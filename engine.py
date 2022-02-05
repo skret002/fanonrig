@@ -2,10 +2,10 @@ import json #подключили библиотеку для работы с js
 import simplejson
 from pprint import pprint #подключили Pprint для красоты выдачи текста
 import os
+import subprocess
 import requests
 import time
 import sys
-import subprocess
 import sensors
 sensors.init()
 
@@ -31,43 +31,6 @@ gpuFanSetHive = 0
 typeGpu = 0
 
 def active_cool_mod():
-<<<<<<< Updated upstream
-	global last_rpm
-	global boost
-	if hot_gpu >= terget_temp_min and hot_gpu < critical_temp:
-		xfactor = (hot_gpu - terget_temp_min) * boost + int(min_fan_rpm)
-		print("xfactor",xfactor)
-		corect_boost = const_rpm / 100 * xfactor
-		if last_rpm != corect_boost:
-			last_rpm = int(corect_boost)
-			os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-			print("удерживаю, даю", int(corect_boost))
-		else:
-			print("температура стабильна")
-	if hot_gpu < terget_temp_min -2:
-		last_rpm = int((const_rpm / 10) *3) 
-		os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-		print("температура ниже уровня, даю ",last_rpm)
-	if hot_gpu == terget_temp_min - 2:
-		last_rpm = int(const_rpm / 100 * 35)
-		os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-		print("температура ниже уровня но подходит к уровню удержания, даю ",last_rpm)
-	if hot_gpu == terget_temp_min - 1:
-		last_rpm = int(const_rpm / 100 * 40)
-		os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-		print("температура ниже уровня но подходит к уровню удержания, даю ",last_rpm)
-		print(hot_gpu)
-
-	if hot_gpu >= critical_temp:
-		print("температура критическая, выполняю защитный алгоритм!")
-		os.system("miner stop")
-		time.sleep(7)
-		os.system("miner stop")
-		print("майнер остановлен")
-	if hot_gpu >= critical_temp +5 :
-		print("температура выше критической на 5 , выполняю защитный алгоритм!")
-		os.system("sreboot shutdown")
-=======
     global last_rpm
     global boost
     if hot_gpu >= terget_temp_min and hot_gpu < critical_temp:
@@ -94,7 +57,6 @@ def active_cool_mod():
         os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         print("температура ниже уровня но подходит к уровню удержания, даю ",last_rpm)
         print(hot_gpu)
->>>>>>> Stashed changes
 
     if hot_gpu >= critical_temp:
         print("температура критическая, выполняю защитный алгоритм!")
@@ -150,7 +112,6 @@ def get_temp():
             temp_gpu.append(i)
         #for i in range(0, int(len(green_gpu_temp))):
         #    temp_gpu.append(feature.get_value())
-            
         print("Найдено карт", len(temp_gpu)) #вывели результат на экран
         global hot_gpu
         hot_gpu = max(temp_gpu)
@@ -401,7 +362,7 @@ def engine_start():
         print("Выбран режиж удержания температур в диапазоне" , terget_temp_min, terget_temp_max)
         print("начинаю вычесления, а пока что продуем систему")
         os.system("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
-        os.system("echo 140 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        os.system("echo 255 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         while 1 > 0:
             test_select_mod()
             time.sleep(7)
@@ -411,15 +372,10 @@ def engine_start():
     elif selected_mod == 1:
         print("Выбран ручной режим")
         os.system("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
-        os.system("echo 140 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        os.system("echo 255 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         while 1 > 0:
             time.sleep(7)
             get_temp()
-<<<<<<< Updated upstream
-            for i in text["1"]:
-                if hot_gpu >= text["1"][i][0] and  hot_gpu <= text["1"][i][1]:
-                    last_rpm = int(const_rpm / 100 * int(i))
-=======
             if get_setting_server1(id_rig_in_server) == "true":
                 print("ответ с сервера получен")
                 test_select_mod()
@@ -429,16 +385,11 @@ def engine_start():
                 print(option1[i][0],option1[i][1])
                 if hot_gpu >= option1[i][0] and  hot_gpu <= option1[i][1]:
                     last_rpm = const_rpm / 100 * int(i)
->>>>>>> Stashed changes
                     print("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
                     os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
                     print("выдаю  ",i,"%",  "горячая карта ", hot_gpu)
     elif selected_mod == 2:
         print("Выбран статичный режим")
-<<<<<<< Updated upstream
-        os.system("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
-        print("echo " + str(text["2"]) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-=======
         while 1 > 0:
             time.sleep(7)
             if get_setting_server2(id_rig_in_server) == "true":
@@ -458,4 +409,3 @@ if __name__ == '__main__':
 		print(e)
 		engine_start()
 	#get_temp()
->>>>>>> Stashed changes

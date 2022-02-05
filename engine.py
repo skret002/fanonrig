@@ -31,7 +31,6 @@ gpuFanSetHive = 0
 typeGpu = 0
 
 def active_cool_mod():
-<<<<<<< Updated upstream
 	global last_rpm
 	global boost
 	if hot_gpu >= terget_temp_min and hot_gpu < critical_temp:
@@ -67,7 +66,6 @@ def active_cool_mod():
 	if hot_gpu >= critical_temp +5 :
 		print("температура выше критической на 5 , выполняю защитный алгоритм!")
 		os.system("sreboot shutdown")
-=======
     global last_rpm
     global boost
     if hot_gpu >= terget_temp_min and hot_gpu < critical_temp:
@@ -94,7 +92,6 @@ def active_cool_mod():
         os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         print("температура ниже уровня но подходит к уровню удержания, даю ",last_rpm)
         print(hot_gpu)
->>>>>>> Stashed changes
 
     if hot_gpu >= critical_temp:
         print("температура критическая, выполняю защитный алгоритм!")
@@ -124,8 +121,8 @@ def addFanData(rpmfun, temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gp
 
 def get_temp():
     global rpmfun
-    temp_gpu = [50,52,51,55,55,52,49,38]
-    rpm_fun_gpu = {'0':600,'1':1000,'2':1050,'3':1020,'4':1030,'5':1000,'6':1000,'7':1040}
+    temp_gpu = []
+    rpm_fun_gpu = {}
     numGpu=0
     try:
         for chip in sensors.iter_detected_chips():                                                                                        
@@ -415,11 +412,9 @@ def engine_start():
         while 1 > 0:
             time.sleep(7)
             get_temp()
-<<<<<<< Updated upstream
             for i in text["1"]:
                 if hot_gpu >= text["1"][i][0] and  hot_gpu <= text["1"][i][1]:
                     last_rpm = int(const_rpm / 100 * int(i))
-=======
             if get_setting_server1(id_rig_in_server) == "true":
                 print("ответ с сервера получен")
                 test_select_mod()
@@ -429,16 +424,13 @@ def engine_start():
                 print(option1[i][0],option1[i][1])
                 if hot_gpu >= option1[i][0] and  hot_gpu <= option1[i][1]:
                     last_rpm = const_rpm / 100 * int(i)
->>>>>>> Stashed changes
                     print("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
                     os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
                     print("выдаю  ",i,"%",  "горячая карта ", hot_gpu)
     elif selected_mod == 2:
         print("Выбран статичный режим")
-<<<<<<< Updated upstream
         os.system("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
         print("echo " + str(text["2"]) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-=======
         while 1 > 0:
             time.sleep(7)
             if get_setting_server2(id_rig_in_server) == "true":

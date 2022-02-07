@@ -91,7 +91,7 @@ def addFanData(rpmfun, temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gp
 def get_temp():
     global rpmfun
     global hot_gpu
-    temp_gpu = [50,52,51,55,55,52,49]
+    temp_gpu = []
     rpm_fun_gpu = {'0':600,'1':1000,'2':1050,'3':1020,'4':1030,'5':1000,'6':1000,'7':1040}
     numGpu=0
     alertFan = False
@@ -113,7 +113,7 @@ def get_temp():
                         pass
         #добавляем данные с карт nvidia если они есть
         (status,output)=subprocess.getstatusoutput("nvidia-smi -q | grep 'GPU Current Temp'")
-        green_gpu_temp = output.replace('GPU Current Temp', '').replace(':', '').replace(' ', '').replace('C', ',').split(',')
+        green_gpu_temp = output.replace('GPU Current Temp', '').replace(':', '').replace(' ', '').replace('C', ',').replace('\n38', ',').split(',')
         print('green_gpu_temp', green_gpu_temp)
         for i in green_gpu_temp:
             if len(i) != 0:

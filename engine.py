@@ -38,10 +38,11 @@ def active_cool_mod():
     global last_rpm
     global boost
     print("НОВЫЙ const_rpm",const_rpm)
+    min_fan_rpm = round(const_rpm / 100 * min_fan_rpm)
     
     if hot_gpu >= terget_temp_min and hot_gpu < critical_temp:
         print('boost', (hot_gpu+1), '-', terget_temp_min, '*', boost, '+', int(min_fan_rpm))
-        xfactor = ((hot_gpu+1) - terget_temp_min) * boost + (const_rpm/100 *min_fan_rpm)
+        xfactor = ((hot_gpu+1) - terget_temp_min) * boost + min_fan_rpm
         print("xfactor",xfactor)
         corect_boost = const_rpm / 100 * xfactor
         if last_rpm != corect_boost:
@@ -194,8 +195,8 @@ def get_temp():
             for feature in chip:                                                                                                      
                 if str(feature.label) == "fan2":                                                                                      
                     print("скорость внешних кулеров  ",feature.get_value())
-                    if len(feature.get_value()) !=0 or len(feature.get_value()) != None or feature.get_value() == '':
-                        rpmfun = feature.get_value()
+                    if len(int(feature.get_value())) !=0 or len(int(feature.get_value()) != None or str(feature.get_value()) == '':
+                        rpmfun = int(feature.get_value())
                     else:
                         rpmfun = 0
 

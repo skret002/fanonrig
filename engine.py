@@ -11,7 +11,7 @@ import sys
 import sensors
 sensors.init()
 
-
+rigOnBoot = 0
 old_selected_mod = 0
 selected_mod = 0
 terget_temp_min = 0
@@ -19,15 +19,15 @@ terget_temp_max = 0
 min_fan_rpm = 30
 hot_gpu = 0
 critical_temp = 0
-const_rpm = 255
-last_rpm = 100
+const_rpm = 0
+last_rpm = 0
 select_fan = 0
 boost = 0
-rigRpmFanMaximum = 5500
-rigRpmFaneffective = 4100
-rpmfun= 3500
+rigRpmFanMaximum = 0
+rigRpmFaneffective = 0
+rpmfun= 0
 option1 = {}
-option2 = 100
+option2 = 0
 id_rig_in_server = 0
 statusAlertSystem = False
 gpuFanSetHive = 0
@@ -38,9 +38,10 @@ def active_cool_mod():
     global last_rpm
     global boost
     print("НОВЫЙ const_rpm",const_rpm)
+    
     if hot_gpu >= terget_temp_min and hot_gpu < critical_temp:
         print('boost', (hot_gpu+1), '-', terget_temp_min, '*', boost, '+', int(min_fan_rpm))
-        xfactor = ((hot_gpu+1) - terget_temp_min) * boost + int(min_fan_rpm)
+        xfactor = ((hot_gpu+1) - terget_temp_min) * boost + (const_rpm/100 *min_fan_rpm)
         print("xfactor",xfactor)
         corect_boost = const_rpm / 100 * xfactor
         if last_rpm != corect_boost:
@@ -49,28 +50,41 @@ def active_cool_mod():
             print("удерживаю, даю", int(last_rpm))
         else:
             print("температура стабильна")
+    
+    if hot_gpu < terget_temp_min -2 and hot_gpu < terget_temp_min -3:
+        last_rpm = round(const_rpm / 10)
+        os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        print("Температуры сильно ниже таргета ",last_rpm)
+
     if hot_gpu < terget_temp_min -2:
-        last_rpm = int((const_rpm / 10) *1 )
+        last_rpm = round(const_rpm / 100 * 20)
         os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         print("температура ниже уровня, даю ",last_rpm)
+
     if hot_gpu == terget_temp_min - 2:
         last_rpm = int(const_rpm / 100 * 25)
         os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         print("температура ниже уровня но подходит к уровню удержания, даю ",last_rpm)
+    
     if hot_gpu == terget_temp_min - 1:
         last_rpm = int(const_rpm / 100 * 3)
         os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-        print("температура ниже уровня но подходит к уровню удержания, даю ",last_rpm)
+        print("температура впритык к началу таргета ",last_rpm)
         print(hot_gpu)
 
     if hot_gpu >= critical_temp:
+        os.system("echo 250 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         print("температура критическая, выполняю защитный алгоритм!")
+        send_mess('Температура достигла критического значения, вынужден остановить майнер', id_rig_in_server)
         os.system("miner stop")
         time.sleep(7)
         os.system("miner stop")
         print("майнер остановлен")
+
     if hot_gpu >= critical_temp +5 :
+        os.system("echo 250 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         print("температура выше критической на 5 , выполняю защитный алгоритм!")
+        send_mess('Температура карты привышает критическую, выключаю риг', id_rig_in_server)
         os.system("sreboot shutdown")
 
 def addFanData(rpmfun, temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gpu5,temp_gpu6,temp_gpu7,rpm_fun_gpu, alertFan,problemNumberGpu, hot_gpu):
@@ -170,13 +184,6 @@ def get_temp():
             temp_gpu7 = temp_gpu[7]
         except Exception:
             temp_gpu7 = 0
-        #temp_gpu1 = temp_gpu[1]
-        #temp_gpu2 = temp_gpu[2]
-        #temp_gpu3 = temp_gpu[3]
-        #temp_gpu4 = temp_gpu[4]
-        #temp_gpu5 = temp_gpu[5]
-        #temp_gpu6 = temp_gpu[6]
-        #temp_gpu7 = temp_gpu[7]
         addFanData(rpmfun,temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gpu5,temp_gpu6,temp_gpu7, rpm_fun_gpu, alertFan,problemNumberGpu,hot_gpu)
     except Exception:
         pass
@@ -187,7 +194,10 @@ def get_temp():
             for feature in chip:                                                                                                      
                 if str(feature.label) == "fan2":                                                                                      
                     print("скорость внешних кулеров  ",feature.get_value())
-                    rpmfun = feature.get_value()
+                    if len(feature.get_value()) !=0 or len(feature.get_value()) != None or feature.get_value() == '':
+                        rpmfun = feature.get_value()
+                    else:
+                        rpmfun = 0
 
 def testing():
     print("начинаю тест железа")
@@ -271,66 +281,179 @@ def get_setting_server(id_rig_in_server):
     global gpuFanSetHive
     global typeGpu
     global const_rpm
-    const_rpm = int(response["data"][0]["attributes"]["effective_echo_fan"])
-    typeGpu = int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"])
-    gpuFanSetHive = int(response["data"][0]["attributes"]["AlertFan"]["gpuFanSetHive"])
-    statusAlertSystem = response["data"][0]["attributes"]["AlertFan"]["statusAlertSystem"]
-    selected_mod = int(response["data"][0]["attributes"]["SetModeFan"]["selected_mod"])
-    terget_temp_min = int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_min"])
-    terget_temp_max = int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_max"])
-    min_fan_rpm = int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"])
-    select_fan = int(response["data"][0]["attributes"]["SetModeFan"]["select_fan"])
-    critical_temp = int(response["data"][0]["attributes"]["SetMode0"]["critical_temp"])
-    boost=int(response["data"][0]["attributes"]["SetMode0"]["boost"])
+    global rigOnBoot
+    if rigOnBoot ==0:
+        const_rpm = int(response["data"][0]["attributes"]["effective_echo_fan"])
+        typeGpu = int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"])
+        gpuFanSetHive = int(response["data"][0]["attributes"]["AlertFan"]["gpuFanSetHive"])
+        statusAlertSystem = response["data"][0]["attributes"]["AlertFan"]["statusAlertSystem"]
+        selected_mod = int(response["data"][0]["attributes"]["SetModeFan"]["selected_mod"])
+        terget_temp_min = int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_min"])
+        terget_temp_max = int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_max"])
+        min_fan_rpm = int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"])
+        select_fan = int(response["data"][0]["attributes"]["SetModeFan"]["select_fan"])
+        critical_temp = int(response["data"][0]["attributes"]["SetMode0"]["critical_temp"])
+        boost=int(response["data"][0]["attributes"]["SetMode0"]["boost"])
+        rigOnBoot == 1
+    else:
+        if const_rpm != int(response["data"][0]["attributes"]["effective_echo_fan"]):
+            engine_start()
+        else:
+            const_rpm = int(response["data"][0]["attributes"]["effective_echo_fan"])
+
+        if typeGpu != int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"]):
+            engine_start()
+        else:
+            typeGpu = int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"])
+
+        if gpuFanSetHive != int(response["data"][0]["attributes"]["AlertFan"]["gpuFanSetHive"]):
+            engine_start()
+        else:
+            gpuFanSetHive = int(response["data"][0]["attributes"]["AlertFan"]["gpuFanSetHive"])
+
+        if statusAlertSystem != response["data"][0]["attributes"]["AlertFan"]["statusAlertSystem"]:
+            engine_start()
+        else:
+            statusAlertSystem = response["data"][0]["attributes"]["AlertFan"]["statusAlertSystem"]
+
+        if selected_mod != int(response["data"][0]["attributes"]["SetModeFan"]["selected_mod"]):
+            engine_start()
+        else:
+            selected_mod = int(response["data"][0]["attributes"]["SetModeFan"]["selected_mod"])
+
+        if terget_temp_min != int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_min"]):
+            engine_start()
+        else:
+            terget_temp_min = int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_min"])
+
+        if terget_temp_max != int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_max"]):
+            engine_start()
+        else:
+            terget_temp_max = int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_max"])
+
+        if min_fan_rpm != int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"]):
+            engine_start()
+        else:
+            min_fan_rpm = int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"])
+
+        if select_fan != int(response["data"][0]["attributes"]["SetModeFan"]["select_fan"]):
+            engine_start()
+        else:
+            select_fan = int(response["data"][0]["attributes"]["SetModeFan"]["select_fan"])
+
+        if critical_temp != int(response["data"][0]["attributes"]["SetMode0"]["critical_temp"]):
+            engine_start()
+        else:
+            critical_temp = int(response["data"][0]["attributes"]["SetMode0"]["critical_temp"])
+
+        if boost != int(response["data"][0]["attributes"]["SetMode0"]["boost"]):
+            engine_start()
+        else:
+            boost=int(response["data"][0]["attributes"]["SetMode0"]["boost"])
+
+    # проверяем включена ли реколебровка и если нужно запускаем
     if response["data"][0]["attributes"]["recalibrationFanRig"] == True:
         testFan(id_rig_in_server)
         get_setting_server(id_rig_in_server)
     return("true")
 
 def get_setting_server1(id_rig_in_server):
-	#print(id_rig_in_server)
-	response = requests.get('http://ggc.center:8000/get_option_rig/', data = [('id_in_serv', id_rig_in_server)] )
-	response = response.json()
-	#print(response)
-	global option1
-	global selected_mod
-	global statusAlertSystem
-	global gpuFanSetHive
-	global typeGpu
-	typeGpu = int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"])
-	gpuFanSetHive = int(response["data"][0]["attributes"]["AlertFan"]["gpuFanSetHive"])
-	statusAlertSystem = response["data"][0]["attributes"]["AlertFan"]["statusAlertSystem"]
-	selected_mod = int(response["data"][0]["attributes"]["SetModeFan"]["selected_mod"])
-	cache = response["data"][0]["attributes"]["SetMode1"]
-	del cache['id']
-	for i in cache:
-		key1 = i.replace('t', '')
-		vals = cache[i].split(",")
-		two_val = []
-		for val in vals:
-			two_val.append(int(val))
-		#print(key1, two_val)
-		option1.update({str(key1):two_val}) 
+    #print(id_rig_in_server)
+    response = requests.get('http://ggc.center:8000/get_option_rig/', data = [('id_in_serv', id_rig_in_server)] )
+    response = response.json()
+    #print(response)
+    global option1
+    global selected_mod
+    global statusAlertSystem
+    global gpuFanSetHive
+    global typeGpu
+    global rigOnBoot
+    if rigOnBoot ==0:
+        typeGpu = int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"])
+        gpuFanSetHive = int(response["data"][0]["attributes"]["AlertFan"]["gpuFanSetHive"])
+        statusAlertSystem = response["data"][0]["attributes"]["AlertFan"]["statusAlertSystem"]
+        selected_mod = int(response["data"][0]["attributes"]["SetModeFan"]["selected_mod"])
+        cache = response["data"][0]["attributes"]["SetMode1"]
+        rigOnBoot == 0
+    else:
+        if typeGpu != int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"]):
+            engine_start()
+        else:
+            typeGpu = int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"])
+        
+        if gpuFanSetHive != int(response["data"][0]["attributes"]["AlertFan"]["gpuFanSetHive"]):
+            engine_start()
+        else:
+            gpuFanSetHive = int(response["data"][0]["attributes"]["AlertFan"]["gpuFanSetHive"])
+        if statusAlertSystem != response["data"][0]["attributes"]["AlertFan"]["statusAlertSystem"]:
+            engine_start()
+        else:
+            statusAlertSystem = response["data"][0]["attributes"]["AlertFan"]["statusAlertSystem"]
+        
+        if selected_mod != int(response["data"][0]["attributes"]["SetModeFan"]["selected_mod"]):
+            engine_start()
+        else:
+            selected_mod = int(response["data"][0]["attributes"]["SetModeFan"]["selected_mod"])
+        if cache != response["data"][0]["attributes"]["SetMode1"]:
+            engine_start()
+        else:
+            cache = response["data"][0]["attributes"]["SetMode1"]
 
-	#print(option1)
-	return("true")
+    del cache['id']
+    for i in cache:
+        key1 = i.replace('t', '')
+        vals = cache[i].split(",")
+        two_val = []
+        for val in vals:
+            two_val.append(int(val))
+        #print(key1, two_val)
+        option1.update({str(key1):two_val}) 
+
+    #print(option1)
+    return("true")
 def get_setting_server2(id_rig_in_server):
-	# передаем данные о риге и получаем ответ с id
-	#print(id_rig_in_server)
-	response = requests.get('http://ggc.center:8000/get_option_rig/', data = [('id_in_serv', id_rig_in_server)] )
-	response = response.json()
-	#print(response)
-	global option2
-	global selected_mod
-	global statusAlertSystem
-	global gpuFanSetHive
-	global typeGpu
-	typeGpu = int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"])
-	gpuFanSetHive = int(response["data"][0]["attributes"]["AlertFan"]["gpuFanSetHive"])
-	statusAlertSystem = response["data"][0]["attributes"]["AlertFan"]["statusAlertSystem"]
-	selected_mod = int(response["data"][0]["attributes"]["SetModeFan"]["selected_mod"])
-	option2 = response["data"][0]["attributes"]["SetMode2"]["SetRpm"]
-	return("true")
+    # передаем данные о риге и получаем ответ с id
+    #print(id_rig_in_server)
+    response = requests.get('http://ggc.center:8000/get_option_rig/', data = [('id_in_serv', id_rig_in_server)] )
+    response = response.json()
+    #print(response)
+    global option2
+    global selected_mod
+    global statusAlertSystem
+    global gpuFanSetHive
+    global typeGpu
+    global rigOnBoot
+
+    if rigOnBoot ==0:
+        typeGpu = int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"])
+        gpuFanSetHive = int(response["data"][0]["attributes"]["AlertFan"]["gpuFanSetHive"])
+        statusAlertSystem = response["data"][0]["attributes"]["AlertFan"]["statusAlertSystem"]
+        selected_mod = int(response["data"][0]["attributes"]["SetModeFan"]["selected_mod"])
+        option2 = response["data"][0]["attributes"]["SetMode2"]["SetRpm"]
+    else:
+        if typeGpu != int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"]):
+            engine_start()
+        else:
+            typeGpu = int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"])
+
+        if gpuFanSetHive != int(response["data"][0]["attributes"]["AlertFan"]["gpuFanSetHive"]):
+            engine_start()
+        else:
+            gpuFanSetHive = int(response["data"][0]["attributes"]["AlertFan"]["gpuFanSetHive"])
+        if statusAlertSystem != response["data"][0]["attributes"]["AlertFan"]["statusAlertSystem"]:
+            engine_start()
+        else:
+            statusAlertSystem = response["data"][0]["attributes"]["AlertFan"]["statusAlertSystem"]  
+        if selected_mod != int(response["data"][0]["attributes"]["SetModeFan"]["selected_mod"]):
+            engine_start()
+        else:
+            selected_mod = int(response["data"][0]["attributes"]["SetModeFan"]["selected_mod"])
+        if option2 != response["data"][0]["attributes"]["SetMode2"]["SetRpm"]:
+            engine_start()
+        else:
+            option2 = response["data"][0]["attributes"]["SetMode2"]["SetRpm"]
+    
+    return("true")
 
 def sendInfoRig(rig_id, rig_name):
     global id_rig_in_server
@@ -352,6 +475,7 @@ def test_select_mod():
 		pass
 	else:
 		engine_start()
+
 
 
 def engine_start():

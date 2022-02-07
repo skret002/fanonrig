@@ -4,7 +4,7 @@ import time
 import requests                                                                                                                       
 sensors.init()
 
-def testFan(id_rig=1):            
+def testFan(id_rig):            
     effective_rpm = 0
     effective_handler = 0
     max_rpm = 0
@@ -17,14 +17,14 @@ def testFan(id_rig=1):
         give_rpm = i*5                                                                                                                
         os.system("echo " + str(give_rpm) +" >> /sys/class/hwmon/hwmon1/pwm2")                                                        
         print("echo " + str(give_rpm) +" >> /sys/class/hwmon/hwmon1/pwm2")                                                            
-        time.sleep(5)                                                                                                                 
+        time.sleep(10)                                                                                                                 
         for chip in sensors.iter_detected_chips():                                                                                    
             if str(chip) == "nct6779-isa-0a30" :                                                                                      
                 for feature in chip:                                                                                                 
                     if str(feature.label) == "fan2":                                                                                 
                         print("скорость внешних кулеров  ",round(feature.get_value()))  
                         if effective_handler == 0:                                                    
-                            if int(old_rpm) >= int(feature.get_value()):                                                              
+                            if int(old_rpm) +80 >= int(feature.get_value()):                                                              
                                 print("кулера эффективны до "+ str(give_rpm))                                                             
                                 effective_rpm = feature.get_value()
                                 effective_handler = give_rpm

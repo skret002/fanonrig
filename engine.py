@@ -193,9 +193,9 @@ def get_temp():
     for chip in sensors.iter_detected_chips():
         if str(chip) == "nct6779-isa-0a30" :
             for feature in chip:                                                                                                      
-                if str(feature.label) == "fan2":                                                                                      
-                    print("скорость внешних кулеров  ",feature.get_value())
-                    if len(int(feature.get_value())) !=0 or len(int(feature.get_value()) != None or str(feature.get_value()) == '':
+                if str(feature.label) == "fan2":                                                         
+                    print("скорость внешних кулеров  ", feature.get_value())
+                    if len(int(feature.get_value())) !=0 or len(int(feature.get_value())) != None:
                         rpmfun = int(feature.get_value())
                     else:
                         rpmfun = 0

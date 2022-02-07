@@ -301,18 +301,18 @@ def get_setting_server2(id_rig_in_server):
 	return("true")
 
 def sendInfoRig(rig_id, rig_name):
-	global id_rig_in_server
-	try:
-		param= [('rigId', rig_id), ('rigName', rig_name)] 
-		response = requests.post('http://ggc.center:8000/add_rig_or_test/', data = param )
-		id_rig_in_server = response.json()["data"]
-		#print('id_rig_in_server тут смотреть',id_rig_in_server)
-	except Exception as e:
-		print('ошибка в sendInfoRig', e)
-		time.sleep(10)
+    global id_rig_in_server
+    try:
+        param= [('rigId', rig_id), ('rigName', rig_name)] 
+        response = requests.post('http://ggc.center:8000/add_rig_or_test/', data = param )
+        id_rig_in_server = response.json()["data"]
+        #print('id_rig_in_server тут смотреть',id_rig_in_server)
+    except Exception as e:
+        print('ошибка в sendInfoRig', e)
+        time.sleep(10)
         sendInfoRig(rig_id, rig_name)
-	time.sleep(30)
-	return(True)
+    time.sleep(30)
+    return(True)
 
 def test_select_mod():
 	print(selected_mod, old_selected_mod)

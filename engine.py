@@ -443,7 +443,7 @@ def engine_start():
             else:
                 test_select_mod()
                 get_temp()
-                option2 = str(int(text["2"]))
+                option2 = round(const_rpm / 100 * int(text["2"]))
             os.system("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
             print("echo " + str(option2) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
 

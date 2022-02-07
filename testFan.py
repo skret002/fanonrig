@@ -24,7 +24,7 @@ def testFan(id_rig):
                     if str(feature.label) == "fan2":                                                                                 
                         print("скорость внешних кулеров  ",round(feature.get_value()))  
                         if effective_handler == 0:                                                    
-                            if int(old_rpm) +20 >= int(feature.get_value()):                                                              
+                            if int(old_rpm) >= int(feature.get_value()):                                                              
                                 print("кулера эффективны до "+ str(give_rpm))                                                             
                                 effective_rpm = feature.get_value()
                                 effective_handler = give_rpm

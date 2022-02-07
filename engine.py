@@ -1,6 +1,8 @@
 import json #подключили библиотеку для работы с json
 import simplejson
 from pprint import pprint #подключили Pprint для красоты выдачи текста
+from testFan import testFan
+from handler_messeges import transmit_mess as send_mess
 import os
 import subprocess
 import requests
@@ -8,6 +10,7 @@ import time
 import sys
 import sensors
 sensors.init()
+
 
 old_selected_mod = 0
 selected_mod = 0
@@ -29,6 +32,7 @@ id_rig_in_server = 0
 statusAlertSystem = False
 gpuFanSetHive = 0
 typeGpu = 0
+ressetRig=True
 
 def active_cool_mod():
     global last_rpm
@@ -41,19 +45,19 @@ def active_cool_mod():
         if last_rpm != corect_boost:
             last_rpm = int(corect_boost)
             os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-            print("удерживаю, даю", int(corect_boost))
+            print("удерживаю, даю", int(last_rpm))
         else:
             print("температура стабильна")
     if hot_gpu < terget_temp_min -2:
-        last_rpm = (const_rpm / 10) *3 
+        last_rpm = int((const_rpm / 10) *3 )
         os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         print("температура ниже уровня, даю ",last_rpm)
     if hot_gpu == terget_temp_min - 2:
-        last_rpm = const_rpm / 100 * 35
+        last_rpm = int(const_rpm / 100 * 35)
         os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         print("температура ниже уровня но подходит к уровню удержания, даю ",last_rpm)
     if hot_gpu == terget_temp_min - 1:
-        last_rpm = const_rpm / 100 * 40
+        last_rpm = int(const_rpm / 100 * 40)
         os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         print("температура ниже уровня но подходит к уровню удержания, даю ",last_rpm)
         print(hot_gpu)
@@ -69,7 +73,7 @@ def active_cool_mod():
         os.system("sreboot shutdown")
 
 def addFanData(rpmfun, temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gpu5,temp_gpu6,temp_gpu7,rpm_fun_gpu, alertFan,problemNumberGpu, hot_gpu):
-    print('отдаю данные о кулерах')
+    print('ЗАШЛИ В ВЫДАЧУ ДАННЫХ О КУЛЕРАХ')
     time.sleep(20)
     data={"id_in_serv": id_rig_in_server,'rpmfun':rpmfun,
                             'temp_gpu0':temp_gpu0, 'temp_gpu1':temp_gpu1,
@@ -80,15 +84,18 @@ def addFanData(rpmfun, temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gp
                             'alertFan':alertFan, 'problemNumberGpu':problemNumberGpu,
                             'hot_gpu':hot_gpu
                             }
-    r = requests.post("http://127.0.0.1:8000/add_and_read_fandata/", data=data)
+    r = requests.post("http://ggc.center:8000/add_and_read_fandata/", data=data)
 	#print(response.json())
 	#response = response.json()
 
 def get_temp():
     global rpmfun
-    temp_gpu = [50,52,51,55,55,52,49,38]
+    global hot_gpu
+    temp_gpu = [50,52,51,55,55,52,49]
     rpm_fun_gpu = {'0':600,'1':1000,'2':1050,'3':1020,'4':1030,'5':1000,'6':1000,'7':1040}
     numGpu=0
+    alertFan = False
+    problemNumberGpu = None
     try:
         for chip in sensors.iter_detected_chips():                                                                                        
             if str(chip.adapter_name) == "PCI adapter":                                                                                   
@@ -109,14 +116,11 @@ def get_temp():
         green_gpu_temp = output.replace('GPU Current Temp', '').replace(':', '').replace(' ', '').replace('C', ',').split(',')
         print('green_gpu_temp', green_gpu_temp)
         for i in green_gpu_temp:
-            temp_gpu.append(i)
-        #for i in range(0, int(len(green_gpu_temp))):
-        #    temp_gpu.append(feature.get_value())
+            if len(i) != 0:
+                temp_gpu.append(int(i))
         print("Найдено карт", len(temp_gpu)) #вывели результат на экран
-        global hot_gpu
+        print(temp_gpu)
         hot_gpu = max(temp_gpu)
-        alertFan = False
-        problemNumberGpu = None
         print("Самая горячая карта", max(temp_gpu)) #вывели результат на экран
         print("самая высокая скорость кулера видеокарты!", rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)]) #вывели результат на экран
         print("!!!",statusAlertSystem == True, gpuFanSetHive == 1, typeGpu == 0)
@@ -218,39 +222,42 @@ def test_key(rig_id, rig_name):
                 print("rig id не совпадает, стираю систему")
                 sys.exit()
 def get_setting_server(id_rig_in_server):
-	#print(id_rig_in_server)
-	response = requests.get('http://127.0.0.1:8000/get_option_rig/', data = [('id_in_serv', id_rig_in_server)] )
-	#print(response)
-	response = response.json()
-	#print(response)
-	global selected_mod
-	global terget_temp_min
-	global terget_temp_max
-	global min_fan_rpm
-	global select_fan
-	global boost
-	global critical_temp
-	global option1
-	global statusAlertSystem
-	global gpuFanSetHive
-	global typeGpu
-	print("ТЕПЕРЬ ТУТ ", response)
-	typeGpu = int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"])
-	gpuFanSetHive = int(response["data"][0]["attributes"]["AlertFan"]["gpuFanSetHive"])
-	statusAlertSystem = response["data"][0]["attributes"]["AlertFan"]["statusAlertSystem"]
-	selected_mod = int(response["data"][0]["attributes"]["SetModeFan"]["selected_mod"])
-	terget_temp_min = int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_min"])
-	terget_temp_max = int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_max"])
-	min_fan_rpm = int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"])
-	select_fan = int(response["data"][0]["attributes"]["SetModeFan"]["select_fan"])
-	critical_temp = int(response["data"][0]["attributes"]["SetMode0"]["critical_temp"])
-	boost=int(response["data"][0]["attributes"]["SetMode0"]["boost"])
-
-	return("true")
+    #print(id_rig_in_server)
+    response = requests.get('http://ggc.center:8000/get_option_rig/', data = [('id_in_serv', id_rig_in_server)] )
+    #print(response)
+    response = response.json()
+    #print('get_setting_server',response["data"][0]["attributes"])
+    global selected_mod
+    global terget_temp_min
+    global terget_temp_max
+    global min_fan_rpm
+    global select_fan
+    global boost
+    global critical_temp
+    global option1
+    global statusAlertSystem
+    global gpuFanSetHive
+    global typeGpu
+    global const_rpm
+    const_rpm = int(response["data"][0]["attributes"]["effective_echo_fan"])
+    typeGpu = int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"])
+    gpuFanSetHive = int(response["data"][0]["attributes"]["AlertFan"]["gpuFanSetHive"])
+    statusAlertSystem = response["data"][0]["attributes"]["AlertFan"]["statusAlertSystem"]
+    selected_mod = int(response["data"][0]["attributes"]["SetModeFan"]["selected_mod"])
+    terget_temp_min = int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_min"])
+    terget_temp_max = int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_max"])
+    min_fan_rpm = int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"])
+    select_fan = int(response["data"][0]["attributes"]["SetModeFan"]["select_fan"])
+    critical_temp = int(response["data"][0]["attributes"]["SetMode0"]["critical_temp"])
+    boost=int(response["data"][0]["attributes"]["SetMode0"]["boost"])
+    if response["data"][0]["attributes"]["recalibrationFanRig"] == True:
+        testFan(id_rig_in_server)
+        get_setting_server(id_rig_in_server)
+    return("true")
 
 def get_setting_server1(id_rig_in_server):
 	#print(id_rig_in_server)
-	response = requests.get('http://127.0.0.1:8000/get_option_rig/', data = [('id_in_serv', id_rig_in_server)] )
+	response = requests.get('http://ggc.center:8000/get_option_rig/', data = [('id_in_serv', id_rig_in_server)] )
 	response = response.json()
 	#print(response)
 	global option1
@@ -278,7 +285,7 @@ def get_setting_server1(id_rig_in_server):
 def get_setting_server2(id_rig_in_server):
 	# передаем данные о риге и получаем ответ с id
 	#print(id_rig_in_server)
-	response = requests.get('http://127.0.0.1:8000/get_option_rig/', data = [('id_in_serv', id_rig_in_server)] )
+	response = requests.get('http://ggc.center:8000/get_option_rig/', data = [('id_in_serv', id_rig_in_server)] )
 	response = response.json()
 	#print(response)
 	global option2
@@ -297,12 +304,13 @@ def sendInfoRig(rig_id, rig_name):
 	global id_rig_in_server
 	try:
 		param= [('rigId', rig_id), ('rigName', rig_name)] 
-		response = requests.post('http://127.0.0.1:8000/add_rig_or_test/', data = param )
+		response = requests.post('http://ggc.center:8000/add_rig_or_test/', data = param )
 		id_rig_in_server = response.json()["data"]
 		#print('id_rig_in_server тут смотреть',id_rig_in_server)
 	except Exception as e:
 		print('ошибка в sendInfoRig', e)
-		pass
+		time.sleep(10)
+        sendInfoRig(rig_id, rig_name)
 	time.sleep(30)
 	return(True)
 
@@ -330,8 +338,10 @@ def engine_start():
     global option1
     global option2
     global id_rig_in_server
+    global ressetRig
 
     #testing()
+
     with open('settings.json', 'r', encoding='utf-8') as f: #открыли файл с данными
         text = json.load(f) #загнали все, что получилось в переменную
     print("Конфиг загружен и валиден", text) #вывели результат на экран
@@ -342,10 +352,11 @@ def engine_start():
     #test_key(rig_id, rig_name)
     # передаем данные о риге и получаем ответ с id
     sendInfoRig(rig_id,rig_name)
-    if sendInfoRig:
-        print('данные о риге записаны на сервер')
+    if ressetRig == True:
+        requests.post("http://ggc.center:8000/ressetRigAndFanData/", data={'ressetRig':'True', 'id_rig_in_server':id_rig_in_server})
+        ressetRig = False
     else:
-        print('данные о риге не ушли')
+        pass
     # передача данных о риге завершена
     if get_setting_server(id_rig_in_server) == "true":
         print("ответ с сервера получен")
@@ -362,7 +373,7 @@ def engine_start():
         print("Выбран режиж удержания температур в диапазоне" , terget_temp_min, terget_temp_max)
         print("начинаю вычесления, а пока что продуем систему")
         os.system("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
-        os.system("echo 255 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        os.system("echo 100 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         while 1 > 0:
             test_select_mod()
             time.sleep(7)
@@ -372,8 +383,9 @@ def engine_start():
     elif selected_mod == 1:
         print("Выбран ручной режим")
         os.system("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
-        os.system("echo 255 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        os.system("echo 100 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         while 1 > 0:
+            test_select_mod()
             time.sleep(7)
             get_temp()
             if get_setting_server1(id_rig_in_server) == "true":
@@ -384,7 +396,7 @@ def engine_start():
             for i in option1:
                 print(option1[i][0],option1[i][1])
                 if hot_gpu >= option1[i][0] and  hot_gpu <= option1[i][1]:
-                    last_rpm = const_rpm / 100 * int(i)
+                    last_rpm = round(int(const_rpm / 100) * int(i))
                     print("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
                     os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
                     print("выдаю  ",i,"%",  "горячая карта ", hot_gpu)
@@ -393,10 +405,13 @@ def engine_start():
         while 1 > 0:
             time.sleep(7)
             if get_setting_server2(id_rig_in_server) == "true":
-            	print("ответ с сервера получен")
-            	test_select_mod()
+                print("ответ с сервера получен")
+                get_temp()
+                test_select_mod()
             else:
-            	option2 = str(text["2"])
+                test_select_mod()
+                get_temp()
+                option2 = str(int(text["2"]))
             os.system("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
             print("echo " + str(option2) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
 

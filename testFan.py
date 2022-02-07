@@ -5,9 +5,9 @@ import requests
 sensors.init()
 
 def testFan(id_rig):            
-    effective_rpm = 5200
-    effective_handler = 160
-    max_rpm = 5500
+    effective_rpm = 0
+    effective_handler = 0
+    max_rpm = 0
     print("начинаю РЕКОЛЕБРОВКУ КУЛЕРОВ")                                                                                             
     os.system("echo 1 >>/sys/class/hwmon/hwmon1/pwm2_enable")                                                                         
     os.system("echo 0  >> /sys/class/hwmon/hwmon1/pwm2")                                                                              
@@ -17,7 +17,7 @@ def testFan(id_rig):
         give_rpm = i*5                                                                                                                
         os.system("echo " + str(give_rpm) +" >> /sys/class/hwmon/hwmon1/pwm2")                                                        
         print("echo " + str(give_rpm) +" >> /sys/class/hwmon/hwmon1/pwm2")                                                            
-        time.sleep(3)                                                                                                                 
+        time.sleep(5)                                                                                                                 
         for chip in sensors.iter_detected_chips():                                                                                    
             if str(chip) == "nct6779-isa-0a30" :                                                                                      
                 for feature in chip:                                                                                                 

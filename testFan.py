@@ -4,7 +4,7 @@ import time
 import requests                                                                                                                       
 sensors.init()
 
-def testFan(id_rig):            
+def testFan(id_rig=1):            
     effective_rpm = 0
     effective_handler = 0
     max_rpm = 0

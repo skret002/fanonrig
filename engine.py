@@ -104,7 +104,7 @@ def get_temp():
                         numGpu = numGpu+1                                                                                                     
                         if str(feature.label) == "edge":                                                                                  
                             #print(feature.get_value())     # температура
-                            temp_gpu.append(feature.get_value())
+                            temp_gpu.append(round(feature.get_value()))
                         if str(feature.label) == "fan1": 
                             #print(feature.get_value())    # скорость кулеров
                             #rpm_fun_gpu.append({str(numGpu):feature.get_value()})
@@ -137,14 +137,45 @@ def get_temp():
                 alertFan = False
         except Exception:
         	pass
-        temp_gpu0 = temp_gpu[0]
-        temp_gpu1 = temp_gpu[1]
-        temp_gpu2 = temp_gpu[2]
-        temp_gpu3 = temp_gpu[3]
-        temp_gpu4 = temp_gpu[4]
-        temp_gpu5 = temp_gpu[5]
-        temp_gpu6 = temp_gpu[6]
-        temp_gpu7 = temp_gpu[7]
+        try:
+            temp_gpu0 = temp_gpu[0]
+        except Exception:
+            temp_gpu0 = 0
+        try:
+            temp_gpu1 = temp_gpu[1]
+        except Exception:
+            temp_gpu1 = 0
+        try:
+            temp_gpu2 = temp_gpu[2]
+        except Exception:
+            temp_gpu2 = 0
+        try:
+            temp_gpu3 = temp_gpu[3]
+        except Exception:
+            temp_gpu3 = 0
+        try:
+            temp_gpu4 = temp_gpu[4]
+        except Exception:
+            temp_gpu4 = 0
+        try:
+            temp_gpu5 = temp_gpu[5]
+        except Exception:
+            temp_gpu5 = 0
+        try:
+            temp_gpu6 = temp_gpu[6]
+        except Exception:
+            temp_gpu6 = 0
+        try:
+            temp_gpu7 = temp_gpu[7]
+        except Exception:
+            temp_gpu7 = 0
+        #temp_gpu1 = temp_gpu[1]
+        #temp_gpu2 = temp_gpu[2]
+        #temp_gpu3 = temp_gpu[3]
+        #temp_gpu4 = temp_gpu[4]
+        #temp_gpu5 = temp_gpu[5]
+        #temp_gpu6 = temp_gpu[6]
+        #temp_gpu7 = temp_gpu[7]
         addFanData(rpmfun,temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gpu5,temp_gpu6,temp_gpu7, rpm_fun_gpu, alertFan,problemNumberGpu,hot_gpu)
     except Exception:
         pass

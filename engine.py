@@ -37,6 +37,7 @@ ressetRig=True
 def active_cool_mod():
     global last_rpm
     global boost
+    print("НОВЫЙ const_rpm",const_rpm)
     if hot_gpu >= terget_temp_min and hot_gpu < critical_temp:
         print('boost', (hot_gpu+1), '-', terget_temp_min, '*', boost, '+', int(min_fan_rpm))
         xfactor = ((hot_gpu+1) - terget_temp_min) * boost + int(min_fan_rpm)
@@ -49,15 +50,15 @@ def active_cool_mod():
         else:
             print("температура стабильна")
     if hot_gpu < terget_temp_min -2:
-        last_rpm = int((const_rpm / 10) *3 )
+        last_rpm = int((const_rpm / 10) *1 )
         os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         print("температура ниже уровня, даю ",last_rpm)
     if hot_gpu == terget_temp_min - 2:
-        last_rpm = int(const_rpm / 100 * 35)
+        last_rpm = int(const_rpm / 100 * 25)
         os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         print("температура ниже уровня но подходит к уровню удержания, даю ",last_rpm)
     if hot_gpu == terget_temp_min - 1:
-        last_rpm = int(const_rpm / 100 * 40)
+        last_rpm = int(const_rpm / 100 * 3)
         os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         print("температура ниже уровня но подходит к уровню удержания, даю ",last_rpm)
         print(hot_gpu)

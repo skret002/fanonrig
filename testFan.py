@@ -22,11 +22,12 @@ def testFan(id_rig):
             if str(chip) == "nct6779-isa-0a30" :                                                                                      
                 for feature in chip:                                                                                                 
                     if str(feature.label) == "fan2":                                                                                 
-                        print("скорость внешних кулеров  ",round(feature.get_value()))                                                       
-                        if int(old_rpm) +20 >= int(feature.get_value()):                                                              
-                            print("кулера эффективны до "+ str(give_rpm))                                                             
-                            effective_rpm = feature.get_value()
-                            effective_handler = give_rpm
+                        print("скорость внешних кулеров  ",round(feature.get_value()))  
+                        if effective_handler == 0:                                                    
+                            if int(old_rpm) +20 >= int(feature.get_value()):                                                              
+                                print("кулера эффективны до "+ str(give_rpm))                                                             
+                                effective_rpm = feature.get_value()
+                                effective_handler = give_rpm
                         old_rpm=feature.get_value()
         max_rpm = old_rpm
     response = requests.post('http://ggc.center:8000/recalibrationOff/', data = {'id_rig': id_rig, 

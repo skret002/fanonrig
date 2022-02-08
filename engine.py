@@ -531,7 +531,7 @@ def engine_start():
         print("начинаю вычесления, а пока что продуем систему")
         send_mess('Интеллектуальный режим активирован', id_rig_in_server)
         os.system("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
-        os.system("echo " + round(const_rpm / 100 * 50) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        os.system("echo " + str(round(const_rpm / 100 * 50)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         while 1 > 0:
             test_select_mod()
             time.sleep(7)
@@ -542,7 +542,7 @@ def engine_start():
         print("Выбран ручной режим")
         send_mess('Ручной режим активирован', id_rig_in_server)
         os.system("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
-        os.system("echo " + round(const_rpm / 100 * 50) + ">> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        os.system("echo " + str(round(const_rpm / 100 * 50)) + ">> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         while 1 > 0:
             test_select_mod()
             time.sleep(7)

@@ -529,8 +529,9 @@ def engine_start():
     if selected_mod == 0:
         print("Выбран режиж удержания температур в диапазоне" , terget_temp_min, terget_temp_max)
         print("начинаю вычесления, а пока что продуем систему")
+        send_mess('Интеллектуальный режим активирован', id_rig_in_server)
         os.system("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
-        os.system("echo 100 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        os.system("echo " + round(const_rpm / 100 * 50) " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         while 1 > 0:
             test_select_mod()
             time.sleep(7)
@@ -539,8 +540,9 @@ def engine_start():
             active_cool_mod()
     elif selected_mod == 1:
         print("Выбран ручной режим")
+        send_mess('Ручной режим активирован', id_rig_in_server)
         os.system("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
-        os.system("echo 100 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        os.system("echo " + round(const_rpm / 100 * 50) ">> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         while 1 > 0:
             test_select_mod()
             time.sleep(7)
@@ -559,6 +561,7 @@ def engine_start():
                     print("выдаю  ",i,"%",  "горячая карта ", hot_gpu)
     elif selected_mod == 2:
         print("Выбран статичный режим")
+        send_mess('Статичный режим активирован', id_rig_in_server)
         while 1 > 0:
             time.sleep(7)
             if get_setting_server2(id_rig_in_server) == "true":

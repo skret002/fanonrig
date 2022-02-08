@@ -132,7 +132,7 @@ def get_temp():
         green_gpu_temp = output.replace('GPU Current Temp', '').replace(':', '').replace(' ', '').replace('C', ',').replace('\n38', ',').split(',')
         print('green_gpu_temp', green_gpu_temp)
         for i in green_gpu_temp:
-            if len(i) != 0:
+            if len(str(i)) != 0:
                 temp_gpu.append(int(i))
         print("Найдено карт", len(temp_gpu)) #вывели результат на экран
         print(temp_gpu)
@@ -195,7 +195,7 @@ def get_temp():
             for feature in chip:                                                                                                      
                 if str(feature.label) == "fan2":                                                         
                     print("скорость внешних кулеров  ", feature.get_value())
-                    if len(int(feature.get_value())) !=0 or len(int(feature.get_value())) != None:
+                    if len(str(int(feature.get_value()))) !=0 or len(str(int(feature.get_value()))) != None:
                         rpmfun = int(feature.get_value())
                     else:
                         rpmfun = 0
@@ -249,7 +249,7 @@ def test_key(rig_id, rig_name):
         if "RIG_ID" in line:
             r_id = line.replace("RIG_ID=", "")
             print("RIG_ID",line.replace("RIG_ID=", ""))
-            if len(rig_id) == 0:
+            if len(str(rig_id)) == 0:
                 print("Это первый запуск, прописываю ID в память")
                 with open('settings.json', 'r+') as f:
                     json_data = json.load(f)
@@ -261,7 +261,7 @@ def test_key(rig_id, rig_name):
 
             if str(rig_id) == str(line.replace("RIG_ID=", "")):
                 print("Защита пройдена и в этот раз я не сотру систему")
-            if len(rig_id) != 0 and rig_id != r_id:
+            if len(str(rig_id)) != 0 and rig_id != r_id:
                 print("rig id не совпадает, стираю систему")
                 sys.exit()
 def get_setting_server(id_rig_in_server):

@@ -64,9 +64,11 @@ def active_cool_mod():
             optimum_fan = optimum_fan + 1
         #elif int(last_rpm) == int(corect_boost) and int(old_hot_gpu) == int(hot_gpu):
         else:
+            last_rpm = (int(const_rpm) / int(terget_temp_max - terget_temp_min)) * ((int(hot_gpu) - int(terget_temp_min)))
+            os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+            print("температура стабильна отдаю", int(last_rpm))
             stable_temp_round = stable_temp_round + 1
             old_hot_gpu = hot_gpu
-            print("температура стабильна")
             if optimum_fan < 0 and int(optimum_temp) == int(hot_gpu):
                 print("Применяю оптимум")
                 corect_boost = int(corect_boost) - int(boost) - int(optimum_fan) +3
@@ -74,14 +76,14 @@ def active_cool_mod():
                 print(last_rpm)
                 os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
             
-            if stable_temp_round >= 10 and stable_temp_round < 20 and old_hot_gpu == hot_gpu:
-                print("Температура стабильна, ищу оптимум 1")
-                corect_boost = int(corect_boost) - int(boost)
-                last_rpm = int(corect_boost)
-                os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-                stable_temp_round = stable_temp_round + 1
-                old_hot_gpu == hot_gpu
-            if stable_temp_round > 20 and old_hot_gpu == hot_gpu and optimum_fan == 0:
+            #if stable_temp_round >= 10 and stable_temp_round < 20 and old_hot_gpu == hot_gpu:
+            #    print("Температура стабильна, ищу оптимум 1")
+            #    corect_boost = int(corect_boost) - int(boost)
+            #    last_rpm = int(corect_boost)
+            #    os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+            #    stable_temp_round = stable_temp_round + 1
+            #    old_hot_gpu == hot_gpu
+            if stable_temp_round > 10 and old_hot_gpu == hot_gpu and optimum_fan == 0:
                 print("Температура стабильна, ищу оптимум 2")
                 corect_boost = int(corect_boost) - int(boost)
                 last_rpm = int(corect_boost)

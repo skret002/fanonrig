@@ -380,7 +380,7 @@ def get_setting_server(id_rig_in_server):
         else:
             terget_temp_max = int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_max"])
 
-        if min_fan_rpm != int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"]):
+        if min_fan_rpm !=  round(const_rpm / 100 * int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"])):
             print("min_fan_rpm" )
             get_setting_server(id_rig_in_server)
         else:

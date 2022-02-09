@@ -18,6 +18,7 @@ terget_temp_min = 0
 terget_temp_max = 0
 min_fan_rpm = 30
 hot_gpu = 0
+old_hot_gpu =0
 critical_temp = 0
 const_rpm = 0
 last_rpm = 0
@@ -33,42 +34,78 @@ statusAlertSystem = False
 gpuFanSetHive = 0
 typeGpu = 0
 ressetRig=True
-
+stable_temp_round = 0
+optimum_fan = 0
 def active_cool_mod():
     global last_rpm
     global boost
+    global min_fan_rpm
+    global stable_temp_round
+    global optimum_fan
     print("НОВЫЙ const_rpm",const_rpm)
     min_fan_rpm = round(const_rpm / 100 * min_fan_rpm)
     
     if hot_gpu >= terget_temp_min and hot_gpu < critical_temp:
-        print('boost', (hot_gpu+1), '-', terget_temp_min, '*', boost, '+', int(min_fan_rpm))
-        xfactor = ((hot_gpu+1) - terget_temp_min) * boost + min_fan_rpm
-        print("xfactor",xfactor)
-        corect_boost = const_rpm / 100 * xfactor
+        #print('boost', (hot_gpu+1), '-', terget_temp_min, '*', boost, '+', int(min_fan_rpm))
+        #xfactor = ((hot_gpu+1) - terget_temp_min) * boost + min_fan_rpm
+        #print("xfactor",xfactor)
+        #corect_boost = const_rpm / 100 * xfactor
+        corect_boost = (int(const_rpm) / int(terget_temp_max - terget_temp_min)) * ((int(hot_gpu) - int(terget_temp_min))) + int(boost)
+        print("xfactor",corect_boost)
         if last_rpm != corect_boost:
             last_rpm = int(corect_boost)
             os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-            print("удерживаю, даю", int(last_rpm))
-        else:
+            print("удерживаю в зеленой зоне, даю", int(last_rpm))
+            old_hot_gpu == hot_gpu
+        elif last_rpm == corect_boost and old_hot_gpu == hot_gpu:
+            stable_temp_round = stable_temp_round + 1
+            old_hot_gpu = hot_gpu
             print("температура стабильна")
+            if optimum_fan < 0:
+                print("Применяю оптимум")
+                corect_boost = int(corect_boost) - int(boost) - int(optimum_fan)
+                last_rpm = int(corect_boost)
+                print(last_rpm)
+                os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+            
+            if stable_temp_round >= 120 and stable_temp_round < 240 and old_hot_gpu == hot_gpu and optimum_fan == 0:
+                print("Температура стабильна, ищу оптимум 1")
+                corect_boost = int(corect_boost) - int(boost)
+                last_rpm = int(corect_boost)
+                os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+                stable_temp_round = stable_temp_round + 1
+                old_hot_gpu == hot_gpu
+            if stable_temp_round > 240 and old_hot_gpu == hot_gpu and optimum_fan == 0:
+                print("Температура стабильна, ищу оптимум 2")
+                corect_boost = int(corect_boost) - int(boost)
+                last_rpm = int(corect_boost)
+                os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))      
+                optimum_fan = optimum_fan -1
+                old_hot_gpu == hot_gpu
     
+    if hot_gpu < terget_temp_min - 4:
+        last_rpm = int(min_fan_rpm)
+        os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        print("температура сильно ниже таргета, даю  ",last_rpm)
+        print(hot_gpu)
+
     if hot_gpu < terget_temp_min -2 and hot_gpu < terget_temp_min -3:
         last_rpm = round(const_rpm / 10)
         os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         print("Температуры сильно ниже таргета ",last_rpm)
 
     if hot_gpu < terget_temp_min -2:
-        last_rpm = round(const_rpm / 100 * 20)
+        last_rpm = round(const_rpm / 100 * 15)
         os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         print("температура ниже уровня, даю ",last_rpm)
 
     if hot_gpu == terget_temp_min - 2:
-        last_rpm = int(const_rpm / 100 * 25)
+        last_rpm = int(const_rpm / 100 * 20)
         os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         print("температура ниже уровня но подходит к уровню удержания, даю ",last_rpm)
     
     if hot_gpu == terget_temp_min - 1:
-        last_rpm = int(const_rpm / 100 * 3)
+        last_rpm = int(const_rpm / 100 * 25)
         os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         print("температура впритык к началу таргета ",last_rpm)
         print(hot_gpu)
@@ -351,7 +388,7 @@ def get_setting_server(id_rig_in_server):
             engine_start()
         else:
             boost=int(response["data"][0]["attributes"]["SetMode0"]["boost"])
-
+    print()
     # проверяем включена ли реколебровка и если нужно запускаем
     if response["data"][0]["attributes"]["recalibrationFanRig"] == True:
         testFan(id_rig_in_server)

@@ -148,7 +148,7 @@ def get_temp():
     global rpmfun
     global hot_gpu
     temp_gpu = []
-    rpm_fun_gpu = {'0':600,'1':1000,'2':1050,'3':1020,'4':1030,'5':1000,'6':1000,'7':1040}
+    rpm_fun_gpu = {'0':None,'1':None,'2':None,'3':None,'4':None,'5':None,'6':None,'7':None}
     alertFan = False
     problemNumberGpu = None
     numGpu=0
@@ -157,18 +157,16 @@ def get_temp():
         for chip in sensors.iter_detected_chips():      
             numGpu = numGpu+1                                                                                  
             if str(chip.adapter_name) == "PCI adapter":                                                                                   
-                for feature in chip:                                                                                                      
-                    try:                                                                                                                 
-                        if str(feature.label) == "edge":   
-                                                                                            
-                            #print(feature.get_value())     # температура
-                            temp_gpu.append(round(feature.get_value()))
-                        if str(feature.label) == "fan1": 
-                            #print(feature.get_value())    # скорость кулеров
-                            #rpm_fun_gpu.append({str(numGpu):feature.get_value()})
-                            rpm_fun_gpu[str(numGpu)] = feature.get_value()
-                    except Exception:
-                        pass
+                for feature in chip:                                                                                                                                                                                           
+                    if str(feature.label) == "edge":                                                                                             
+                        #print(feature.get_value())     # температура
+                        temp_gpu.append(round(feature.get_value()))
+                    if str(feature.label) == "fan1": 
+                        #print(feature.get_value())    # скорость кулеров
+                        #rpm_fun_gpu.append({str(numGpu):feature.get_value()})
+                        rpm_fun_gpu[str(numGpu)] = feature.get_value()
+
+        print("rpm_fun_gpu до зеленых",rpm_fun_gpu)
         print("temp_gpu до зеленых",temp_gpu)
         #добавляем данные с карт nvidia если они есть
         (status,output)=subprocess.getstatusoutput("nvidia-smi -q | grep 'GPU Current Temp'")

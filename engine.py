@@ -148,7 +148,7 @@ def get_temp():
     global rpmfun
     global hot_gpu
     temp_gpu = []
-    rpm_fun_gpu = {'0':None,'1':None,'2':None,'3':None,'4':None,'5':None,'6':None,'7':None}
+    rpm_fun_gpu = {}
     alertFan = False
     problemNumberGpu = None
     numGpu=0
@@ -169,6 +169,7 @@ def get_temp():
                     if str(feature.label) == "fan1": 
                         #print(feature.get_value())    # скорость кулеров
                         #rpm_fun_gpu.append({str(numGpu):feature.get_value()})
+
                         rpm_fun_gpu[str(numGpu)] = feature.get_value()
                 except Exception:
                     print("Ошибка получения кулера AMD")

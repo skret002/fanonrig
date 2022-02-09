@@ -45,7 +45,6 @@ def active_cool_mod():
     global old_hot_gpu
     global hot_gpu
     print("НОВЫЙ const_rpm",const_rpm)
-    min_fan_rpm = round(const_rpm / 100 * min_fan_rpm)
     
     if int(hot_gpu) >= int(terget_temp_min) and int(hot_gpu) < int(critical_temp):
         #print('boost', (hot_gpu+1), '-', terget_temp_min, '*', boost, '+', int(min_fan_rpm))
@@ -63,6 +62,7 @@ def active_cool_mod():
             stable_temp_round = stable_temp_round + 1
             old_hot_gpu = hot_gpu
             print("температура стабильна")
+            print("stable_temp_round",stable_temp_round)
             if optimum_fan < 0:
                 print("Применяю оптимум")
                 corect_boost = int(corect_boost) - int(boost) - int(optimum_fan)
@@ -70,14 +70,14 @@ def active_cool_mod():
                 print(last_rpm)
                 os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
             
-            if stable_temp_round >= 60 and stable_temp_round < 120 and old_hot_gpu == hot_gpu and optimum_fan == 0:
+            if stable_temp_round >= 10 and stable_temp_round < 20 and old_hot_gpu == hot_gpu and optimum_fan == 0:
                 print("Температура стабильна, ищу оптимум 1")
                 corect_boost = int(corect_boost) - int(boost)
                 last_rpm = int(corect_boost)
                 os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
                 stable_temp_round = stable_temp_round + 1
                 old_hot_gpu == hot_gpu
-            if stable_temp_round > 120 and old_hot_gpu == hot_gpu and optimum_fan == 0:
+            if stable_temp_round > 20 and old_hot_gpu == hot_gpu and optimum_fan == 0:
                 print("Температура стабильна, ищу оптимум 2")
                 corect_boost = int(corect_boost) - int(boost)
                 last_rpm = int(corect_boost)
@@ -331,7 +331,7 @@ def get_setting_server(id_rig_in_server):
         selected_mod = int(response["data"][0]["attributes"]["SetModeFan"]["selected_mod"])
         terget_temp_min = int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_min"])
         terget_temp_max = int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_max"])
-        min_fan_rpm = int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"])
+        min_fan_rpm = round(const_rpm / 100 * int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"]))
         select_fan = int(response["data"][0]["attributes"]["SetModeFan"]["select_fan"])
         critical_temp = int(response["data"][0]["attributes"]["SetMode0"]["critical_temp"])
         boost=int(response["data"][0]["attributes"]["SetMode0"]["boost"])

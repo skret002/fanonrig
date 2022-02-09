@@ -58,6 +58,7 @@ def active_cool_mod():
             os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
             print("удерживаю в зеленой зоне, даю", int(last_rpm))
             old_hot_gpu = hot_gpu
+            stable_temp_round = 0
         elif int(last_rpm) == int(corect_boost) and int(old_hot_gpu) == int(hot_gpu):
             stable_temp_round = stable_temp_round + 1
             old_hot_gpu = hot_gpu
@@ -65,7 +66,7 @@ def active_cool_mod():
             print("stable_temp_round",stable_temp_round)
             if optimum_fan < 0:
                 print("Применяю оптимум")
-                corect_boost = int(corect_boost) - int(boost) - int(optimum_fan)
+                corect_boost = int(corect_boost) - int(boost) - int(optimum_fan) +3
                 last_rpm = int(corect_boost)
                 print(last_rpm)
                 os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
@@ -148,16 +149,16 @@ def get_temp():
     global hot_gpu
     temp_gpu = []
     rpm_fun_gpu = {'0':600,'1':1000,'2':1050,'3':1020,'4':1030,'5':1000,'6':1000,'7':1040}
-    numGpu=0
     alertFan = False
     problemNumberGpu = None
+    numGpu=0
     try:
         for chip in sensors.iter_detected_chips():                                                                                        
             if str(chip.adapter_name) == "PCI adapter":                                                                                   
                 for feature in chip:                                                                                                      
-                    try:             
-                        numGpu = numGpu+1                                                                                                     
-                        if str(feature.label) == "edge":                                                                                  
+                    try:                                                                                                                 
+                        if str(feature.label) == "edge":   
+                            numGpu = numGpu+1                                                                                
                             #print(feature.get_value())     # температура
                             temp_gpu.append(round(feature.get_value()))
                         if str(feature.label) == "fan1": 
@@ -166,6 +167,7 @@ def get_temp():
                             rpm_fun_gpu[str(numGpu)] = feature.get_value()
                     except Exception:
                         pass
+        print("temp_gpu до зеленых",temp_gpu)
         #добавляем данные с карт nvidia если они есть
         (status,output)=subprocess.getstatusoutput("nvidia-smi -q | grep 'GPU Current Temp'")
         green_gpu_temp = output.replace('GPU Current Temp', '').replace(':', '').replace(' ', '').replace('C', ',').replace('\n38', ',').split(',')

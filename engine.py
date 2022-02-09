@@ -156,9 +156,10 @@ def get_temp():
     #try:
     for chip in sensors.iter_detected_chips():      
         numGpu = numGpu+1                                                                                  
-        if str(chip.adapter_name) == "PCI adapter":                                                                                   
+        if 'amd' in str(chip):                                                                                  
             for feature in chip:
-                if str(feature.label) == "edge":                                                                                             
+                if str(feature.label) == "edge": 
+                    print("зашли в кулера")                                                                                            
                     #print(feature.get_value())     # температура
                     temp_gpu.append(round(feature.get_value()))
 

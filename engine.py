@@ -36,6 +36,7 @@ typeGpu = 0
 ressetRig=True
 stable_temp_round = 0
 optimum_fan = 0
+optimum_temp = 0
 def active_cool_mod():
     global last_rpm
     global boost
@@ -60,20 +61,21 @@ def active_cool_mod():
             os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
             print("удерживаю в зеленой зоне, даю", int(last_rpm))
             old_hot_gpu = hot_gpu
-            stable_temp_round = 0
+            stable_temp_round = stable_temp_round - 1
+            optimum_fan = optimum_fan + 1
         #elif int(last_rpm) == int(corect_boost) and int(old_hot_gpu) == int(hot_gpu):
         else:
             stable_temp_round = stable_temp_round + 1
             old_hot_gpu = hot_gpu
             print("температура стабильна")
-            if optimum_fan < 0 and int(old_hot_gpu) + 1 == int(hot_gpu):
+            if optimum_fan < 0 and int(optimum_temp) == int(hot_gpu):
                 print("Применяю оптимум")
                 corect_boost = int(corect_boost) - int(boost) - int(optimum_fan) +3
                 last_rpm = int(corect_boost)
                 print(last_rpm)
                 os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
             
-            if stable_temp_round >= 10 and stable_temp_round < 20 and old_hot_gpu == hot_gpu and optimum_fan == 0:
+            if stable_temp_round >= 10 and stable_temp_round < 20 and old_hot_gpu == hot_gpu:
                 print("Температура стабильна, ищу оптимум 1")
                 corect_boost = int(corect_boost) - int(boost)
                 last_rpm = int(corect_boost)
@@ -86,7 +88,8 @@ def active_cool_mod():
                 last_rpm = int(corect_boost)
                 os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))      
                 optimum_fan = optimum_fan -1
-                old_hot_gpu == hot_gpu
+                old_hot_gpu = hot_gpu
+                optimum_temp = hot_gpu + 1
     
     if hot_gpu < terget_temp_min - 4:
         last_rpm = int(min_fan_rpm)

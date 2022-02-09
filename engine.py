@@ -42,22 +42,24 @@ def active_cool_mod():
     global min_fan_rpm
     global stable_temp_round
     global optimum_fan
+    global old_hot_gpu
+    global hot_gpu
     print("НОВЫЙ const_rpm",const_rpm)
     min_fan_rpm = round(const_rpm / 100 * min_fan_rpm)
     
-    if hot_gpu >= terget_temp_min and hot_gpu < critical_temp:
+    if int(hot_gpu) >= int(terget_temp_min) and int(hot_gpu) < int(critical_temp):
         #print('boost', (hot_gpu+1), '-', terget_temp_min, '*', boost, '+', int(min_fan_rpm))
         #xfactor = ((hot_gpu+1) - terget_temp_min) * boost + min_fan_rpm
         #print("xfactor",xfactor)
         #corect_boost = const_rpm / 100 * xfactor
         corect_boost = (int(const_rpm) / int(terget_temp_max - terget_temp_min)) * ((int(hot_gpu) - int(terget_temp_min))) + int(boost)
         print("xfactor",corect_boost)
-        if last_rpm != corect_boost:
+        if int(last_rpm) != int(corect_boost):
             last_rpm = int(corect_boost)
             os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
             print("удерживаю в зеленой зоне, даю", int(last_rpm))
-            old_hot_gpu == hot_gpu
-        elif last_rpm == corect_boost and old_hot_gpu == hot_gpu:
+            old_hot_gpu = hot_gpu
+        elif int(last_rpm) == int(corect_boost) and int(old_hot_gpu) == int(hot_gpu):
             stable_temp_round = stable_temp_round + 1
             old_hot_gpu = hot_gpu
             print("температура стабильна")
@@ -68,14 +70,14 @@ def active_cool_mod():
                 print(last_rpm)
                 os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
             
-            if stable_temp_round >= 120 and stable_temp_round < 240 and old_hot_gpu == hot_gpu and optimum_fan == 0:
+            if stable_temp_round >= 60 and stable_temp_round < 120 and old_hot_gpu == hot_gpu and optimum_fan == 0:
                 print("Температура стабильна, ищу оптимум 1")
                 corect_boost = int(corect_boost) - int(boost)
                 last_rpm = int(corect_boost)
                 os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
                 stable_temp_round = stable_temp_round + 1
                 old_hot_gpu == hot_gpu
-            if stable_temp_round > 240 and old_hot_gpu == hot_gpu and optimum_fan == 0:
+            if stable_temp_round > 120 and old_hot_gpu == hot_gpu and optimum_fan == 0:
                 print("Температура стабильна, ищу оптимум 2")
                 corect_boost = int(corect_boost) - int(boost)
                 last_rpm = int(corect_boost)
@@ -332,7 +334,7 @@ def get_setting_server(id_rig_in_server):
         select_fan = int(response["data"][0]["attributes"]["SetModeFan"]["select_fan"])
         critical_temp = int(response["data"][0]["attributes"]["SetMode0"]["critical_temp"])
         boost=int(response["data"][0]["attributes"]["SetMode0"]["boost"])
-        rigOnBoot == 1
+        rigOnBoot = 1
     else:
         if const_rpm != int(response["data"][0]["attributes"]["effective_echo_fan"]):
             engine_start()
@@ -412,7 +414,7 @@ def get_setting_server1(id_rig_in_server):
         statusAlertSystem = response["data"][0]["attributes"]["AlertFan"]["statusAlertSystem"]
         selected_mod = int(response["data"][0]["attributes"]["SetModeFan"]["selected_mod"])
         cache = response["data"][0]["attributes"]["SetMode1"]
-        rigOnBoot == 0
+        rigOnBoot =1
     else:
         if typeGpu != int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"]):
             engine_start()
@@ -468,6 +470,7 @@ def get_setting_server2(id_rig_in_server):
         statusAlertSystem = response["data"][0]["attributes"]["AlertFan"]["statusAlertSystem"]
         selected_mod = int(response["data"][0]["attributes"]["SetModeFan"]["selected_mod"])
         option2 = response["data"][0]["attributes"]["SetMode2"]["SetRpm"]
+        rigOnBoot =1
     else:
         if typeGpu != int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"]):
             engine_start()

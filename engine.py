@@ -157,13 +157,14 @@ def get_temp():
     for chip in sensors.iter_detected_chips():      
         print("chip",chip)
         numGpu = numGpu+1                                                                                  
-        if 'amd' in str(chip):                                                                                  
+        if 'amdgpu' in str(chip):                                                                                  
             for feature in chip:
-                print("feature",feature)
-                if str(feature.label) == "edge": 
-                    print("зашли в кулера")                                                                                            
-                    #print(feature.get_value())     # температура
-                    temp_gpu.append(round(feature.get_value()))
+                print('chip %s label %s value %s' % (chip, feature.label, feature.get_value()))
+                #print("feature",feature)
+                #if str(feature.label) == "edge": 
+                #    print("зашли в кулера")                                                                                            
+                #    #print(feature.get_value())     # температура
+                #    temp_gpu.append(round(feature.get_value()))
 
     numGpu=0            
     for chip in sensors.iter_detected_chips():

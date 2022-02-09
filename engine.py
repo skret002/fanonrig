@@ -165,14 +165,16 @@ def get_temp():
                 except Exception:
                     print("Ошибка получения Температуры AMD")
                     numGpu -1
+    numGpu=0            
+    for chip in sensors.iter_detected_chips():
+        numGpu = numGpu+1
+        if str(chip.adapter_name) == "PCI adapter":
+            for feature in chip:
                 try:
                     if str(feature.label) == "fan1": 
-                        #print(feature.get_value())    # скорость кулеров
-                        #rpm_fun_gpu.append({str(numGpu):feature.get_value()})
-
                         rpm_fun_gpu[str(numGpu)] = feature.get_value()
                 except Exception:
-                    print("Ошибка получения кулера AMD")
+                    numGpu -1
 
     print("rpm_fun_gpu до зеленых",rpm_fun_gpu)
     print("temp_gpu до зеленых",temp_gpu)

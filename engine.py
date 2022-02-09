@@ -156,7 +156,6 @@ def get_temp():
     #try:
     labels = ''
     for chip in sensors.iter_detected_chips():      
-        print("chip",chip)
         numGpu = numGpu+1                                                                                  
         if 'amdgpu' in str(chip) and str(chip) not in labels: 
             labels += ' ' + str(chip)                                                                                
@@ -164,19 +163,21 @@ def get_temp():
                 if feature.label:
                     if str(feature.label) == "edge":                                                                                            
                     #print(feature.get_value())     # температура
-                    temp_gpu.append(round(feature.get_value()))
+                        temp_gpu.append(round(feature.get_value()))
     labels = ''
     numGpu=0            
     for chip in sensors.iter_detected_chips():
         if 'amdgpu' in str(chip) and str(chip) not in labels: 
+            print(str(chip)
             labels += ' ' + str(chip)  
-                for feature in chip:
+            for feature in chip:
+                #try:
+                if str(feature.label) == "fan1": 
                     numGpu = numGpu+1
-                    try:
-                        if str(feature.label) == "fan1": 
-                            rpm_fun_gpu[str(numGpu)] = feature.get_value()
-                    except Exception:
-                        numGpu -1
+                    print("зашли в кулера")
+                    rpm_fun_gpu[str(numGpu)] = round(feature.get_value())
+                #except Exception:
+                #    numGpu -1
 
     print("rpm_fun_gpu до зеленых",rpm_fun_gpu)
     print("temp_gpu до зеленых",temp_gpu)

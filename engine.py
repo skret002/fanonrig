@@ -322,7 +322,8 @@ def get_setting_server(id_rig_in_server):
     global typeGpu
     global const_rpm
     global rigOnBoot
-    if rigOnBoot ==0:
+    if const_rpm == 0:
+        print("первое получение данных")
         const_rpm = int(response["data"][0]["attributes"]["effective_echo_fan"])
         typeGpu = int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"])
         gpuFanSetHive = int(response["data"][0]["attributes"]["AlertFan"]["gpuFanSetHive"])
@@ -336,61 +337,73 @@ def get_setting_server(id_rig_in_server):
         boost=int(response["data"][0]["attributes"]["SetMode0"]["boost"])
         rigOnBoot = 1
     else:
+        print("Настройки изменены")
         if const_rpm != int(response["data"][0]["attributes"]["effective_echo_fan"]):
-            engine_start()
+            print("const_rpm", const_rpm, int(response["data"][0]["attributes"]["effective_echo_fan"]))
+            get_setting_server(id_rig_in_server)
         else:
             const_rpm = int(response["data"][0]["attributes"]["effective_echo_fan"])
 
         if typeGpu != int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"]):
-            engine_start()
+            print("typeGpu", typeGpu, int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"]))
+            get_setting_server(id_rig_in_server)
         else:
             typeGpu = int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"])
 
         if gpuFanSetHive != int(response["data"][0]["attributes"]["AlertFan"]["gpuFanSetHive"]):
-            engine_start()
+            print("gpuFanSetHive", gpuFanSetHive ,int(response["data"][0]["attributes"]["AlertFan"]["gpuFanSetHive"]))
+            get_setting_server(id_rig_in_server)
         else:
             gpuFanSetHive = int(response["data"][0]["attributes"]["AlertFan"]["gpuFanSetHive"])
 
         if statusAlertSystem != response["data"][0]["attributes"]["AlertFan"]["statusAlertSystem"]:
-            engine_start()
+            print("statusAlertSystem",statusAlertSystem , response["data"][0]["attributes"]["AlertFan"]["statusAlertSystem"])
+            get_setting_server(id_rig_in_server)
         else:
             statusAlertSystem = response["data"][0]["attributes"]["AlertFan"]["statusAlertSystem"]
 
         if selected_mod != int(response["data"][0]["attributes"]["SetModeFan"]["selected_mod"]):
-            engine_start()
+            print("selected_mod", selected_mod , int(response["data"][0]["attributes"]["SetModeFan"]["selected_mod"]))
+            get_setting_server(id_rig_in_server)
         else:
             selected_mod = int(response["data"][0]["attributes"]["SetModeFan"]["selected_mod"])
 
         if terget_temp_min != int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_min"]):
-            engine_start()
+            print("terget_temp_min", terget_temp_min ,int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_min"]))
+            get_setting_server(id_rig_in_server)
         else:
             terget_temp_min = int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_min"])
 
         if terget_temp_max != int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_max"]):
-            engine_start()
+            print("terget_temp_max" )
+            get_setting_server(id_rig_in_server)
         else:
             terget_temp_max = int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_max"])
 
         if min_fan_rpm != int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"]):
-            engine_start()
+            print("min_fan_rpm" )
+            get_setting_server(id_rig_in_server)
         else:
             min_fan_rpm = int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"])
 
         if select_fan != int(response["data"][0]["attributes"]["SetModeFan"]["select_fan"]):
-            engine_start()
+            print("select_fan" )
+            get_setting_server(id_rig_in_server)
         else:
             select_fan = int(response["data"][0]["attributes"]["SetModeFan"]["select_fan"])
 
         if critical_temp != int(response["data"][0]["attributes"]["SetMode0"]["critical_temp"]):
-            engine_start()
+            print("critical_temp" )
+            get_setting_server(id_rig_in_server)
         else:
             critical_temp = int(response["data"][0]["attributes"]["SetMode0"]["critical_temp"])
 
         if boost != int(response["data"][0]["attributes"]["SetMode0"]["boost"]):
-            engine_start()
+            print("boost" )
+            get_setting_server(id_rig_in_server)
         else:
             boost=int(response["data"][0]["attributes"]["SetMode0"]["boost"])
-    print()
+
     # проверяем включена ли реколебровка и если нужно запускаем
     if response["data"][0]["attributes"]["recalibrationFanRig"] == True:
         testFan(id_rig_in_server)

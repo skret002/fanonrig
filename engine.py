@@ -158,18 +158,15 @@ def get_temp():
         numGpu = numGpu+1                                                                                  
         if str(chip.adapter_name) == "PCI adapter":                                                                                   
             for feature in chip:
-                try:                                                                                                                                                                                           
-                    if str(feature.label) == "edge":                                                                                             
-                        #print(feature.get_value())     # температура
-                        temp_gpu.append(round(feature.get_value()))
-                except Exception:
-                    print("Ошибка получения Температуры AMD")
-                    numGpu -1
+                if str(feature.label) == "edge":                                                                                             
+                    #print(feature.get_value())     # температура
+                    temp_gpu.append(round(feature.get_value()))
+
     numGpu=0            
     for chip in sensors.iter_detected_chips():
-        numGpu = numGpu+1
         if str(chip.adapter_name) == "PCI adapter":
             for feature in chip:
+                numGpu = numGpu+1
                 try:
                     if str(feature.label) == "fan1": 
                         rpm_fun_gpu[str(numGpu)] = feature.get_value()

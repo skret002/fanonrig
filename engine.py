@@ -155,9 +155,11 @@ def get_temp():
 
     #try:
     for chip in sensors.iter_detected_chips():      
+        print("chip",chip)
         numGpu = numGpu+1                                                                                  
         if 'amd' in str(chip):                                                                                  
             for feature in chip:
+                print("feature",feature)
                 if str(feature.label) == "edge": 
                     print("зашли в кулера")                                                                                            
                     #print(feature.get_value())     # температура

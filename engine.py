@@ -172,10 +172,11 @@ def get_temp():
                     if str(feature.label) == "edge":                                                                                            
                         temp_gpu.append(round(feature.get_value()))
 
-
+    labels = ''
     numGpu=0
     for chip in sensors.iter_detected_chips():                         
-        if 'amd' in str(chip):
+        if 'amd' in str(chip) and str(chip) not in labels:
+            labels += ' ' + str(chip)
             numGpu = numGpu+1
             print(chip)                                                                                                                                                
             for feature in chip:
@@ -183,7 +184,7 @@ def get_temp():
                     try:
                         rpm_fun_gpu[str(numGpu)] = round(feature.get_value())
                     except Exception:
-                        numGpu = numGpu -1
+                        rpm_fun_gpu[str(numGpu)] = 0
 
     print("rpm_fun_gpu до зеленых",rpm_fun_gpu)
     print("temp_gpu до зеленых",temp_gpu)

@@ -58,7 +58,7 @@ def active_cool_mod():
         
         if int(old_hot_gpu) < int(hot_gpu) and int(hot_gpu) > int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) +1:
             last_rpm = int(corect_boost)
-            os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+            os.system("echo " + str(int(last_rpm)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
             print("удерживаю в зеленой зоне, даю", int(last_rpm))
             old_hot_gpu = hot_gpu
             stable_temp_round = stable_temp_round - 1
@@ -70,12 +70,13 @@ def active_cool_mod():
             print("температура стабильна отдаю", int(last_rpm))
             stable_temp_round = stable_temp_round + 1
             old_hot_gpu = hot_gpu
+            print('stable_temp_round', stable_temp_round, int(optimum_temp) == int(hot_gpu))
             if optimum_fan < 0 and int(optimum_temp) == int(hot_gpu):
                 print("Применяю оптимум")
                 corect_boost = int(corect_boost) - int(boost) - int(optimum_fan) +3
                 last_rpm = int(corect_boost)
                 print(last_rpm)
-                os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+                os.system("echo " + str(int(last_rpm)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
             
             #if stable_temp_round >= 10 and stable_temp_round < 20 and old_hot_gpu == hot_gpu:
             #    print("Температура стабильна, ищу оптимум 1")
@@ -171,17 +172,18 @@ def get_temp():
                     if str(feature.label) == "edge":                                                                                            
                         temp_gpu.append(round(feature.get_value()))
 
-    numGpu=0            
-    for chip in sensors.iter_detected_chips():
-        if str(chip.adapter_name) == "PCI adapter":
+
+    numGpu=0
+    for chip in sensors.iter_detected_chips():                         
+        if 'amd' in str(chip):
+            numGpu = numGpu+1
+            print(chip)                                                                                                                                                
             for feature in chip:
-                try:
-                    if str(feature.label) == "fan1": 
+                if str(feature.label) == "fan1": 
+                    try:
                         rpm_fun_gpu[str(numGpu)] = round(feature.get_value())
-                        numGpu = numGpu+1
-                except Exception:
-                    pass
-                    #numGpu -1
+                    except Exception:
+                        numGpu = numGpu -1
 
     print("rpm_fun_gpu до зеленых",rpm_fun_gpu)
     print("temp_gpu до зеленых",temp_gpu)

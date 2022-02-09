@@ -157,14 +157,21 @@ def get_temp():
     for chip in sensors.iter_detected_chips():      
         numGpu = numGpu+1                                                                                  
         if str(chip.adapter_name) == "PCI adapter":                                                                                   
-            for feature in chip:                                                                                                                                                                                           
-                if str(feature.label) == "edge":                                                                                             
-                    #print(feature.get_value())     # температура
-                    temp_gpu.append(round(feature.get_value()))
-                if str(feature.label) == "fan1": 
-                    #print(feature.get_value())    # скорость кулеров
-                    #rpm_fun_gpu.append({str(numGpu):feature.get_value()})
-                    rpm_fun_gpu[str(numGpu)] = feature.get_value()
+            for feature in chip:
+                try:                                                                                                                                                                                           
+                    if str(feature.label) == "edge":                                                                                             
+                        #print(feature.get_value())     # температура
+                        temp_gpu.append(round(feature.get_value()))
+                except Exception:
+                    print("Ошибка получения Температуры AMD")
+                    numGpu -1
+                try:
+                    if str(feature.label) == "fan1": 
+                        #print(feature.get_value())    # скорость кулеров
+                        #rpm_fun_gpu.append({str(numGpu):feature.get_value()})
+                        rpm_fun_gpu[str(numGpu)] = feature.get_value()
+                except Exception:
+                    print("Ошибка получения кулера AMD")
 
     print("rpm_fun_gpu до зеленых",rpm_fun_gpu)
     print("temp_gpu до зеленых",temp_gpu)

@@ -45,7 +45,6 @@ def active_cool_mod():
     global optimum_fan
     global old_hot_gpu
     global hot_gpu
-    corect_boost = 0
     print("НОВЫЙ const_rpm",const_rpm)
     
     if int(hot_gpu) >= int(terget_temp_min) and int(hot_gpu) < int(critical_temp):
@@ -53,11 +52,10 @@ def active_cool_mod():
         #xfactor = ((hot_gpu+1) - terget_temp_min) * boost + min_fan_rpm
         #print("xfactor",xfactor)
         #corect_boost = const_rpm / 100 * xfactor
-        
+        corect_boost = (int(const_rpm) / int(terget_temp_max - terget_temp_min)) * ((int(hot_gpu) - int(terget_temp_min))) + int(boost)
         print("last_rpm  last_rpm",last_rpm, corect_boost)
         
         if int(old_hot_gpu) < int(hot_gpu) and int(hot_gpu) > int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) +1:
-            corect_boost = (int(const_rpm) / int(terget_temp_max - terget_temp_min)) * ((int(hot_gpu) - int(terget_temp_min))) + int(boost)
             last_rpm = int(corect_boost)
             os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
             print("удерживаю в зеленой зоне, даю", int(last_rpm))

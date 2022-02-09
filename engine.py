@@ -45,6 +45,7 @@ def active_cool_mod():
     global optimum_fan
     global old_hot_gpu
     global hot_gpu
+    global optimum_temp
     print("НОВЫЙ const_rpm",const_rpm)
     
     if int(hot_gpu) >= int(terget_temp_min) and int(hot_gpu) < int(critical_temp):

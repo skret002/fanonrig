@@ -72,7 +72,8 @@ def active_cool_mod():
             old_hot_gpu = hot_gpu
             print('stable_temp_round', stable_temp_round, int(optimum_temp) == int(hot_gpu))
             if optimum_fan < 0 and int(optimum_temp) == int(hot_gpu):
-                print("Применяю оптимум")
+                print("///////////////////////////////Применяю оптимум//////////////////////")
+                print(int(corect_boost), '-', int(boost), '-',int(optimum_fan), '+',  3)
                 corect_boost = int(corect_boost) - int(boost) - int(optimum_fan) +3
                 last_rpm = int(corect_boost)
                 print(last_rpm)
@@ -85,7 +86,7 @@ def active_cool_mod():
             #    os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
             #    stable_temp_round = stable_temp_round + 1
             #    old_hot_gpu == hot_gpu
-            if stable_temp_round > 10 and old_hot_gpu == hot_gpu and optimum_fan == 0:
+            if stable_temp_round > 10 and old_hot_gpu == hot_gpu:
                 print("Температура стабильна, ищу оптимум 2")
                 corect_boost = int(corect_boost) - int(boost)
                 last_rpm = int(corect_boost)
@@ -173,12 +174,11 @@ def get_temp():
                         temp_gpu.append(round(feature.get_value()))
 
     labels = ''
-    numGpu=0
+    numGpu=-1
     for chip in sensors.iter_detected_chips():                         
         if 'amd' in str(chip) and str(chip) not in labels:
             labels += ' ' + str(chip)
-            numGpu = numGpu+1
-            print(chip)                                                                                                                                                
+            numGpu = numGpu+1                                                                                                                                              
             for feature in chip:
                 if str(feature.label) == "fan1": 
                     try:

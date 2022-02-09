@@ -51,9 +51,11 @@ def active_cool_mod():
         #xfactor = ((hot_gpu+1) - terget_temp_min) * boost + min_fan_rpm
         #print("xfactor",xfactor)
         #corect_boost = const_rpm / 100 * xfactor
-        corect_boost = (int(const_rpm) / int(terget_temp_max - terget_temp_min)) * ((int(hot_gpu) - int(terget_temp_min))) + int(boost)
+        
         print("last_rpm  last_rpm",last_rpm, corect_boost)
-        if int(last_rpm) < int(corect_boost) and int(old_hot_gpu) != int(hot_gpu):
+        
+        if int(old_hot_gpu) < int(hot_gpu) and int(hot_gpu) > int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2):
+            corect_boost = (int(const_rpm) / int(terget_temp_max - terget_temp_min)) * ((int(hot_gpu) - int(terget_temp_min))) + int(boost)
             last_rpm = int(corect_boost)
             os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
             print("удерживаю в зеленой зоне, даю", int(last_rpm))
@@ -64,7 +66,7 @@ def active_cool_mod():
             stable_temp_round = stable_temp_round + 1
             old_hot_gpu = hot_gpu
             print("температура стабильна")
-            if optimum_fan < 0:
+            if optimum_fan < 0 and int(old_hot_gpu) + 1 == int(hot_gpu):
                 print("Применяю оптимум")
                 corect_boost = int(corect_boost) - int(boost) - int(optimum_fan) +3
                 last_rpm = int(corect_boost)
@@ -151,7 +153,7 @@ def get_temp():
     rpm_fun_gpu = {}
     alertFan = False
     problemNumberGpu = None
-    numGpu=-1
+    numGpu=0
 
     #try:
     labels = ''
@@ -164,7 +166,7 @@ def get_temp():
                     if str(feature.label) == "edge":                                                                                            
                         temp_gpu.append(round(feature.get_value()))
 
-    numGpu=-1            
+    numGpu=0            
     for chip in sensors.iter_detected_chips():
         if str(chip.adapter_name) == "PCI adapter":
             for feature in chip:

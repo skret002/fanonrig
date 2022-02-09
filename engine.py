@@ -65,7 +65,7 @@ def active_cool_mod():
         #elif int(last_rpm) == int(corect_boost) and int(old_hot_gpu) == int(hot_gpu):
         else:
             last_rpm = (int(const_rpm) / int(terget_temp_max - terget_temp_min)) * ((int(hot_gpu) - int(terget_temp_min)))
-            os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+            os.system("echo " + str(int(last_rpm)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
             print("температура стабильна отдаю", int(last_rpm))
             stable_temp_round = stable_temp_round + 1
             old_hot_gpu = hot_gpu

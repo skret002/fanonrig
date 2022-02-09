@@ -159,7 +159,8 @@ def get_temp():
         numGpu = numGpu+1                                                                                  
         if 'amdgpu' in str(chip):                                                                                  
             for feature in chip:
-                print('chip %s label %s value %s' % (chip, feature.label, feature.get_value()))
+                if feature.label:
+                    print(feature.label)
                 #print("feature",feature)
                 #if str(feature.label) == "edge": 
                 #    print("зашли в кулера")                                                                                            

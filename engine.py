@@ -152,13 +152,15 @@ def get_temp():
     alertFan = False
     problemNumberGpu = None
     numGpu=0
+
     try:
-        for chip in sensors.iter_detected_chips():                                                                                        
+        for chip in sensors.iter_detected_chips():      
+            numGpu = numGpu+1                                                                                  
             if str(chip.adapter_name) == "PCI adapter":                                                                                   
                 for feature in chip:                                                                                                      
                     try:                                                                                                                 
                         if str(feature.label) == "edge":   
-                            numGpu = numGpu+1                                                                                
+                                                                                            
                             #print(feature.get_value())     # температура
                             temp_gpu.append(round(feature.get_value()))
                         if str(feature.label) == "fan1": 

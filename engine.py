@@ -154,10 +154,12 @@ def get_temp():
     numGpu=0
 
     #try:
+    labels = ''
     for chip in sensors.iter_detected_chips():      
         print("chip",chip)
         numGpu = numGpu+1                                                                                  
-        if 'amdgpu' in str(chip):                                                                                  
+        if 'amdgpu' in str(chip) and str(chip) not in labels: 
+            labels += ' ' + str(chip)                                                                                
             for feature in chip:
                 if feature.label:
                     print(feature.label)

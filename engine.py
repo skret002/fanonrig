@@ -167,8 +167,8 @@ def get_temp():
     numGpu=0            
     for chip in sensors.iter_detected_chips():
         if str(chip.adapter_name) == "PCI adapter":
+            numGpu = numGpu+1
             for feature in chip:
-                numGpu = numGpu+1
                 try:
                     if str(feature.label) == "fan1": 
                         rpm_fun_gpu[str(numGpu)] = feature.get_value()

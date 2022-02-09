@@ -153,83 +153,83 @@ def get_temp():
     problemNumberGpu = None
     numGpu=0
 
-    try:
-        for chip in sensors.iter_detected_chips():      
-            numGpu = numGpu+1                                                                                  
-            if str(chip.adapter_name) == "PCI adapter":                                                                                   
-                for feature in chip:                                                                                                                                                                                           
-                    if str(feature.label) == "edge":                                                                                             
-                        #print(feature.get_value())     # температура
-                        temp_gpu.append(round(feature.get_value()))
-                    if str(feature.label) == "fan1": 
-                        #print(feature.get_value())    # скорость кулеров
-                        #rpm_fun_gpu.append({str(numGpu):feature.get_value()})
-                        rpm_fun_gpu[str(numGpu)] = feature.get_value()
+    #try:
+    for chip in sensors.iter_detected_chips():      
+        numGpu = numGpu+1                                                                                  
+        if str(chip.adapter_name) == "PCI adapter":                                                                                   
+            for feature in chip:                                                                                                                                                                                           
+                if str(feature.label) == "edge":                                                                                             
+                    #print(feature.get_value())     # температура
+                    temp_gpu.append(round(feature.get_value()))
+                if str(feature.label) == "fan1": 
+                    #print(feature.get_value())    # скорость кулеров
+                    #rpm_fun_gpu.append({str(numGpu):feature.get_value()})
+                    rpm_fun_gpu[str(numGpu)] = feature.get_value()
 
-        print("rpm_fun_gpu до зеленых",rpm_fun_gpu)
-        print("temp_gpu до зеленых",temp_gpu)
-        #добавляем данные с карт nvidia если они есть
-        (status,output)=subprocess.getstatusoutput("nvidia-smi -q | grep 'GPU Current Temp'")
-        green_gpu_temp = output.replace('GPU Current Temp', '').replace(':', '').replace(' ', '').replace('C', ',').replace('\n38', ',').split(',')
-        print('green_gpu_temp', green_gpu_temp)
-        for i in green_gpu_temp:
-            if len(str(i)) != 0:
-                temp_gpu.append(int(i))
-        print("Найдено карт", len(temp_gpu)) #вывели результат на экран
-        print(temp_gpu)
-        hot_gpu = max(temp_gpu)
-        print("Самая горячая карта", max(temp_gpu)) #вывели результат на экран
-        print("самая высокая скорость кулера видеокарты!", rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)]) #вывели результат на экран
-        print("!!!",statusAlertSystem == True, gpuFanSetHive == 1, typeGpu == 0)
-        try:
-            if statusAlertSystem == True and gpuFanSetHive == 1 and typeGpu == 0:
-                print("зашли в проверку кулеров",rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)] - rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)]/10, rpm_fun_gpu[min(rpm_fun_gpu, key=rpm_fun_gpu.get)])
-                if rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)] - rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)]/10 > rpm_fun_gpu[min(rpm_fun_gpu, key=rpm_fun_gpu.get)]:
-                    print("обнаружена проблема с кулерами")
-                    alertFan = True
-                    problemNumberGpu = min(rpm_fun_gpu, key=rpm_fun_gpu.get)
-                else:
-                    alertFan = False
+    print("rpm_fun_gpu до зеленых",rpm_fun_gpu)
+    print("temp_gpu до зеленых",temp_gpu)
+    #добавляем данные с карт nvidia если они есть
+    (status,output)=subprocess.getstatusoutput("nvidia-smi -q | grep 'GPU Current Temp'")
+    green_gpu_temp = output.replace('GPU Current Temp', '').replace(':', '').replace(' ', '').replace('C', ',').replace('\n38', ',').split(',')
+    print('green_gpu_temp', green_gpu_temp)
+    for i in green_gpu_temp:
+        if len(str(i)) != 0:
+            temp_gpu.append(int(i))
+    print("Найдено карт", len(temp_gpu)) #вывели результат на экран
+    print(temp_gpu)
+    hot_gpu = max(temp_gpu)
+    print("Самая горячая карта", max(temp_gpu)) #вывели результат на экран
+    print("самая высокая скорость кулера видеокарты!", rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)]) #вывели результат на экран
+    print("!!!",statusAlertSystem == True, gpuFanSetHive == 1, typeGpu == 0)
+    try:
+        if statusAlertSystem == True and gpuFanSetHive == 1 and typeGpu == 0:
+            print("зашли в проверку кулеров",rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)] - rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)]/10, rpm_fun_gpu[min(rpm_fun_gpu, key=rpm_fun_gpu.get)])
+            if rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)] - rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)]/10 > rpm_fun_gpu[min(rpm_fun_gpu, key=rpm_fun_gpu.get)]:
+                print("обнаружена проблема с кулерами")
+                alertFan = True
+                problemNumberGpu = min(rpm_fun_gpu, key=rpm_fun_gpu.get)
             else:
                 alertFan = False
-        except Exception:
-        	pass
-        try:
-            temp_gpu0 = temp_gpu[0]
-        except Exception:
-            temp_gpu0 = 0
-        try:
-            temp_gpu1 = temp_gpu[1]
-        except Exception:
-            temp_gpu1 = 0
-        try:
-            temp_gpu2 = temp_gpu[2]
-        except Exception:
-            temp_gpu2 = 0
-        try:
-            temp_gpu3 = temp_gpu[3]
-        except Exception:
-            temp_gpu3 = 0
-        try:
-            temp_gpu4 = temp_gpu[4]
-        except Exception:
-            temp_gpu4 = 0
-        try:
-            temp_gpu5 = temp_gpu[5]
-        except Exception:
-            temp_gpu5 = 0
-        try:
-            temp_gpu6 = temp_gpu[6]
-        except Exception:
-            temp_gpu6 = 0
-        try:
-            temp_gpu7 = temp_gpu[7]
-        except Exception:
-            temp_gpu7 = 0
-        addFanData(rpmfun,temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gpu5,temp_gpu6,temp_gpu7, rpm_fun_gpu, alertFan,problemNumberGpu,hot_gpu)
+        else:
+            alertFan = False
     except Exception:
         pass
-        time.sleep(3)
+    try:
+        temp_gpu0 = temp_gpu[0]
+    except Exception:
+        temp_gpu0 = 0
+    try:
+        temp_gpu1 = temp_gpu[1]
+    except Exception:
+        temp_gpu1 = 0
+    try:
+        temp_gpu2 = temp_gpu[2]
+    except Exception:
+        temp_gpu2 = 0
+    try:
+        temp_gpu3 = temp_gpu[3]
+    except Exception:
+        temp_gpu3 = 0
+    try:
+        temp_gpu4 = temp_gpu[4]
+    except Exception:
+        temp_gpu4 = 0
+    try:
+        temp_gpu5 = temp_gpu[5]
+    except Exception:
+        temp_gpu5 = 0
+    try:
+        temp_gpu6 = temp_gpu[6]
+    except Exception:
+        temp_gpu6 = 0
+    try:
+        temp_gpu7 = temp_gpu[7]
+    except Exception:
+        temp_gpu7 = 0
+    addFanData(rpmfun,temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gpu5,temp_gpu6,temp_gpu7, rpm_fun_gpu, alertFan,problemNumberGpu,hot_gpu)
+    #except Exception:
+    #    pass
+    ##   time.sleep(3)
 
     for chip in sensors.iter_detected_chips():
         if str(chip) == "nct6779-isa-0a30" :

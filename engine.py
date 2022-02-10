@@ -37,6 +37,7 @@ ressetRig=True
 stable_temp_round = 0
 optimum_fan = 0
 optimum_temp = 0
+optimum_on = 0
 def active_cool_mod():
     global last_rpm
     global boost
@@ -46,6 +47,7 @@ def active_cool_mod():
     global old_hot_gpu
     global hot_gpu
     global optimum_temp
+    global optimum_on
     print("НОВЫЙ const_rpm",const_rpm)
     
     if int(hot_gpu) >= int(terget_temp_min) and int(hot_gpu) < int(critical_temp):
@@ -61,20 +63,21 @@ def active_cool_mod():
             os.system("echo " + str(int(last_rpm)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
             print("удерживаю в зеленой зоне, даю", int(last_rpm))
             old_hot_gpu = hot_gpu
-            stable_temp_round = stable_temp_round - 1
-            optimum_fan = optimum_fan + 1
+            stable_temp_round = 0
+            optimum_on = 0
         #elif int(last_rpm) == int(corect_boost) and int(old_hot_gpu) == int(hot_gpu):
         else:
-            last_rpm = (int(const_rpm) / int(terget_temp_max - terget_temp_min)) * ((int(hot_gpu) - int(terget_temp_min)))
-            os.system("echo " + str(int(last_rpm)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-            print("температура стабильна отдаю", int(last_rpm))
-            stable_temp_round = stable_temp_round + 1
-            #old_hot_gpu = hot_gpu
-            print('stable_temp_round', stable_temp_round, int(optimum_temp) == int(hot_gpu))
-            if optimum_fan < 0 and int(optimum_temp) == int(hot_gpu):
+            if optimum_on == 0:
+                last_rpm = (int(const_rpm) / int(terget_temp_max - terget_temp_min)) * ((int(hot_gpu) - int(terget_temp_min)))
+                os.system("echo " + str(int(last_rpm)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+                print("температура стабильна отдаю", int(last_rpm))
+                stable_temp_round = stable_temp_round + 1
+                #old_hot_gpu = hot_gpu
+                print('stable_temp_round', stable_temp_round, int(optimum_temp) == int(hot_gpu))
+            if optimum_fan < 0 and optimum_on == 1:
                 print("///////////////////////////////Применяю оптимум//////////////////////")
                 print(int(corect_boost), '-', int(boost), '+',int(optimum_fan), '+',  3)
-                corect_boost = int(corect_boost) - int(boost) + int(optimum_fan) +3
+                corect_boost = int(corect_boost) - int(boost) + int(optimum_fan)
                 last_rpm = int(corect_boost)
                 print(last_rpm)
                 os.system("echo " + str(int(last_rpm)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
@@ -89,11 +92,16 @@ def active_cool_mod():
             if stable_temp_round > 10:
                 print("Температура стабильна, ищу оптимум 2")
                 corect_boost = int(corect_boost) - int(boost)
-                last_rpm = int(corect_boost)
-                os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))      
+                last_rpm = int(corect_boost) + int (optimum_fan)
+                os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan)) 
+                print(last_rpm)     
                 optimum_fan = optimum_fan -1
                 old_hot_gpu = hot_gpu
-                optimum_temp = hot_gpu + 1
+                if int(optimum_temp) == int(hot_gpu):
+                    optimum_on = 1
+                    print("ОПТИМУМ ГОТОВ")
+                else
+                    optimum_temp = hot_gpu + 1
     
     if hot_gpu < terget_temp_min - 4:
         last_rpm = int(min_fan_rpm)
@@ -125,7 +133,7 @@ def active_cool_mod():
     if hot_gpu >= critical_temp:
         os.system("echo 250 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         print("температура критическая, выполняю защитный алгоритм!")
-        send_mess('Температура достигла критического значения, вынужден остановить майнер', id_rig_in_server)
+        send_mess('; Температура достигла критического значения, вынужден остановить майнер', id_rig_in_server)
         os.system("miner stop")
         time.sleep(7)
         os.system("miner stop")
@@ -134,7 +142,7 @@ def active_cool_mod():
     if hot_gpu >= critical_temp +5 :
         os.system("echo 250 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         print("температура выше критической на 5 , выполняю защитный алгоритм!")
-        send_mess('Температура карты привышает критическую, выключаю риг', id_rig_in_server)
+        send_mess('; Температура карты привышает критическую, выключаю риг', id_rig_in_server)
         os.system("sreboot shutdown")
 
 def addFanData(rpmfun, temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gpu5,temp_gpu6,temp_gpu7,rpm_fun_gpu, alertFan,problemNumberGpu, hot_gpu):
@@ -578,7 +586,7 @@ def engine_start():
     if selected_mod == 0:
         print("Выбран режиж удержания температур в диапазоне" , terget_temp_min, terget_temp_max)
         print("начинаю вычесления, а пока что продуем систему")
-        send_mess('Интеллектуальный режим активирован', id_rig_in_server)
+        send_mess('; Интеллектуальный режим активирован', id_rig_in_server)
         os.system("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
         os.system("echo " + str(round(const_rpm / 100 * 50)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         while 1 > 0:
@@ -589,7 +597,7 @@ def engine_start():
             active_cool_mod()
     elif selected_mod == 1:
         print("Выбран ручной режим")
-        send_mess('Ручной режим активирован', id_rig_in_server)
+        send_mess('; Ручной режим активирован', id_rig_in_server)
         os.system("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
         os.system("echo " + str(round(const_rpm / 100 * 50)) + ">> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         while 1 > 0:
@@ -611,7 +619,7 @@ def engine_start():
     elif selected_mod == 2:
         print("Выбран статичный режим")
         os.system("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
-        send_mess('Статичный режим активирован', id_rig_in_server)
+        send_mess('; Статичный режим активирован', id_rig_in_server)
         while 1 > 0:
             time.sleep(10)
             if get_setting_server2(id_rig_in_server) == "true":

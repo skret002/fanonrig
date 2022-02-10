@@ -100,7 +100,7 @@ def active_cool_mod():
                 if int(optimum_temp) == int(hot_gpu):
                     optimum_on = 1
                     print("ОПТИМУМ ГОТОВ")
-                else
+                else:
                     optimum_temp = hot_gpu + 1
     
     if hot_gpu < terget_temp_min - 4:

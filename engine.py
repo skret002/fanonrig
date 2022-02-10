@@ -50,7 +50,7 @@ def active_cool_mod():
     global optimum_temp
     global optimum_on
     global optimun_echo
-    print("ПОРОГ ВКЛЮЧЕНИЯ ОПЕРЕЖЕНИЯ",int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2))
+    print("ПОРОГ ВКЛЮЧЕНИЯ ОПЕРЕЖЕНИЯ",int(hot_gpu) >= int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) + 2)
     if int(hot_gpu) >= int(terget_temp_min) and int(hot_gpu) < int(critical_temp):
         #print('boost', (hot_gpu+1), '-', terget_temp_min, '*', boost, '+', int(min_fan_rpm))
         #xfactor = ((hot_gpu+1) - terget_temp_min) * boost + min_fan_rpm
@@ -59,7 +59,7 @@ def active_cool_mod():
         corect_boost = (int(const_rpm) / int(terget_temp_max - terget_temp_min)) * ((int(hot_gpu) - int(terget_temp_min))) + int(boost)
         print("last_rpm  last_rpm",last_rpm, corect_boost)
         
-        if int(old_hot_gpu) < int(hot_gpu) and int(hot_gpu) > int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2):
+        if int(hot_gpu) >= int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) + 2:
             last_rpm = int(corect_boost)
             os.system("echo " + str(int(last_rpm)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
             print("удерживаю в зеленой зоне, даю", int(last_rpm))

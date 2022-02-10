@@ -65,7 +65,7 @@ def active_cool_mod():
             stable_temp_round = 0
             optimum_on = 0
         else:
-            if optimum_on == 0 and stable_temp_round < 5:
+            if optimum_on == 0 and stable_temp_round <= 5:
                 last_rpm = (int(const_rpm) / int(terget_temp_max - terget_temp_min)) * ((int(hot_gpu) - int(terget_temp_min)))
                 os.system("echo " + str(int(last_rpm)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
                 stable_temp_round = stable_temp_round + 1

@@ -88,10 +88,10 @@ def active_cool_mod():
                 old_hot_gpu = hot_gpu
                 if int(optimum_temp) == int(hot_gpu):
                     optimum_on = 1
-                    optimun_echo = last_rpm
                     print("ОПТИМУМ ГОТОВ", optimun_echo)
                 else:
                     optimum_temp = hot_gpu + 1
+                    optimun_echo = last_rpm
 
     
     if hot_gpu < terget_temp_min - 4:

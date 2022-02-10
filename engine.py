@@ -48,8 +48,7 @@ def active_cool_mod():
     global hot_gpu
     global optimum_temp
     global optimum_on
-    print("НОВЫЙ const_rpm",const_rpm)
-    
+    print("ПОРОГ ВКЛЮЧЕНИЯ ОПЕРЕЖЕНИЯ",int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) +1)
     if int(hot_gpu) >= int(terget_temp_min) and int(hot_gpu) < int(critical_temp):
         #print('boost', (hot_gpu+1), '-', terget_temp_min, '*', boost, '+', int(min_fan_rpm))
         #xfactor = ((hot_gpu+1) - terget_temp_min) * boost + min_fan_rpm
@@ -74,10 +73,10 @@ def active_cool_mod():
                 stable_temp_round = stable_temp_round + 1
                 #old_hot_gpu = hot_gpu
                 print('stable_temp_round', stable_temp_round, int(optimum_temp) == int(hot_gpu))
-            if optimum_fan < 0 and optimum_on == 1:
+            if optimum_fan < 0 and optimum_on == 1 and int(hot_gpu) < int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) +1:
                 print("///////////////////////////////Применяю оптимум//////////////////////")
-                print(int(corect_boost), '-', int(boost), '+',int(optimum_fan), '+',  3)
-                corect_boost = int(corect_boost) - int(boost) + int(optimum_fan)
+                print(int(corect_boost), '-', int(boost), '+',int(optimum_fan))
+                corect_boost = (int(const_rpm) / int(terget_temp_max - terget_temp_min)) * ((int(hot_gpu) - int(terget_temp_min))) + int(optimum_fan)
                 last_rpm = int(corect_boost)
                 print(last_rpm)
                 os.system("echo " + str(int(last_rpm)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
@@ -89,7 +88,7 @@ def active_cool_mod():
             #    os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
             #    stable_temp_round = stable_temp_round + 1
             #    old_hot_gpu == hot_gpu
-            if stable_temp_round > 10:
+            if stable_temp_round > 10 and optimum_on == 0 :
                 print("Температура стабильна, ищу оптимум 2")
                 corect_boost = int(corect_boost) - int(boost)
                 last_rpm = int(corect_boost) + int (optimum_fan)

@@ -69,12 +69,12 @@ def active_cool_mod():
             os.system("echo " + str(int(last_rpm)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
             print("температура стабильна отдаю", int(last_rpm))
             stable_temp_round = stable_temp_round + 1
-            old_hot_gpu = hot_gpu
+            #old_hot_gpu = hot_gpu
             print('stable_temp_round', stable_temp_round, int(optimum_temp) == int(hot_gpu))
             if optimum_fan < 0 and int(optimum_temp) == int(hot_gpu):
                 print("///////////////////////////////Применяю оптимум//////////////////////")
-                print(int(corect_boost), '-', int(boost), '-',int(optimum_fan), '+',  3)
-                corect_boost = int(corect_boost) - int(boost) - int(optimum_fan) +3
+                print(int(corect_boost), '-', int(boost), '+',int(optimum_fan), '+',  3)
+                corect_boost = int(corect_boost) - int(boost) + int(optimum_fan) +3
                 last_rpm = int(corect_boost)
                 print(last_rpm)
                 os.system("echo " + str(int(last_rpm)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
@@ -86,7 +86,7 @@ def active_cool_mod():
             #    os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
             #    stable_temp_round = stable_temp_round + 1
             #    old_hot_gpu == hot_gpu
-            if stable_temp_round > 10 and old_hot_gpu == hot_gpu:
+            if stable_temp_round > 10:
                 print("Температура стабильна, ищу оптимум 2")
                 corect_boost = int(corect_boost) - int(boost)
                 last_rpm = int(corect_boost)
@@ -610,19 +610,17 @@ def engine_start():
                     print("выдаю  ",i,"%",  "горячая карта ", hot_gpu)
     elif selected_mod == 2:
         print("Выбран статичный режим")
+        os.system("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
         send_mess('Статичный режим активирован', id_rig_in_server)
         while 1 > 0:
-            time.sleep(7)
+            time.sleep(10)
             if get_setting_server2(id_rig_in_server) == "true":
                 print("ответ с сервера получен")
                 get_temp()
                 test_select_mod()
-            else:
-                test_select_mod()
-                get_temp()
-                option2 = round(const_rpm / 100 * int(text["2"]))
-            os.system("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
-            print("echo " + str(option2) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+                option = round(const_rpm / 100 * int(option2))
+                os.system("echo " + str(option2) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+                print("echo " + str(option2) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
 
 
 

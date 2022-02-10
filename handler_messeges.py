@@ -2,7 +2,7 @@ import requests
 
 def transmit_mess(messege, rig_id): 
 	print("Сообщение на сервер", messege)
-	requests.post('http://ggc.center:8000/recalibrationOff/', data = {'id_rig': rig_id, 
+	requests.post('http://ggc.center:8000/meseger/', data = {'id_rig': rig_id, 
                                                                 'messege':messege,
                                                                  })
 	return()

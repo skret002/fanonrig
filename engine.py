@@ -133,7 +133,7 @@ def active_cool_mod():
     if hot_gpu >= critical_temp:
         os.system("echo 250 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         print("температура критическая, выполняю защитный алгоритм!")
-        send_mess('; Температура достигла критического значения, вынужден остановить майнер', id_rig_in_server)
+        send_mess(' Температура достигла критического значения, вынужден остановить майнер', id_rig_in_server)
         os.system("miner stop")
         time.sleep(7)
         os.system("miner stop")
@@ -142,7 +142,7 @@ def active_cool_mod():
     if hot_gpu >= critical_temp +5 :
         os.system("echo 250 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         print("температура выше критической на 5 , выполняю защитный алгоритм!")
-        send_mess('; Температура карты привышает критическую, выключаю риг', id_rig_in_server)
+        send_mess(' Температура карты привышает критическую, выключаю риг', id_rig_in_server)
         os.system("sreboot shutdown")
 
 def addFanData(rpmfun, temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gpu5,temp_gpu6,temp_gpu7,rpm_fun_gpu, alertFan,problemNumberGpu, hot_gpu):
@@ -586,7 +586,7 @@ def engine_start():
     if selected_mod == 0:
         print("Выбран режиж удержания температур в диапазоне" , terget_temp_min, terget_temp_max)
         print("начинаю вычесления, а пока что продуем систему")
-        send_mess('; Интеллектуальный режим активирован', id_rig_in_server)
+        send_mess(' Интеллектуальный режим активирован', id_rig_in_server)
         os.system("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
         os.system("echo " + str(round(const_rpm / 100 * 50)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         while 1 > 0:
@@ -597,7 +597,7 @@ def engine_start():
             active_cool_mod()
     elif selected_mod == 1:
         print("Выбран ручной режим")
-        send_mess('; Ручной режим активирован', id_rig_in_server)
+        send_mess(' Ручной режим активирован', id_rig_in_server)
         os.system("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
         os.system("echo " + str(round(const_rpm / 100 * 50)) + ">> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         while 1 > 0:
@@ -619,7 +619,7 @@ def engine_start():
     elif selected_mod == 2:
         print("Выбран статичный режим")
         os.system("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
-        send_mess('; Статичный режим активирован', id_rig_in_server)
+        send_mess(' Статичный режим активирован', id_rig_in_server)
         while 1 > 0:
             time.sleep(10)
             if get_setting_server2(id_rig_in_server) == "true":

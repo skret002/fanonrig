@@ -91,10 +91,10 @@ def active_cool_mod():
             if stable_temp_round > 10 and optimum_on == 0 :
                 print("Температура стабильна, ищу оптимум 2")
                 corect_boost = int(corect_boost) - int(boost)
-                last_rpm = int(corect_boost) + int (optimum_fan)
+                last_rpm = int(corect_boost) + int(optimum_fan)
                 os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan)) 
                 print(last_rpm)     
-                optimum_fan = optimum_fan -1
+                optimum_fan = optimum_fan - round(int(const_rpm) / 100)
                 old_hot_gpu = hot_gpu
                 if int(optimum_temp) == int(hot_gpu):
                     optimum_on = 1

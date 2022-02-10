@@ -87,8 +87,8 @@ def active_cool_mod():
                 last_rpm = int(corect_boost) + int(optimum_fan)
                 os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan)) 
                 print(last_rpm)  
-                time.sleep(120)   
-                optimum_fan = optimum_fan - round(int(const_rpm) / 100)
+                time.sleep(30)   
+                optimum_fan = optimum_fan - round(int(const_rpm) / 300)
                 old_hot_gpu = hot_gpu
                 if int(optimum_temp) == int(hot_gpu):
                     optimum_on = 1

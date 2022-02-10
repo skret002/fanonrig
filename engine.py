@@ -76,7 +76,7 @@ def active_cool_mod():
                 #old_hot_gpu = hot_gpu
                 print('stable_temp_round', stable_temp_round, int(optimum_temp) == int(hot_gpu))
                 time.sleep(30) 
-            if optimum_fan < 0 and optimum_on == 1 and int(hot_gpu) < int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2):
+            if optimum_fan < 0 and optimum_on == 1 and int(hot_gpu) < int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2 +1):
                 print("///////////////////////////////Применяю оптимум//////////////////////")
                 print(optimun_echo)
                 os.system("echo " + str(int(optimun_echo)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))

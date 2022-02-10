@@ -82,7 +82,7 @@ def active_cool_mod():
                 print(last_rpm)  
 
                 time.sleep(30)   
-                optimum_fan = optimum_fan - round(int(const_rpm) / 300)
+                optimum_fan = optimum_fan - round(int(const_rpm) / 100)
                 old_hot_gpu = hot_gpu
                 print("/////Температура стабильна, ищу оптимум ///",last_rpm,optimum_fan)
                 if int(optimum_temp) == int(hot_gpu):
@@ -570,8 +570,8 @@ def engine_start():
         ressetRig = False
     else:
         pass
-    # передача данных о риге завершена
     if get_setting_server(id_rig_in_server) == "true":
+        pass
         #print("ответ с сервера получен")
     else:
         #print("нет ответа с сервера")

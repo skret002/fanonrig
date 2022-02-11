@@ -252,7 +252,6 @@ def get_temp():
         temp_gpu7 = temp_gpu[7]
     except Exception:
         temp_gpu7 = 0
-    addFanData(rpmfun,temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gpu5,temp_gpu6,temp_gpu7, rpm_fun_gpu, alertFan,problemNumberGpu,hot_gpu)
     #except Exception:
     #    pass
     ##   time.sleep(3)
@@ -265,7 +264,9 @@ def get_temp():
                     if len(str(int(feature.get_value()))) !=0 or len(str(int(feature.get_value()))) != None:
                         rpmfun = int(feature.get_value())
                     else:
-                        rpmfun = 0
+                       rpmfun = 0
+    addFanData(rpmfun,temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gpu5,temp_gpu6,temp_gpu7, rpm_fun_gpu, alertFan,problemNumberGpu,hot_gpu)
+    time.sleep(20)
 
 def testing():
     print("начинаю тест железа")

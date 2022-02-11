@@ -70,7 +70,7 @@ def active_cool_mod():
                 os.system("echo " + str(int(last_rpm)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
                 stable_temp_round = stable_temp_round + 1
                 print("///// АКТИВИРОВАН УСРЕДНЕНЫЙ РЕЖИМ", int(last_rpm), stable_temp_round)
-                time.sleep(20) 
+                time.sleep(10) 
 
             
             if  optimum_on == 1 and int(hot_gpu) < int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) +1:
@@ -81,11 +81,11 @@ def active_cool_mod():
             if stable_temp_round > 20 and optimum_on == 0 :
                 print("/////Температура стабильна, ищу оптимум ///")
                 corect_boost = int(corect_boost) - int(boost)
-                optimum_fan = optimum_fan + round(int(const_rpm) / 300)
+                optimum_fan = optimum_fan + round(int(const_rpm) / 100)
                 last_rpm = int(corect_boost) - int(optimum_fan)
                 print("значения после корекции", last_rpm)
                 os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan)) 
-                time.sleep(20)   
+                time.sleep(30)   
                 old_hot_gpu = hot_gpu
                 if int(optimum_temp) == int(hot_gpu):
                     optimum_on = 1

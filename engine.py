@@ -70,7 +70,8 @@ def active_cool_mod():
                 os.system("echo " + str(int(last_rpm)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
                 stable_temp_round = stable_temp_round + 1
                 print("///// АКТИВИРОВАН УСРЕДНЕНЫЙ РЕЖИМ", int(last_rpm), stable_temp_round)
-                time.sleep(30) 
+                time.sleep(20) 
+
             
             if  optimum_on == 1 and int(hot_gpu) < int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) +1:
                 print("///////////////////////////////Применяю оптимум//////////////////////",optimun_echo)
@@ -80,11 +81,11 @@ def active_cool_mod():
             if stable_temp_round > 20 and optimum_on == 0 :
                 print("/////Температура стабильна, ищу оптимум ///")
                 corect_boost = int(corect_boost) - int(boost)
-                optimum_fan = optimum_fan + round(int(const_rpm) / 100)
+                optimum_fan = optimum_fan + round(int(const_rpm) / 300)
                 last_rpm = int(corect_boost) - int(optimum_fan)
                 print("значения после корекции", last_rpm)
                 os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan)) 
-                time.sleep(30)   
+                time.sleep(20)   
                 old_hot_gpu = hot_gpu
                 if int(optimum_temp) == int(hot_gpu):
                     optimum_on = 1
@@ -138,7 +139,6 @@ def active_cool_mod():
 
 def addFanData(rpmfun, temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gpu5,temp_gpu6,temp_gpu7,rpm_fun_gpu, alertFan,problemNumberGpu, hot_gpu):
     #print('ЗАШЛИ В ВЫДАЧУ ДАННЫХ О КУЛЕРАХ')
-    time.sleep(20)
     data={"id_in_serv": id_rig_in_server,'rpmfun':rpmfun,
                             'temp_gpu0':temp_gpu0, 'temp_gpu1':temp_gpu1,
                             'temp_gpu2':temp_gpu2,'temp_gpu3':temp_gpu3,
@@ -524,7 +524,6 @@ def sendInfoRig(rig_id, rig_name):
         print('ошибка в sendInfoRig', e)
         time.sleep(10)
         sendInfoRig(rig_id, rig_name)
-    time.sleep(30)
     return(True)
 
 def test_select_mod():
@@ -591,7 +590,7 @@ def engine_start():
         os.system("echo " + str(round(const_rpm / 100 * 50)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         while 1 > 0:
             test_select_mod()
-            time.sleep(7)
+            time.sleep(1)
             get_setting_server(id_rig_in_server)
             get_temp()
             active_cool_mod()

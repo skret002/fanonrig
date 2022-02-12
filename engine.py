@@ -602,7 +602,7 @@ def engine_start():
         ressetRig = False
     else:
         pass
-    if get_setting_server(id_rig_in_server, key_slave) == "true":
+    if get_setting_server(id_rig_in_server) == "true":
         pass
         #print("ответ с сервера получен")
     else:

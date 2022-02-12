@@ -8,6 +8,7 @@ import subprocess
 import requests
 import time
 import sys
+import glob
 import sensors
 sensors.init()
 
@@ -39,6 +40,11 @@ optimum_fan = 0
 optimum_temp = 0
 optimum_on = 0
 optimun_echo = 0
+key_slave = ''
+
+def error511():
+    send_mess(' Замечена ошибка 511, проверьте блок питания и прилигание охлаждения к GPU.', id_rig_in_server)
+
 def active_cool_mod():
     global last_rpm
     global boost
@@ -77,6 +83,13 @@ def active_cool_mod():
                 print("///////////////////////////////Применяю оптимум//////////////////////",optimun_echo)
                 print(optimun_echo)
                 os.system("echo " + str(int(optimun_echo)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+                time.sleep(30)
+                if old_hot_gpu < hot_gpu:
+                    optimum_on = 0
+                    stable_temp_round = 0
+                else:
+                    old_hot_gpu = hot_gpu
+
             
             if stable_temp_round > 20 and optimum_on == 0 :
                 print("/////Температура стабильна, ищу оптимум ///")
@@ -90,6 +103,7 @@ def active_cool_mod():
                 if int(optimum_temp) == int(hot_gpu):
                     optimum_on = 1
                     print("ОПТИМУМ ГОТОВ", optimun_echo)
+                    old_hot_gpu = hot_gpu
                 else:
                     optimum_temp = hot_gpu + 1
                     optimun_echo = last_rpm
@@ -171,6 +185,9 @@ def get_temp():
                 if feature.label:
                     if str(feature.label) == "edge":                                                                                            
                         temp_gpu.append(round(int(feature.get_value())))
+                        if int(feature.label) == -511:
+                            error511()
+
 
     labels = ''
     numGpu=-1
@@ -191,6 +208,8 @@ def get_temp():
     for i in green_gpu_temp:
         if len(str(i)) != 0:
             temp_gpu.append(int(i))
+                if int(i) == -511:
+                    error511()
 
     #добавляем данные кулеров с карт nvidia если они есть
     (status,output_fan)=subprocess.getstatusoutput("nvidia-smi -q | grep 'Fan'")
@@ -198,7 +217,7 @@ def get_temp():
     for fan in green_fan:
         if len(str(fan)) != 0:
             numGpu = numGpu+1
-            rpm_fun_gpu[str(numGpu)] = round(int(4500 / 100 * int(fan)))
+            rpm_fun_gpu[str(numGpu)] = round(int(3600 / 100 * int(fan)))
 
     #print("Найдено карт", len(temp_gpu)) #вывели результат на экран
     #print("rpm_fun_gpu",rpm_fun_gpu)
@@ -209,13 +228,12 @@ def get_temp():
     #print("!!!",statusAlertSystem == True, gpuFanSetHive == 1, typeGpu == 0)
     try:
         if statusAlertSystem == True and gpuFanSetHive == 1 and typeGpu == 0:
-            print('rpm_fun_gpu',rpm_fun_gpu)
-            print("зашли в проверку кулеров",rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)] - rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)]/5, rpm_fun_gpu[min(rpm_fun_gpu, key=rpm_fun_gpu.get)])
-            if rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)] - rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)]/5 > rpm_fun_gpu[min(rpm_fun_gpu, key=rpm_fun_gpu.get)]:
-                print("обнаружена проблема с кулерами")
+            #print("зашли в проверку кулеров",rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)] - rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)]/5, rpm_fun_gpu[min(rpm_fun_gpu, key=rpm_fun_gpu.get)])
+            if rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)] - rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)]/10 > rpm_fun_gpu[min(rpm_fun_gpu, key=rpm_fun_gpu.get)]:
+                #print("обнаружена проблема с кулерами")
                 alertFan = True
                 problemNumberGpu = min(rpm_fun_gpu, key=rpm_fun_gpu.get)
-                print(problemNumberGpu)
+                #print(problemNumberGpu)
             else:
                 alertFan = False
                 problemNumberGpu = None
@@ -309,34 +327,45 @@ def testing():
     	print("видеокарт не обнаружено, сорян")
     	sys.exit()
     print("тест завершился успешно")
-    time.sleep(3)
 
 def test_key(rig_id, rig_name):
+    global key_slave
     r_id = "" 
     r_name = ""
+    for filename in glob.iglob('/hive-config/*.key_slave', recursive=True): 
+        file_key = open(filename, "r")
+    key_slave = file_key.read()
+    
     file1 = open("/hive-config/rig.conf", "r")
     lines = file1.readlines()
+
     for line in lines:
         if "WORKER_NAME=" in line:
             r_name = line.replace("WORKER_NAME=", "").replace('"', '')
         if "RIG_ID" in line:
             r_id = line.replace("RIG_ID=", "")
-            print("RIG_ID",line.replace("RIG_ID=", ""))
-            if len(str(rig_id)) == 0:
-                print("Это первый запуск, прописываю ID в память")
-                with open('settings.json', 'r+') as f:
-                    json_data = json.load(f)
-                    json_data['rig_id'] = str(r_id)
-                    json_data['rig_name'] = str(r_name)
-                    f.seek(0)
-                    f.write(json.dumps(json_data))
-                    f.truncate()
 
-            if str(rig_id) == str(line.replace("RIG_ID=", "")):
-                print("Защита пройдена и в этот раз я не сотру систему")
-            if len(str(rig_id)) != 0 and rig_id != r_id:
-                print("rig id не совпадает, стираю систему")
-                sys.exit()
+    if len(str(rig_id)) == 0 and rig_name != r_name:
+        with open('settings.json', 'r+') as f:
+            json_data['rig_name'] = str(r_name)
+        os.system("sreboot")
+
+            
+    if len(str(rig_id)) == 0:
+        print("Это первый запуск, прописываю ID в память")
+        with open('settings.json', 'r+') as f:
+            json_data = json.load(f)
+            json_data['rig_id'] = str(r_id)
+            json_data['rig_name'] = str(r_name)
+            f.seek(0)
+            f.write(json.dumps(json_data))
+            f.truncate()
+        os.system("sreboot")
+
+    if str(rig_id) == str(r_id):
+        print("Защита пройдена и в этот раз я не сотру систему")
+    return()
+
 def get_setting_server(id_rig_in_server):
     #print(id_rig_in_server)
     response = requests.get('http://ggc.center:8000/get_option_rig/', data = [('id_in_serv', id_rig_in_server)] )
@@ -557,35 +586,29 @@ def engine_start():
     global id_rig_in_server
     global ressetRig
 
-    #testing()
+    testing()
 
     with open('settings.json', 'r', encoding='utf-8') as f: #открыли файл с данными
-        text = json.load(f) #загнали все, что получилось в переменную
-    #print("Конфиг загружен и валиден", text) #вывели результат на экран
-    #print("начинаю тест безопастности")
+        text = json.load(f)
     rig_id = str(text["rig_id"])
     rig_name = str(text["rig_name"])
     old_selected_mod = selected_mod
-    #test_key(rig_id, rig_name)
+    test_key(rig_id, rig_name)
+    
     # передаем данные о риге и получаем ответ с id
     sendInfoRig(rig_id,rig_name)
     if ressetRig == True:
-        requests.post("http://ggc.center:8000/ressetRigAndFanData/", data={'ressetRig':'True', 'id_rig_in_server':id_rig_in_server})
+        requests.post("http://ggc.center:8000/ressetRigAndFanData/", data={'ressetRig':'True', 'id_rig_in_server':id_rig_in_server, 'key_slave':key_slave})
         ressetRig = False
     else:
         pass
-    if get_setting_server(id_rig_in_server) == "true":
+    if get_setting_server(id_rig_in_server, key_slave) == "true":
         pass
         #print("ответ с сервера получен")
     else:
         #print("нет ответа с сервера")
-        selected_mod=int(text["selected_mod"])
-        terget_temp_min = text['0']['terget_temp_min']
-        terget_temp_max = text['0']['terget_temp_max']
-        min_fan_rpm = text['0']['min_fan_rpm']
-        select_fan = text['select_fan']
-        critical_temp = text['0']['critical_temp']
-        boost = text['0']['boost']
+        os.system("sreboot")
+
     if selected_mod == 0:
         #print("Выбран режиж удержания температур в диапазоне" , terget_temp_min, terget_temp_max)
         #print("начинаю вычесления, а пока что продуем систему")

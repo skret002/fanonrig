@@ -208,8 +208,8 @@ def get_temp():
     for i in green_gpu_temp:
         if len(str(i)) != 0:
             temp_gpu.append(int(i))
-                if int(i) == -511:
-                    error511()
+            if int(i) == -511:
+                error511()
 
     #добавляем данные кулеров с карт nvidia если они есть
     (status,output_fan)=subprocess.getstatusoutput("nvidia-smi -q | grep 'Fan'")

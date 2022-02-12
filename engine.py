@@ -207,6 +207,7 @@ def get_temp():
     #print("Самая горячая карта", max(temp_gpu)) #вывели результат на экран
     #print("самая высокая скорость кулера видеокарты!", rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)]) #вывели результат на экран
     #print("!!!",statusAlertSystem == True, gpuFanSetHive == 1, typeGpu == 0)
+    print(statusAlertSystem, gpuFanSetHive, typeGpu)
     try:
         if statusAlertSystem == True and gpuFanSetHive == 1 and typeGpu == 0:
             print("зашли в проверку кулеров",rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)] - rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)]/10, rpm_fun_gpu[min(rpm_fun_gpu, key=rpm_fun_gpu.get)])
@@ -214,6 +215,7 @@ def get_temp():
                 print("обнаружена проблема с кулерами")
                 alertFan = True
                 problemNumberGpu = min(rpm_fun_gpu, key=rpm_fun_gpu.get)
+                print(problemNumberGpu)
             else:
                 alertFan = False
         else:

@@ -328,44 +328,47 @@ def testing():
     	sys.exit()
     print("тест завершился успешно")
 
-def test_key(rig_id='', rig_name=''):
-    print("Зашли в test_key", len(str(rig_id)))
-    global key_slave
-    r_id = "" 
-    r_name = ""
-
-    for filename in glob.iglob('/hive-config/*.key_slave', recursive=True): 
+def test_key(rig_id='', rig_name=''):                                                                                                 
+    print("Зашли в test_key", len(str(rig_id)))                                                                                       
+    global key_slave                                                                                                                  
+    r_id = ""                                                                                                                         
+    r_name = ""                                                                                                                       
+    for filename in glob.iglob('/hive-config/*.key_slave', recursive=True):                                                           
         file_key = open(filename, "r")
-        key_slave = file_key.read()
-    print('key_slave',key_slave)
-    
-    file1 = open("/hive-config/rig.conf", "r")
-    lines = file1.readlines()
+        key_slave = file_key.read()                                                                                                   
+    print('key_slave',key_slave)                                                                                                      
+    file1 = open("/hive-config/rig.conf", "r")                                                                                        
+    lines = file1.readlines()  
 
-    for line in lines:
-        if "WORKER_NAME=" in line:
-            r_name = line.replace("WORKER_NAME=", "").replace('"', '')
-            print(r_name)
-        if  "RIG_ID" in line:
-            r_id = line.replace("RIG_ID=", "")
-            print(r_id)
-
-    if len(str(rig_id)) != 0 and rig_name != r_name:
-        with open('settings.json', 'r+') as f:
+    for line in lines:                                                                                                                
+        if "WORKER_NAME=" in line:                                                                                                    
+            r_name = line.replace("WORKER_NAME=", "").replace('"', '').replace('\n', '')                                              
+            print(r_name)                                                                                                             
+    for line in lines:                                                                                                                
+        if "RIG_ID" in line.split('='):
+            r_id = line.replace("RIG_ID=", "").replace('\n', '')                                                                      
+            print(r_id)                                                                                                               
+    if len(str(rig_id)) != 0 and rig_name != r_name and rig_name != '':                                                               
+        print("///// изменилось имя рига ///////")
+        with open('settings.json', 'r+') as f:                                                                                        
+            json_data = json.load(f)                                                                                                  
             json_data['rig_name'] = str(r_name)
+            f.seek(0)                                                                                                                 
+            f.write(json.dumps(json_data))                                                                                            
+            f.truncate()                                                                                                              
         os.system("sreboot")
 
             
-    if len(str(rig_id)) == 0:
-        print("Это первый запуск, прописываю ID в память")
+    if len(str(rig_id)) == 0:                                                                                                         
+        print("Это первый запуск, прописываю ID в память")                                                                            
         with open('settings.json', 'r+') as f:
-            json_data = json.load(f)
-            json_data['rig_id'] = str(r_id)
-            json_data['rig_name'] = str(r_name)
-            f.seek(0)
-            f.write(json.dumps(json_data))
-            f.truncate()
-        os.system("sreboot")
+            json_data = json.load(f)                                                                                                  
+            json_data['rig_id'] = str(r_id)                                                                                           
+            json_data['rig_name'] = str(r_name)                                                                                       
+            f.seek(0)                                                                                                                 
+            f.write(json.dumps(json_data))                                                                                            
+            f.truncate()                                                                                                              
+       # os.system("sreboot")   
 
     if str(rig_id) == str(r_id):
         print("Защита пройдена и в этот раз я не сотру систему")
@@ -561,7 +564,7 @@ def sendInfoRig(rig_id, rig_name, key_slave):
     except Exception as e:
         print('ошибка в sendInfoRig', e)
         time.sleep(10)
-        sendInfoRig(rig_id, rig_name)
+        sendInfoRig(rig_id, rig_name, key_slave)
     return(True)
 
 def test_select_mod():
@@ -605,63 +608,60 @@ def engine_start():
     if ressetRig == True:
         requests.post("http://ggc.center:8000/ressetRigAndFanData/", data={'ressetRig':'True', 'id_rig_in_server':id_rig_in_server})
         ressetRig = False
-    #else:
-    #    pass
-    #if get_setting_server(id_rig_in_server, 'key_slave':key_slave) == "true":
-    #    pass
-    #    #print("ответ с сервера получен")
-    #else:
-    #    #print("нет ответа с сервера")
-    #    os.system("sreboot")
+
+    if get_setting_server(id_rig_in_server, 'key_slave':key_slave) == "true":
+        pass
+        #print("ответ с сервера получен")
+    else:
+        #print("нет ответа с сервера")
+        os.system("sreboot")
   
-    #if selected_mod == 0:
-    #    #print("Выбран режиж удержания температур в диапазоне" , terget_temp_min, terget_temp_max)
-    #    #print("начинаю вычесления, а пока что продуем систему")
-    #    send_mess(' Интеллектуальный режим активирован', id_rig_in_server)
-    #    os.system("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
-    #    os.system("echo " + str(round(const_rpm / 100 * 50)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-    #    while 1 > 0:
-    #        test_select_mod()
-    #        time.sleep(1)
-    #        get_setting_server(id_rig_in_server)
-    #        get_temp()
-    #        active_cool_mod()
-    #elif selected_mod == 1:
-    #    print("Выбран ручной режим")
-    #    send_mess(' Ручной режим активирован', id_rig_in_server)
-    #    os.system("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
-    #    os.system("echo " + str(round(const_rpm / 100 * 50)) + ">> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-    #    while 1 > 0:
-    #        test_select_mod()
-    #        time.sleep(7)
-    #        get_temp()
-    #        if get_setting_server1(id_rig_in_server) == "true":
-    #            #print("ответ с сервера получен")
-    #            test_select_mod()
-    #        else:
-    #            option1 = text["1"]	
-    #        for i in option1:
-    #            print(option1[i][0],option1[i][1])
-    #            if hot_gpu >= option1[i][0] and  hot_gpu <= option1[i][1]:
-    #                last_rpm = round(int(const_rpm / 100) * int(i))
-    #                print("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-    #                os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-    #                print("выдаю  ",i,"%",  "горячая карта ", hot_gpu)
-    #elif selected_mod == 2:
-    #    print("Выбран статичный режим")
-    #    os.system("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
-    #    send_mess(' Статичный режим активирован', id_rig_in_server)
-    #    while 1 > 0:
-    #        time.sleep(10)
-    #        if get_setting_server2(id_rig_in_server) == "true":
-    #            print("ответ с сервера получен")
-    #            get_temp()
-    #            test_select_mod()
-    #            option = round(const_rpm / 100 * int(option2))
-    #            os.system("echo " + str(option2) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-    #            print("echo " + str(option2) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-
-
+    if selected_mod == 0:
+        #print("Выбран режиж удержания температур в диапазоне" , terget_temp_min, terget_temp_max)
+        #print("начинаю вычесления, а пока что продуем систему")
+        send_mess(' Интеллектуальный режим активирован', id_rig_in_server)
+        os.system("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
+        os.system("echo " + str(round(const_rpm / 100 * 50)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        while 1 > 0:
+            test_select_mod()
+            time.sleep(1)
+            get_setting_server(id_rig_in_server)
+            get_temp()
+            active_cool_mod()
+    elif selected_mod == 1:
+        print("Выбран ручной режим")
+        send_mess(' Ручной режим активирован', id_rig_in_server)
+        os.system("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
+        os.system("echo " + str(round(const_rpm / 100 * 50)) + ">> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        while 1 > 0:
+            test_select_mod()
+            time.sleep(7)
+            get_temp()
+            if get_setting_server1(id_rig_in_server) == "true":
+                #print("ответ с сервера получен")
+                test_select_mod()
+            else:
+                option1 = text["1"]	
+            for i in option1:
+                print(option1[i][0],option1[i][1])
+                if hot_gpu >= option1[i][0] and  hot_gpu <= option1[i][1]:
+                    last_rpm = round(int(const_rpm / 100) * int(i))
+                    print("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+                    os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+                    print("выдаю  ",i,"%",  "горячая карта ", hot_gpu)
+    elif selected_mod == 2:
+        print("Выбран статичный режим")
+        os.system("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
+        send_mess(' Статичный режим активирован', id_rig_in_server)
+        while 1 > 0:
+            time.sleep(10)
+            if get_setting_server2(id_rig_in_server) == "true":
+                print("ответ с сервера получен")
+                get_temp()
+                test_select_mod()
+                option = round(const_rpm / 100 * int(option2))
+                os.system("echo " + str(option2) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+                print("echo " + str(option2) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
 
 if __name__ == '__main__':
 	try:

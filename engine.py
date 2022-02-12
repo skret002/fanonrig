@@ -170,7 +170,7 @@ def get_temp():
             for feature in chip:
                 if feature.label:
                     if str(feature.label) == "edge":                                                                                            
-                        temp_gpu.append(round(feature.get_value()))
+                        temp_gpu.append(round(int(feature.get_value())))
 
     labels = ''
     numGpu=-1
@@ -198,7 +198,7 @@ def get_temp():
     for fan in green_fan:
         if len(str(fan)) != 0:
             numGpu = numGpu+1
-            rpm_fun_gpu[str(numGpu)] = round(4500 / 100 * int(fan))
+            rpm_fun_gpu[str(numGpu)] = round(int(4500 / 100 * int(fan)))
 
     #print("Найдено карт", len(temp_gpu)) #вывели результат на экран
     #print("rpm_fun_gpu",rpm_fun_gpu)
@@ -207,17 +207,18 @@ def get_temp():
     #print("Самая горячая карта", max(temp_gpu)) #вывели результат на экран
     #print("самая высокая скорость кулера видеокарты!", rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)]) #вывели результат на экран
     #print("!!!",statusAlertSystem == True, gpuFanSetHive == 1, typeGpu == 0)
-    print(statusAlertSystem, gpuFanSetHive, typeGpu)
     try:
         if statusAlertSystem == True and gpuFanSetHive == 1 and typeGpu == 0:
-            print("зашли в проверку кулеров",rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)] - rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)]/10, rpm_fun_gpu[min(rpm_fun_gpu, key=rpm_fun_gpu.get)])
-            if rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)] - rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)]/10 > rpm_fun_gpu[min(rpm_fun_gpu, key=rpm_fun_gpu.get)]:
+            print('rpm_fun_gpu',rpm_fun_gpu)
+            print("зашли в проверку кулеров",rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)] - rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)]/5, rpm_fun_gpu[min(rpm_fun_gpu, key=rpm_fun_gpu.get)])
+            if rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)] - rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)]/5 > rpm_fun_gpu[min(rpm_fun_gpu, key=rpm_fun_gpu.get)]:
                 print("обнаружена проблема с кулерами")
                 alertFan = True
                 problemNumberGpu = min(rpm_fun_gpu, key=rpm_fun_gpu.get)
                 print(problemNumberGpu)
             else:
                 alertFan = False
+                problemNumberGpu = None
         else:
             alertFan = False
     except Exception:

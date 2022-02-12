@@ -328,8 +328,8 @@ def testing():
     	sys.exit()
     print("тест завершился успешно")
 
-def test_key(rig_id=None, rig_name=None):
-    print("Зашли в test_key")
+def test_key(rig_id='', rig_name=''):
+    print("Зашли в test_key", len(str(rig_id)))
     global key_slave
     r_id = "" 
     r_name = ""
@@ -346,7 +346,7 @@ def test_key(rig_id=None, rig_name=None):
         if "WORKER_NAME=" in line:
             r_name = line.replace("WORKER_NAME=", "").replace('"', '')
             print(r_name)
-        if "RIG_ID" in line:
+        if  "RIG_ID" in line:
             r_id = line.replace("RIG_ID=", "")
             print(r_id)
 

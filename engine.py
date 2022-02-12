@@ -347,7 +347,10 @@ def test_key(rig_id='', rig_name=''):
     for line in lines:                                                                                                                
         if "RIG_ID" in line.split('='):
             r_id = line.replace("RIG_ID=", "").replace('\n', '')                                                                      
-            print(r_id)                                                                                                               
+            print(r_id)
+            if  len(r_id) <2:
+                print("не нашел ID, Пробую еще")
+                engine_start()                                                                                                           
     if len(str(rig_id)) != 0 and rig_name != r_name and rig_name != '':                                                               
         print("///// изменилось имя рига ///////")
         with open('settings.json', 'r+') as f:                                                                                        
@@ -356,7 +359,7 @@ def test_key(rig_id='', rig_name=''):
             f.seek(0)                                                                                                                 
             f.write(json.dumps(json_data))                                                                                            
             f.truncate()                                                                                                              
-        os.system("sreboot")
+        #os.system("sreboot")
 
             
     if len(str(rig_id)) == 0:                                                                                                         
@@ -609,7 +612,7 @@ def engine_start():
         requests.post("http://ggc.center:8000/ressetRigAndFanData/", data={'ressetRig':'True', 'id_rig_in_server':id_rig_in_server})
         ressetRig = False
 
-    if get_setting_server(id_rig_in_server, 'key_slave':key_slave) == "true":
+    if get_setting_server(id_rig_in_server) == "true":
         pass
         #print("ответ с сервера получен")
     else:

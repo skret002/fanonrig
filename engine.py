@@ -64,6 +64,7 @@ def active_cool_mod():
         corect_boost = (int(const_rpm) / int(terget_temp_max - terget_temp_min)) * ((int(hot_gpu) - int(terget_temp_min))) + int(boost)
         
         if int(hot_gpu) >= int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) + 2:
+            corect_boost = (int(const_rpm) / int(terget_temp_max - terget_temp_min)) * ((int(hot_gpu) - int(terget_temp_min))) + int(boost)
             last_rpm = int(corect_boost)
             print("///// АКТИВИРОВАН РЕЖИМ С ОПЕРЕЖЕНИЕМ", int(last_rpm))
             os.system("echo " + str(int(last_rpm)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
@@ -79,7 +80,7 @@ def active_cool_mod():
                 time.sleep(10) 
 
             
-            if  optimum_on == 1 and int(hot_gpu) < int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) +1:
+            if  optimum_on == 1 and int(hot_gpu) < int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) +2:
                 print("///////////////////////////////Применяю оптимум//////////////////////",optimun_echo)
                 print(optimun_echo)
                 os.system("echo " + str(int(optimun_echo)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
@@ -131,7 +132,7 @@ def active_cool_mod():
         #print("температура ниже уровня но подходит к уровню удержания, даю ",last_rpm)
     
     if hot_gpu == terget_temp_min - 1:
-        last_rpm = int(const_rpm / 100 * 25)
+        last_rpm = int(const_rpm / 100 * 30)
         os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         #print("температура впритык к началу таргета ",last_rpm)
         #print(hot_gpu)
@@ -208,7 +209,7 @@ def get_temp():
     for i in green_gpu_temp:
         if len(str(i)) != 0:
             temp_gpu.append(int(i))
-            if int(i) == -511:
+            if str(i) == '-511':
                 error511()
 
     #добавляем данные кулеров с карт nvidia если они есть
@@ -330,16 +331,18 @@ def testing():
 
 def test_key(rig_id='', rig_name=''):                                                                                                 
     print("Зашли в test_key", len(str(rig_id)))                                                                                       
-    global key_slave                                                                                                                  
+    global key_slave
+                                                                                                          
     r_id = ""                                                                                                                         
     r_name = ""                                                                                                                       
     for filename in glob.iglob('/hive-config/*.key_slave', recursive=True):                                                           
         file_key = open(filename, "r")
         key_slave = file_key.read()                                                                                                   
     print('key_slave',key_slave)                                                                                                      
+    
+
     file1 = open("/hive-config/rig.conf", "r")                                                                                        
     lines = file1.readlines()  
-
     for line in lines:                                                                                                                
         if "WORKER_NAME=" in line:                                                                                                    
             r_name = line.replace("WORKER_NAME=", "").replace('"', '').replace('\n', '')                                              
@@ -351,35 +354,39 @@ def test_key(rig_id='', rig_name=''):
             if  len(r_id) <2:
                 print("не нашел ID, Пробую еще")
                 engine_start()                                                                                                           
-    if len(str(rig_id)) != 0 and rig_name != r_name and rig_name != '':                                                               
-        print("///// изменилось имя рига ///////")
-        with open('settings.json', 'r+') as f:                                                                                        
-            json_data = json.load(f)                                                                                                  
-            json_data['rig_name'] = str(r_name)
-            f.seek(0)                                                                                                                 
-            f.write(json.dumps(json_data))                                                                                            
-            f.truncate()                                                                                                              
-        #os.system("sreboot")
+    
 
-            
-    if len(str(rig_id)) == 0:                                                                                                         
-        print("Это первый запуск, прописываю ID в память")                                                                            
-        with open('settings.json', 'r+') as f:
-            json_data = json.load(f)                                                                                                  
-            json_data['rig_id'] = str(r_id)                                                                                           
-            json_data['rig_name'] = str(r_name)                                                                                       
-            f.seek(0)                                                                                                                 
-            f.write(json.dumps(json_data))                                                                                            
-            f.truncate()                                                                                                              
-       # os.system("sreboot")   
+    if len(r_id)<2 or len(r_name)< 2:
+        engine()
+    else:
+        if len(str(rig_id)) == 0:                                                                                                         
+            print("Это первый запуск, прописываю ID в память")                                                                            
+            with open('settings.json', 'r+') as f:
+                json_data = json.load(f)                                                                                                  
+                json_data['rig_id'] = str(r_id)                                                                                           
+                json_data['rig_name'] = str(r_name)                                                                                       
+                f.seek(0)                                                                                                                 
+                f.write(json.dumps(json_data))                                                                                            
+                f.truncate()  
+            os.system("sreboot")
 
-    if str(rig_id) == str(r_id):
+        if len(str(rig_id)) != 0 and rig_name != r_name and rig_name != '':                                                               
+            print("///// изменилось имя рига ///////")
+            with open('settings.json', 'r+') as f:                                                                                        
+                json_data = json.load(f)                                                                                                  
+                json_data['rig_name'] = str(r_name)
+                f.seek(0)                                                                                                                 
+                f.write(json.dumps(json_data))                                                                                            
+                f.truncate()                                                                                                              
+            os.system("sreboot")         
+
+    if str(rig_id) == str(r_id) and len(rig_id) >2 and len(rig_name) >2:
         print("Защита пройдена и в этот раз я не сотру систему")
-    return()
+        return(True)
 
-def get_setting_server(id_rig_in_server):
+def get_setting_server(id_rig_in_server,key_slave):
     #print(id_rig_in_server)
-    response = requests.get('http://ggc.center:8000/get_option_rig/', data = [('id_in_serv', id_rig_in_server)] )
+    response = requests.get('http://ggc.center:8000/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)] )
     #print(response)
     response = response.json()
     #print('get_setting_server',response["data"][0]["attributes"])
@@ -459,7 +466,7 @@ def get_setting_server(id_rig_in_server):
     # проверяем включена ли реколебровка и если нужно запускаем
     if response["data"][0]["attributes"]["recalibrationFanRig"] == True:
         testFan(id_rig_in_server)
-        get_setting_server(id_rig_in_server)
+        get_setting_server(id_rig_in_server, key_slave)
     return("true")
 
 def get_setting_server1(id_rig_in_server):
@@ -567,7 +574,7 @@ def sendInfoRig(rig_id, rig_name, key_slave):
     except Exception as e:
         print('ошибка в sendInfoRig', e)
         time.sleep(10)
-        sendInfoRig(rig_id, rig_name, key_slave)
+        engine_start()
     return(True)
 
 def test_select_mod():
@@ -607,12 +614,12 @@ def engine_start():
     test_key(rig_id, rig_name)
     
     # передаем данные о риге и получаем ответ с id
-    sendInfoRig(rig_id,rig_name,key_slave)
+    sendInfoRig(rig_id,rig_name)
     if ressetRig == True:
         requests.post("http://ggc.center:8000/ressetRigAndFanData/", data={'ressetRig':'True', 'id_rig_in_server':id_rig_in_server})
         ressetRig = False
 
-    if get_setting_server(id_rig_in_server) == "true":
+    if get_setting_server(id_rig_in_server, key_slave) == "true":
         pass
         #print("ответ с сервера получен")
     else:
@@ -628,7 +635,7 @@ def engine_start():
         while 1 > 0:
             test_select_mod()
             time.sleep(1)
-            get_setting_server(id_rig_in_server)
+            get_setting_server(id_rig_in_server, key_slave)
             get_temp()
             active_cool_mod()
     elif selected_mod == 1:

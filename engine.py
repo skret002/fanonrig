@@ -99,11 +99,11 @@ def active_cool_mod():
             if stable_temp_round > 20 and optimum_on == 0 :
                 print("/////Температура стабильна, ищу оптимум ///")
                 corect_boost = int(corect_boost) - int(boost)
-                optimum_fan = optimum_fan + round(int(const_rpm) / 200)
+                optimum_fan = optimum_fan + round(int(const_rpm) / 100)
                 last_rpm = int(corect_boost) - int(optimum_fan)
                 print("значения после корекции", last_rpm)
                 os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan)) 
-                time.sleep(30)   
+                time.sleep(60)   
                 old_hot_gpu = hot_gpu
                 if int(optimum_temp) == int(hot_gpu):
                     optimum_on = 1
@@ -293,6 +293,8 @@ def get_temp():
                        rpmfun = 0
     addFanData(rpmfun,temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gpu5,temp_gpu6,temp_gpu7, rpm_fun_gpu, alertFan,problemNumberGpu,hot_gpu)
     time.sleep(20)
+    task_update(id_rig_in_server, str(soft_rev))
+    return()
 
 def testing():
     print("начинаю тест железа")
@@ -633,7 +635,6 @@ def engine_start():
     else:
         #print("нет ответа с сервера")
         os.system("sreboot")
-    task_update(id_rig_in_server, str(soft_rev))
 
     if selected_mod == 0:
         #print("Выбран режиж удержания температур в диапазоне" , terget_temp_min, terget_temp_max)

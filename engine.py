@@ -3,6 +3,7 @@ import simplejson
 from pprint import pprint #подключили Pprint для красоты выдачи текста
 from testFan import testFan
 from handler_messeges import transmit_mess as send_mess
+from update_task import task_update
 import os
 import subprocess
 import requests
@@ -40,6 +41,7 @@ optimum_fan = 0
 optimum_temp = 0
 optimum_on = 0
 optimun_echo = 0
+soft_rev = ''
 key_slave = ''
 
 def error511():
@@ -56,6 +58,8 @@ def active_cool_mod():
     global optimum_temp
     global optimum_on
     global optimun_echo
+    if boost < 1:
+        boost = 1
     print("ПОРОГ ВКЛЮЧЕНИЯ ОПЕРЕЖЕНИЯ",int(hot_gpu) >= int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) + 2,int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) + 2)
     print("stable_temp_round",stable_temp_round)
     print("optimum_on",optimum_on)
@@ -95,7 +99,7 @@ def active_cool_mod():
             if stable_temp_round > 20 and optimum_on == 0 :
                 print("/////Температура стабильна, ищу оптимум ///")
                 corect_boost = int(corect_boost) - int(boost)
-                optimum_fan = optimum_fan + round(int(const_rpm) / 100)
+                optimum_fan = optimum_fan + round(int(const_rpm) / 200)
                 last_rpm = int(corect_boost) - int(optimum_fan)
                 print("значения после корекции", last_rpm)
                 os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan)) 
@@ -186,7 +190,7 @@ def get_temp():
                 if feature.label:
                     if str(feature.label) == "edge":                                                                                            
                         temp_gpu.append(round(int(feature.get_value())))
-                        if int(feature.label) == -511:
+                        if str(feature.label) == '-511':
                             error511()
 
 
@@ -229,7 +233,7 @@ def get_temp():
     #print("!!!",statusAlertSystem == True, gpuFanSetHive == 1, typeGpu == 0)
     try:
         if statusAlertSystem == True and gpuFanSetHive == 1 and typeGpu == 0:
-            #print("зашли в проверку кулеров",rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)] - rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)]/5, rpm_fun_gpu[min(rpm_fun_gpu, key=rpm_fun_gpu.get)])
+            print("зашли в проверку кулеров",rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)] - rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)]/5, rpm_fun_gpu[min(rpm_fun_gpu, key=rpm_fun_gpu.get)])
             if rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)] - rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)]/10 > rpm_fun_gpu[min(rpm_fun_gpu, key=rpm_fun_gpu.get)]:
                 #print("обнаружена проблема с кулерами")
                 alertFan = True
@@ -340,22 +344,24 @@ def test_key(rig_id='', rig_name=''):
         key_slave = file_key.read()                                                                                                   
     print('key_slave',key_slave)                                                                                                      
     
-
-    file1 = open("/hive-config/rig.conf", "r")                                                                                        
-    lines = file1.readlines()  
-    for line in lines:                                                                                                                
-        if "WORKER_NAME=" in line:                                                                                                    
-            r_name = line.replace("WORKER_NAME=", "").replace('"', '').replace('\n', '')                                              
-            print(r_name)                                                                                                             
-    for line in lines:                                                                                                                
-        if "RIG_ID" in line.split('='):
-            r_id = line.replace("RIG_ID=", "").replace('\n', '')                                                                      
-            print(r_id)
-            if  len(r_id) <2:
-                print("не нашел ID, Пробую еще")
-                engine_start()                                                                                                           
+    try:
+        file1 = open("/hive-config/rig.conf", "r")                                                                                        
+        lines = file1.readlines()  
+        for line in lines:                                                                                                                
+            if "WORKER_NAME=" in line:                                                                                                    
+                r_name = line.replace("WORKER_NAME=", "").replace('"', '').replace('\n', '')                                              
+                print(r_name)                                                                                                             
+        for line in lines:                                                                                                                
+            if "RIG_ID" in line.split('='):
+                r_id = line.replace("RIG_ID=", "").replace('\n', '')                                                                      
+                print(r_id)
+                if  len(r_id) <2:
+                    print("не нашел ID, Пробую еще")
+                    engine_start()                                                                                                           
+    except Exception:
+        print("Ошибка открытия hive-config")
+        engine_start()
     
-
     if len(r_id)<2 or len(r_name)< 2:
         engine()
     else:
@@ -603,6 +609,7 @@ def engine_start():
     global option2
     global id_rig_in_server
     global ressetRig
+    global soft_rev
 
     testing()
 
@@ -610,11 +617,12 @@ def engine_start():
         text = json.load(f)
     rig_id = str(text["rig_id"])
     rig_name = str(text["rig_name"])
+    soft_rev = str(text["soft_rev"])
     old_selected_mod = selected_mod
     test_key(rig_id, rig_name)
     
     # передаем данные о риге и получаем ответ с id
-    sendInfoRig(rig_id,rig_name)
+    sendInfoRig(rig_id,rig_name, key_slave)
     if ressetRig == True:
         requests.post("http://ggc.center:8000/ressetRigAndFanData/", data={'ressetRig':'True', 'id_rig_in_server':id_rig_in_server})
         ressetRig = False
@@ -625,28 +633,41 @@ def engine_start():
     else:
         #print("нет ответа с сервера")
         os.system("sreboot")
-  
+    task_update(id_rig_in_server, str(soft_rev))
+
     if selected_mod == 0:
         #print("Выбран режиж удержания температур в диапазоне" , terget_temp_min, terget_temp_max)
         #print("начинаю вычесления, а пока что продуем систему")
         send_mess(' Интеллектуальный режим активирован', id_rig_in_server)
         os.system("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
         os.system("echo " + str(round(const_rpm / 100 * 50)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        r = 0
         while 1 > 0:
             test_select_mod()
             time.sleep(1)
             get_setting_server(id_rig_in_server, key_slave)
             get_temp()
             active_cool_mod()
+            r = r+1
+            if r == 240:
+                r=0
+                task_update(id_rig_in_server, str(soft_rev))
+
     elif selected_mod == 1:
         print("Выбран ручной режим")
         send_mess(' Ручной режим активирован', id_rig_in_server)
         os.system("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
         os.system("echo " + str(round(const_rpm / 100 * 50)) + ">> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        r=0
         while 1 > 0:
             test_select_mod()
-            time.sleep(7)
+            time.sleep(20)
             get_temp()
+            r = r+1
+            if r == 240:
+                r=0
+                task_update(id_rig_in_server, str(soft_rev))
+
             if get_setting_server1(id_rig_in_server) == "true":
                 #print("ответ с сервера получен")
                 test_select_mod()
@@ -663,8 +684,14 @@ def engine_start():
         print("Выбран статичный режим")
         os.system("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
         send_mess(' Статичный режим активирован', id_rig_in_server)
+        r=0
         while 1 > 0:
             time.sleep(10)
+            r = r+1
+            if r == 240:
+                r=0
+                task_update(id_rig_in_server, str(soft_rev))
+                
             if get_setting_server2(id_rig_in_server) == "true":
                 print("ответ с сервера получен")
                 get_temp()

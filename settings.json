@@ -3,6 +3,7 @@
 	"rig_name": "",
 	"selected_mod":"0",
 	"select_fan":2,
+	"soft_rev": "00",
 	
 		"0":{
 		"terget_temp_min":55,

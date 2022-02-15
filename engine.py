@@ -294,7 +294,6 @@ def get_temp():
     addFanData(rpmfun,temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gpu5,temp_gpu6,temp_gpu7, rpm_fun_gpu, alertFan,problemNumberGpu,hot_gpu)
     time.sleep(20)
     task_update(id_rig_in_server, str(soft_rev))
-    return()
 
 def testing():
     print("начинаю тест железа")

@@ -12,11 +12,11 @@ def task_update(rig_id, soft_rev):
     url = response.json()["data"]["url"]
     new_ver = response.json()["data"]["version"]
     if str(ver) != str(new_ver):
-        os.system("wget -O fanonrig.zip"+ url)
+        os.system("wget -O fanonrig.zip "+ url)
         print(url, new_ver)
-        os.system("unzip -o fanonrig.zip")
+        os.system("unzip -O fanonrig.zip")
         os.system("rm fanonrig.zip")
-        send_mess(' GPU GOD CONTROL обновлен до версии' + str(new_ver), rig_id)
+        send_mess(' GPU GOD CONTROL обновлен до версии ' + str(new_ver), rig_id)
         with open('settings.json', 'r+') as f:
             json_data = json.load(f)                                                                                                  
             json_data['soft_rev'] = str(new_ver)                                                                                                                                                                                 
@@ -25,7 +25,7 @@ def task_update(rig_id, soft_rev):
             f.truncate()  
         time.sleep(3)
         print("***********СИСТЕМА ОБНОВЛЕНА ****************")
-        #os.system("sreboot")
+        os.system("sreboot")
 
 if __name__ == '__main__':
     task_update()

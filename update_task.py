@@ -5,6 +5,7 @@ from handler_messeges import transmit_mess as send_mess
 import time
 import json
 
+
 def task_update(rig_id, soft_rev):
     ver = soft_rev
     response = requests.post('http://ggc.center:8000/soft_revison/', data = {'id_rig': rig_id})
@@ -23,7 +24,7 @@ def task_update(rig_id, soft_rev):
             f.write(json.dumps(json_data))                                                                                            
             f.truncate()  
         time.sleep(3)
-        print("***********СИСТЕМА ОБНОВЛЕНА *********************")
+        print("***********СИСТЕМА ОБНОВЛЕНА ****************")
         #os.system("sreboot")
 
 if __name__ == '__main__':

@@ -60,14 +60,14 @@ def active_cool_mod():
     global optimun_echo
     if boost < 1:
         boost = 1
-    print("ПОРОГ ВКЛЮЧЕНИЯ ОПЕРЕЖЕНИЯ",int(hot_gpu) >= int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) + 2,int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) + 2)
+    print("ПОРОГ ВКЛЮЧЕНИЯ ОПЕРЕЖЕНИЯ",int(hot_gpu) >= int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) + 3,int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) + 3)
     print("stable_temp_round",stable_temp_round)
     print("optimum_on",optimum_on)
 
     if int(hot_gpu) >= int(terget_temp_min) and int(hot_gpu) < int(critical_temp):
         corect_boost = (int(const_rpm) / int(terget_temp_max - terget_temp_min)) * ((int(hot_gpu) - int(terget_temp_min))) + int(boost)
         print(const_rpm, corect_boost)    
-        if int(hot_gpu) >= int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) + 2:
+        if int(hot_gpu) >= int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) + 3:
             corect_boost = (int(const_rpm) / int(terget_temp_max - terget_temp_min)) * ((int(hot_gpu) - int(terget_temp_min))) + int(boost)
             last_rpm = int(corect_boost)
             print("///// АКТИВИРОВАН РЕЖИМ С ОПЕРЕЖЕНИЕМ", int(last_rpm))
@@ -115,7 +115,7 @@ def active_cool_mod():
                     print("ОПТИМУМ ГОТОВ", optimun_echo)
                     old_hot_gpu = hot_gpu
                 else:
-                    optimum_temp = int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) #hot_gpu + 1
+                    optimum_temp = int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2)+1 #hot_gpu + 1
                     optimun_echo = last_rpm
 
     
@@ -237,9 +237,10 @@ def get_temp():
     #print("самая высокая скорость кулера видеокарты!", rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)]) #вывели результат на экран
     #print("!!!",statusAlertSystem == True, gpuFanSetHive == 1, typeGpu == 0)
     try:
+        print(statusAlertSystem == True, gpuFanSetHive == 1, typeGpu == 0)
         if statusAlertSystem == True and gpuFanSetHive == 1 and typeGpu == 0:
-            print("зашли в проверку кулеров",round(rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)] - rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)]/10) , roond(rpm_fun_gpu[min(rpm_fun_gpu, key=rpm_fun_gpu.get)]))
-            if round(rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)] - rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)]/10) > roond(rpm_fun_gpu[min(rpm_fun_gpu, key=rpm_fun_gpu.get)]):
+            print("зашли в проверку кулеров",round(rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)] - rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)]/100*10) , round(rpm_fun_gpu[min(rpm_fun_gpu, key=rpm_fun_gpu.get)]))
+            if round(rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)] - rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)]/10) > round(rpm_fun_gpu[min(rpm_fun_gpu, key=rpm_fun_gpu.get)]):
                 print("обнаружена проблема с кулерами")
                 alertFan = True
                 problemNumberGpu = min(rpm_fun_gpu, key=rpm_fun_gpu.get)
@@ -249,7 +250,7 @@ def get_temp():
                 problemNumberGpu = None
         else:
             alertFan = False
-    except Exception:
+    except Exception as e:
         pass
     try:
         temp_gpu0 = temp_gpu[0]

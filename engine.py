@@ -48,6 +48,7 @@ key_slave = ''
 target_fan_opt_lock =0
 start_optimum = 0 
 mem_t = 0
+pass_round = 0
 
 def error511():
     send_mess(' Замечена ошибка 511, проверьте блок питания и прилигание охлаждения к GPU.', id_rig_in_server)
@@ -66,13 +67,15 @@ def active_cool_mod():
     global start_optimum                                                                                                                             
     global target_fan_opt_lock
     global mem_t
+    global pass_round
+
     if int(boost) < 1:
         boost = 1
 
     try:
         mem_t = int(mem_temp())                                                                                                              
         if int(mem_t) > 75:                                                                                                                            
-            boost_mem = round(int(const_rpm) /100 * (mem_t - 75))
+            boost_mem = int(const_rpm) /100 * (mem_t - 75)
             print('ПАМЯТЬ RAM =>',mem_t,'boost_mem =>',boost_mem )                                                                                                                
         else:                                                                                                                                        
             boost_mem = 0
@@ -116,7 +119,7 @@ def active_cool_mod():
                     old_hot_gpu = hot_gpu
                     time.sleep(20)
 
-            print('mem сравнение ',int(mem_t) >= 89)    
+                print('mem сравнение ',int(mem_t) >= 89)    
 
             elif  (optimum_on == 1) and (int(hot_gpu) <= int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) +2) and (int(mem_t) <=92):     
                 print("///////////////////////////////Применяю оптимум//////////////////////")
@@ -130,7 +133,7 @@ def active_cool_mod():
                     print('оставляю как есть')                                                                                                       
                     get_temp()
 
-                if (int(hot_gpu) == int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) + 2) or (int(hot_gpu)< old_hot_gpu) or (int(mem_t) > 92):            
+                if int(hot_gpu) == int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) + 2 or int(hot_gpu)< old_hot_gpu or int(mem_t) > 92:            
                     print('сбросил optimum_on stable_temp_round target_fan_opt_lock')                                                                
                     optimum_on = 0                                                                                                                   
                     stable_temp_round = 0                                                                                                            
@@ -141,20 +144,26 @@ def active_cool_mod():
             elif (stable_temp_round > 3) and (optimum_on == 0) and (int(mem_t) <= 90):  
                 get_temp()                                                                     
                 print("/////Температура стабильна, ищу оптимум ///")
-                optimum_fan = optimum_fan + round(round(int(const_rpm) / 100)*1)                                                                     
-                last_rpm = int(start_optimum) - int(optimum_fan)                                                                                  
-                print("значения после корекции", last_rpm)                                                                                           
-                os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                               
-                time.sleep(40)
-                get_temp()                                                                                                                           
-                old_hot_gpu = hot_gpu                                                                                                                
-                if  (int(mem_t) > 89 and int(mem_t) <= 90) or (int(optimum_temp) == int(hot_gpu)):                                                             
-                    optimum_on = 1                                                                                                                   
-                    print("ОПТИМУМ ГОТОВ", optimun_echo)
-                    old_hot_gpu = hot_gpu
-                    optimun_echo = last_rpm + round(round(int(const_rpm) / 100)*3)                                                                                                                           
+                if pass_round == 5 or pass_round == 0:
+                    print('pass_round',pass_round)
+                    optimum_fan = optimum_fan + int(int(int(const_rpm) / 100)*1)                                                                    
+                    last_rpm = int(start_optimum) - int(optimum_fan)                                                                                  
+                    print("значения после корекции", last_rpm)                                                                                           
+                    os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                               
+                    time.sleep(30)
+                    get_temp()                                                                                                                           
+                    old_hot_gpu = hot_gpu                                                                                                                
+                    if  int(mem_t) >= 88 or int(optimum_temp) == int(hot_gpu):                                                             
+                        optimum_on = 1                                                                                                                   
+                        print("ОПТИМУМ ГОТОВ", optimun_echo, 'mem_t', mem_t)
+                        old_hot_gpu = hot_gpu
+                        optimun_echo = last_rpm + int(int(int(const_rpm) / 100)*2)                                                                                                                           
+                    else:
+                        optimum_temp = int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) 
                 else:
-                    optimum_temp = int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2)                                       
+                    pass_round = pass_round + 1       
+                if  pass_round > 5:
+                    pass_round = 0                               
     
     elif (hot_gpu < terget_temp_min - 4):
         last_rpm = int(min_fan_rpm)

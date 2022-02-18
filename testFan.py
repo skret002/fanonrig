@@ -20,12 +20,13 @@ def testFan(id_rig):
         (status,output)=subprocess.getstatusoutput("sensors | grep -i fan2")
         rpm = output.replace('fan2:', '').replace('RPM', '').replace('(min = 0 RPM)', '').replace(' ', '').replace('(min=0)','')                                                                                                                                                                                                                                                                           
         if one_data_fan == 0:                                                                                                                                                                                                                                                 
-            if int(old_rpm) + 80 < int(rpm):   
+            if int(old_rpm) + 10 < int(rpm):   
                 pass                                                                                                                                                                                                                                     
             else:                                                                                                                                                                                                                                  
                 effective_rpm = int(rpm)
                 effective_handler = give_rpm
                 one_data_fan = 1
+                break
 
         old_rpm=rpm
 

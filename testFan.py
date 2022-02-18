@@ -37,7 +37,8 @@ def testFan(id_rig):
                                                                  'max_rpm':int(max_rpm),
                                                                  'effective_echo':effective_handler
                                                                  })
-
+    
+    os.system("reboot")
     return()
 if __name__ == '__main__':
     testFan()

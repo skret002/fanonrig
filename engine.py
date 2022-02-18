@@ -92,9 +92,9 @@ def active_cool_mod():
         #corect_boost = (int(const_rpm) / int(terget_temp_max - terget_temp_min)) * ((int(hot_gpu) - int(terget_temp_min)))+int(boost)+int(boost_mem)
         
         if (int(hot_gpu) >= int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) + 4) or (int(mem_t) >= 95):   
-            if int(mem_t) <= 90    
+            if int(mem_t) <= 90:    
                 boost_mem =  0 
-            elif (int(mem_t) > 90) and (int(mem_t) <= 95)
+            elif (int(mem_t) > 90) and (int(mem_t) <= 95):
                 boost_mem = int(boost_mem /2)               
             corect_boost = (int(const_rpm) / int(terget_temp_max - terget_temp_min)) * ((int(hot_gpu) - int(terget_temp_min))) + int(boost)+boost_mem
 
@@ -129,15 +129,20 @@ def active_cool_mod():
             elif optimum_on == 1:     
                 print("///////////////////////////////Применяю оптимум//////////////////////")
                 if int(hot_gpu) - int(temp_gpu_freeze) > 0:
-                    stab_balance =  int(int(int(const_rpm) / 100)*(int(hot_gpu) - int(temp_gpu_freeze)))
+                    stab_balance =  round((int(const_rpm) / 100) * (int(hot_gpu) - int(temp_gpu_freeze))*2)
                     print('stab_balance',stab_balance)
                     target_fan_opt_lock = 0
-                else:
-                    stab_balance = 0                
+                    old_stab_balance = stab_balance
+                elif int(old_stab_balance) > 0 and int(hot_gpu) - int(temp_gpu_freeze) <= 0:
+                    target_fan_opt_lock = 0
+                    stab_balance = 0
+                elif int(hot_gpu) - int(temp_gpu_freeze) <= 0:
+                    stab_balance = 0       
+
+
                 if (target_fan_opt_lock) == 0:
-                    optimun_echo = optimun_echo+ stab_balance
                     print(optimun_echo)                                                                                                              
-                    os.system("echo " + str(int(optimun_echo)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                  
+                    os.system("echo " + str(int(optimun_echo) + int(stab_balance)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                  
                     time.sleep(30)
                     get_temp()                                                                                                                       
                     target_fan_opt_lock = 1                                                                                                          
@@ -187,22 +192,22 @@ def active_cool_mod():
         #print(hot_gpu)
 
     elif (hot_gpu < terget_temp_min -2 and hot_gpu < terget_temp_min -3):
-        last_rpm = round(const_rpm / 10)
+        last_rpm = round(const_rpm / 20) #5%
         os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         #print("Температуры сильно ниже таргета ",last_rpm)
 
     elif (hot_gpu < terget_temp_min -2):
-        last_rpm = round(const_rpm / 100 * 15)
+        last_rpm = round(const_rpm / 100 * 10)
         os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         #print("температура ниже уровня, даю ",last_rpm)
 
     elif (hot_gpu == terget_temp_min - 2):
-        last_rpm = int(const_rpm / 100 * 20)
+        last_rpm = int(const_rpm / 100 * 15)
         os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         #print("температура ниже уровня но подходит к уровню удержания, даю ",last_rpm)
     
     elif (hot_gpu == terget_temp_min - 1):
-        last_rpm = int(const_rpm / 100 * 25)
+        last_rpm = int(const_rpm / 100 * 20)
         os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         #print("температура впритык к началу таргета ",last_rpm)
         #print(hot_gpu)

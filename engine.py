@@ -49,6 +49,7 @@ target_fan_opt_lock =0
 start_optimum = 0 
 mem_t = 0
 pass_round = 0
+temp_gpu_freeze = 0
 
 def error511():
     send_mess(' Замечена ошибка 511, проверьте блок питания и прилигание охлаждения к GPU.', id_rig_in_server)
@@ -68,6 +69,7 @@ def active_cool_mod():
     global target_fan_opt_lock
     global mem_t
     global pass_round
+    global temp_gpu_freeze
 
     if int(boost) < 1:
         boost = 1
@@ -126,12 +128,13 @@ def active_cool_mod():
 
             elif optimum_on == 1:     
                 print("///////////////////////////////Применяю оптимум//////////////////////")
+                if int(hot_gpu) - int(temp_gpu_freeze) > 0:
+                    stab_balance =  int(int(int(const_rpm) / 100)*(int(hot_gpu) - int(temp_gpu_freeze)))
+                    print('stab_balance',stab_balance)
+                    target_fan_opt_lock = 0
+                else:
+                    stab_balance = 0                
                 if (target_fan_opt_lock) == 0:
-                    if int(hot_gpu) - int(temp_gpu_freeze) > 0:
-                        stab_balance =  int(int(int(const_rpm) / 100)*(int(hot_gpu) - int(temp_gpu_freeze)))
-                        print('stab_balance',stab_balance)
-                    else:
-                        stab_balance = 0
                     optimun_echo = optimun_echo+ stab_balance
                     print(optimun_echo)                                                                                                              
                     os.system("echo " + str(int(optimun_echo)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                  

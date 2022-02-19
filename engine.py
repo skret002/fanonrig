@@ -88,51 +88,51 @@ def active_cool_mod():
     elif (hot_gpu < terget_temp_min - 4):
         get_temp()
         last_rpm = int(min_fan_rpm)
-        os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        subprocess.call("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         #print("температура сильно ниже таргета, даю  ",last_rpm)
         #print(hot_gpu)
 
     elif (hot_gpu < terget_temp_min -2 and hot_gpu < terget_temp_min -3):
         get_temp()
         last_rpm = round(const_rpm / 10) #10%
-        os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        subprocess.call("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         #print("Температуры сильно ниже таргета ",last_rpm)
 
     elif (hot_gpu < terget_temp_min -2):
         get_temp()
         last_rpm = round(const_rpm / 100 * 15)
-        os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        subprocess.call("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         #print("температура ниже уровня, даю ",last_rpm)
 
     elif (hot_gpu == terget_temp_min - 2):
         get_temp()
         last_rpm = int(const_rpm / 100 * 20)
-        os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        subprocess.call("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         #print("температура ниже уровня но подходит к уровню удержания, даю ",last_rpm)
     
     elif (hot_gpu == terget_temp_min - 1):
         get_temp()
         last_rpm = int(const_rpm / 100 * 25)
-        os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        subprocess.call("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         #print("температура впритык к началу таргета ",last_rpm)
         #print(hot_gpu)
 
     elif (hot_gpu == critical_temp):
         get_temp()
-        os.system("echo 250 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        subprocess.call("echo 250 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         #print("температура критическая, выполняю защитный алгоритм!")
         send_mess(' Температура достигла критического значения, вынужден остановить майнер', id_rig_in_server)
-        os.system("miner stop")
+        subprocess.call("miner stop")
         time.sleep(7)
-        os.system("miner stop")
+        subprocess.call("miner stop")
         #print("майнер остановлен")
 
     elif (hot_gpu >= critical_temp +5) :
         get_temp()
-        os.system("echo 250 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        subprocess.call("echo 250 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         print("температура выше критической на 5 , выполняю защитный алгоритм!")
         send_mess(' Температура карты привышает критическую, выключаю риг', id_rig_in_server)
-        os.system("sreboot shutdown")
+        subprocess.call("sreboot shutdown")
 
 
     print("ПОРОГ ВКЛЮЧЕНИЯ ОПЕРЕЖЕНИЯ",int(hot_gpu) >= int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) + 3,int(terget_temp_min))
@@ -150,7 +150,7 @@ def active_cool_mod():
 
             
             print("///// АКТИВИРОВАН РЕЖИМ С ОПЕРЕЖЕНИЕМ", int(corect_boost))
-            os.system("echo " + str(int(corect_boost)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                              
+            subprocess.call("echo " + str(int(corect_boost)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                              
             old_hot_gpu = hot_gpu
             stable_temp_round = 0                                                                                                                    
             optimum_on = 0                                                                                                                           
@@ -162,7 +162,7 @@ def active_cool_mod():
                     print('усредненый пересчитываю')                                                                                                 
                     last_rpm = (int(const_rpm) / int(terget_temp_max - terget_temp_min)) * ((int(hot_gpu) - int(terget_temp_min)))                   
                     last_rpm_s = (int(last_rpm)/100*80) + int(boost_mem)
-                    os.system("echo " + str(int(last_rpm_s)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                    
+                    subprocess.call("echo " + str(int(last_rpm_s)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                    
                     stable_temp_round = stable_temp_round + 1                                                                                        
                     print("///// АКТИВИРОВАН УСРЕДНЕНЫЙ РЕЖИМ", int(last_rpm),int(last_rpm_s), stable_temp_round)
                     time.sleep(10)                                                                                                                   
@@ -192,7 +192,7 @@ def active_cool_mod():
 
                 if (target_fan_opt_lock) == 0:
                     print(optimun_echo)                                                                                                              
-                    os.system("echo " + str(int(optimun_echo) + int(stab_balance)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                  
+                    subprocess.call("echo " + str(int(optimun_echo) + int(stab_balance)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                  
                     time.sleep(30)
                     get_temp()                                                                                                                       
                     target_fan_opt_lock = 1                                                                                                          
@@ -213,7 +213,7 @@ def active_cool_mod():
                 optimum_fan = optimum_fan + int(int(int(const_rpm) / 100)*1)                                                                    
                 last_rpm = int(start_optimum) - int(optimum_fan)                                                                                  
                 print("значения после корекции", last_rpm)                                                                                           
-                os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                               
+                subprocess.call("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                               
                 time.sleep(30)
                 get_temp()                                                                                                                           
                 old_hot_gpu = hot_gpu                                                                                                                
@@ -451,7 +451,7 @@ def test_key(rig_id='', rig_name=''):
                 f.seek(0)                                                                                                                 
                 f.write(json.dumps(json_data))                                                                                            
                 f.truncate()  
-            os.system("sreboot")
+            subprocess.call("sreboot")
 
         if len(str(rig_id)) != 0 and rig_name != r_name and rig_name != '':                                                               
             print("///// изменилось имя рига ///////")
@@ -461,7 +461,7 @@ def test_key(rig_id='', rig_name=''):
                 f.seek(0)                                                                                                                 
                 f.write(json.dumps(json_data))                                                                                            
                 f.truncate()                                                                                                              
-            os.system("sreboot")         
+            subprocess.call("sreboot")         
 
     if str(rig_id) == str(r_id) and len(rig_id) >2 and len(rig_name) >2:
         print("Защита пройдена и в этот раз я не сотру систему")
@@ -714,14 +714,14 @@ def engine_start():
         #print("ответ с сервера получен")
     else:
         #print("нет ответа с сервера")
-        os.system("sreboot")
+        subprocess.call("sreboot")
 
     if selected_mod == 0:
         #print("Выбран режиж удержания температур в диапазоне" , terget_temp_min, terget_temp_max)
         #print("начинаю вычесления, а пока что продуем систему")
         send_mess(' Интеллектуальный режим активирован', id_rig_in_server)
-        os.system("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
-        os.system("echo " + str(round(const_rpm / 100 * 30)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        subprocess.call("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
+        subprocess.call("echo " + str(round(const_rpm / 100 * 30)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         r = 0
         while 1 > 0:
             test_select_mod()
@@ -737,8 +737,8 @@ def engine_start():
     elif selected_mod == 1:
         print("Выбран ручной режим")
         send_mess(' Ручной режим активирован', id_rig_in_server)
-        os.system("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
-        os.system("echo " + str(round(const_rpm / 100 * 30)) + ">> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        subprocess.call("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
+        subprocess.call("echo " + str(round(const_rpm / 100 * 30)) + ">> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         r=0
         while 1 > 0:
             test_select_mod()
@@ -759,11 +759,11 @@ def engine_start():
                 if hot_gpu >= option1[i][0] and  hot_gpu <= option1[i][1]:
                     last_rpm = round(int(const_rpm / 100) * int(i))
                     print("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-                    os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+                    subprocess.call("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
                     print("выдаю  ",i,"%",  "горячая карта ", hot_gpu)
     elif selected_mod == 2:
         print("Выбран статичный режим")
-        os.system("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
+        subprocess.call("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
         send_mess(' Статичный режим активирован', id_rig_in_server)
         r=0
         while 1 > 0:
@@ -778,7 +778,7 @@ def engine_start():
                 get_temp()
                 test_select_mod()
                 option = round(const_rpm / 100 * int(option2))
-                os.system("echo " + str(option) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+                subprocess.call("echo " + str(option) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
                 print("echo " + str(option) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
 
 if __name__ == '__main__':

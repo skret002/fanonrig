@@ -48,8 +48,8 @@ key_slave = ''
 target_fan_opt_lock =0
 start_optimum = 0 
 mem_t = 0
-pass_round = 0
 temp_gpu_freeze = 0
+old_stab_balance = 0
 
 def error511():
     send_mess(' Замечена ошибка 511, проверьте блок питания и прилигание охлаждения к GPU.', id_rig_in_server)
@@ -68,8 +68,8 @@ def active_cool_mod():
     global start_optimum                                                                                                                             
     global target_fan_opt_lock
     global mem_t
-    global pass_round
     global temp_gpu_freeze
+    global old_stab_balance
 
     if int(boost) < 1:
         boost = 1
@@ -129,7 +129,7 @@ def active_cool_mod():
             elif optimum_on == 1:     
                 print("///////////////////////////////Применяю оптимум//////////////////////")
                 if int(hot_gpu) - int(temp_gpu_freeze) > 0:
-                    stab_balance =  round((int(const_rpm) / 100) * (int(hot_gpu) - int(temp_gpu_freeze))*2)
+                    stab_balance =  round((int(const_rpm) / 100) * (int(hot_gpu) - int(temp_gpu_freeze))*3)
                     print('stab_balance',stab_balance)
                     target_fan_opt_lock = 0
                     old_stab_balance = stab_balance
@@ -159,31 +159,25 @@ def active_cool_mod():
             elif (stable_temp_round > 3) and (optimum_on == 0) and (int(mem_t) <= 90):  
                 get_temp()                                                                     
                 print("/////Температура стабильна, ищу оптимум ///")
-                if pass_round == 5 or pass_round == 0:
-                    print('pass_round',pass_round)
-                    optimum_fan = optimum_fan + int(int(int(const_rpm) / 100)*1)                                                                    
-                    last_rpm = int(start_optimum) - int(optimum_fan)                                                                                  
-                    print("значения после корекции", last_rpm)                                                                                           
-                    os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                               
-                    time.sleep(30)
-                    get_temp()                                                                                                                           
-                    old_hot_gpu = hot_gpu                                                                                                                
-                    if  int(mem_t) >= 88 or int(optimum_temp) == int(hot_gpu):
-                        print('optTRIGER', int(mem_t) >= 88 , int(optimum_temp) == int(hot_gpu))                                                             
-                        optimum_on = 1                                                                                                                   
-                        print("ОПТИМУМ ГОТОВ", optimun_echo, 'mem_t', mem_t)
-                        old_hot_gpu = hot_gpu
-                        optimun_echo = last_rpm + int(int(int(const_rpm) / 100)*2)
-                        temp_gpu_freeze = hot_gpu
+                print('pass_round',pass_round)
+                optimum_fan = optimum_fan + int(int(int(const_rpm) / 100)*1)                                                                    
+                last_rpm = int(start_optimum) - int(optimum_fan)                                                                                  
+                print("значения после корекции", last_rpm)                                                                                           
+                os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                               
+                time.sleep(30)
+                get_temp()                                                                                                                           
+                old_hot_gpu = hot_gpu                                                                                                                
+                if  int(mem_t) >= 88 or int(optimum_temp) == int(hot_gpu):
+                    print('optTRIGER', int(mem_t) >= 88 , int(optimum_temp) == int(hot_gpu))                                                             
+                    optimum_on = 1                                                                                                                   
+                    print("ОПТИМУМ ГОТОВ", optimun_echo, 'mem_t', mem_t)
+                    old_hot_gpu = hot_gpu
+                    optimun_echo = last_rpm + int(int(int(const_rpm) / 100)*2)
+                    temp_gpu_freeze = hot_gpu
 
-                    else:
-                        optimum_temp = int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) 
                 else:
-                    pass_round = pass_round + 1  
-                    time.sleep(30)     
-                if  pass_round > 5:
-                    pass_round = 0        
-                    old_hot_gpu = hot_gpu                       
+                    optimum_temp = int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) 
+                
     
     elif (hot_gpu < terget_temp_min - 4):
         last_rpm = int(min_fan_rpm)

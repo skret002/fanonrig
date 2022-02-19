@@ -85,6 +85,56 @@ def active_cool_mod():
         mem_t = 0
         boost_mem = 0
 
+    elif (hot_gpu < terget_temp_min - 4):
+        get_temp()
+        last_rpm = int(min_fan_rpm)
+        os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        #print("температура сильно ниже таргета, даю  ",last_rpm)
+        #print(hot_gpu)
+
+    elif (hot_gpu < terget_temp_min -2 and hot_gpu < terget_temp_min -3):
+        get_temp()
+        last_rpm = round(const_rpm / 10) #10%
+        os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        #print("Температуры сильно ниже таргета ",last_rpm)
+
+    elif (hot_gpu < terget_temp_min -2):
+        get_temp()
+        last_rpm = round(const_rpm / 100 * 15)
+        os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        #print("температура ниже уровня, даю ",last_rpm)
+
+    elif (hot_gpu == terget_temp_min - 2):
+        get_temp()
+        last_rpm = int(const_rpm / 100 * 20)
+        os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        #print("температура ниже уровня но подходит к уровню удержания, даю ",last_rpm)
+    
+    elif (hot_gpu == terget_temp_min - 1):
+        get_temp()
+        last_rpm = int(const_rpm / 100 * 25)
+        os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        #print("температура впритык к началу таргета ",last_rpm)
+        #print(hot_gpu)
+
+    elif (hot_gpu == critical_temp):
+        get_temp()
+        os.system("echo 250 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        #print("температура критическая, выполняю защитный алгоритм!")
+        send_mess(' Температура достигла критического значения, вынужден остановить майнер', id_rig_in_server)
+        os.system("miner stop")
+        time.sleep(7)
+        os.system("miner stop")
+        #print("майнер остановлен")
+
+    elif (hot_gpu >= critical_temp +5) :
+        get_temp()
+        os.system("echo 250 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        print("температура выше критической на 5 , выполняю защитный алгоритм!")
+        send_mess(' Температура карты привышает критическую, выключаю риг', id_rig_in_server)
+        os.system("sreboot shutdown")
+
+
     print("ПОРОГ ВКЛЮЧЕНИЯ ОПЕРЕЖЕНИЯ",int(hot_gpu) >= int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) + 3,int(terget_temp_min))
     print("optimum_on",optimum_on)
     
@@ -107,15 +157,15 @@ def active_cool_mod():
             time.sleep(10)                                                                                                                           
             get_temp()   
         else:    
-            if (optimum_on == 0) and (stable_temp_round <= 3) and (int(mem_t) <95):
+            if (optimum_on == 0) and (stable_temp_round <= 15) and (int(mem_t) <95):
                 if int(old_hot_gpu) != int(hot_gpu):
                     print('усредненый пересчитываю')                                                                                                 
                     last_rpm = (int(const_rpm) / int(terget_temp_max - terget_temp_min)) * ((int(hot_gpu) - int(terget_temp_min)))                   
-                    last_rpm_s = int(last_rpm)/100*80 + int(boost_mem)
+                    last_rpm_s = (int(last_rpm)/100*80) + int(boost_mem)
                     os.system("echo " + str(int(last_rpm_s)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                    
                     stable_temp_round = stable_temp_round + 1                                                                                        
                     print("///// АКТИВИРОВАН УСРЕДНЕНЫЙ РЕЖИМ", int(last_rpm),int(last_rpm_s), stable_temp_round)
-                    time.sleep(20)                                                                                                                   
+                    time.sleep(10)                                                                                                                   
                     get_temp()                                                                                                                       
                     start_optimum = last_rpm_s                                                                                                       
                 else:                                                                                                                                
@@ -123,7 +173,7 @@ def active_cool_mod():
                     get_temp()                                                                                                                       
                     stable_temp_round = stable_temp_round + 1                                                                                        
                     old_hot_gpu = hot_gpu
-                    time.sleep(20)
+                    time.sleep(10)
   
 
             elif optimum_on == 1:     
@@ -156,7 +206,7 @@ def active_cool_mod():
                     stable_temp_round = 0                                                                                                            
                     target_fan_opt_lock = 0
 
-            elif (stable_temp_round > 3) and (optimum_on == 0) and (int(mem_t) <= 90):  
+            elif (stable_temp_round > 15) and (optimum_on == 0) and (int(mem_t) <= 90):  
                 get_temp()                                                                     
                 print("/////Температура стабильна, ищу оптимум ///")
                 print('pass_round',pass_round)
@@ -177,49 +227,7 @@ def active_cool_mod():
 
                 else:
                     optimum_temp = int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) 
-                
-    
-    elif (hot_gpu < terget_temp_min - 4):
-        last_rpm = int(min_fan_rpm)
-        os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-        #print("температура сильно ниже таргета, даю  ",last_rpm)
-        #print(hot_gpu)
 
-    elif (hot_gpu < terget_temp_min -2 and hot_gpu < terget_temp_min -3):
-        last_rpm = round(const_rpm / 20) #5%
-        os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-        #print("Температуры сильно ниже таргета ",last_rpm)
-
-    elif (hot_gpu < terget_temp_min -2):
-        last_rpm = round(const_rpm / 100 * 10)
-        os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-        #print("температура ниже уровня, даю ",last_rpm)
-
-    elif (hot_gpu == terget_temp_min - 2):
-        last_rpm = int(const_rpm / 100 * 15)
-        os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-        #print("температура ниже уровня но подходит к уровню удержания, даю ",last_rpm)
-    
-    elif (hot_gpu == terget_temp_min - 1):
-        last_rpm = int(const_rpm / 100 * 20)
-        os.system("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-        #print("температура впритык к началу таргета ",last_rpm)
-        #print(hot_gpu)
-
-    elif (hot_gpu == critical_temp):
-        os.system("echo 250 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-        #print("температура критическая, выполняю защитный алгоритм!")
-        send_mess(' Температура достигла критического значения, вынужден остановить майнер', id_rig_in_server)
-        os.system("miner stop")
-        time.sleep(7)
-        os.system("miner stop")
-        #print("майнер остановлен")
-
-    elif (hot_gpu >= critical_temp +5) :
-        os.system("echo 250 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-        print("температура выше критической на 5 , выполняю защитный алгоритм!")
-        send_mess(' Температура карты привышает критическую, выключаю риг', id_rig_in_server)
-        os.system("sreboot shutdown")
 
 def addFanData(rpmfun, temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gpu5,temp_gpu6,temp_gpu7,rpm_fun_gpu, alertFan,problemNumberGpu, hot_gpu):
     #print('ЗАШЛИ В ВЫДАЧУ ДАННЫХ О КУЛЕРАХ')

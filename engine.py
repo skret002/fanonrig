@@ -77,62 +77,13 @@ def active_cool_mod():
     try:
         mem_t = int(mem_temp())                                                                                                              
         if int(mem_t) > 75:                                                                                                                            
-            boost_mem = int(const_rpm) /100 * (mem_t - 75)
+            boost_mem = (int(const_rpm) /100) * (mem_t - 75)
             print('ПАМЯТЬ RAM =>',mem_t,'boost_mem =>',boost_mem )                                                                                                                
         else:                                                                                                                                        
             boost_mem = 0
     except Exception:
         mem_t = 0
         boost_mem = 0
-
-    if (hot_gpu < terget_temp_min - 4):
-        get_temp()
-        last_rpm = int(min_fan_rpm)
-        subprocess.getstatusoutput("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-        #print("температура сильно ниже таргета, даю  ",last_rpm)
-        #print(hot_gpu)
-
-    elif (hot_gpu < terget_temp_min -2 and hot_gpu < terget_temp_min -3):
-        get_temp()
-        last_rpm = round(const_rpm / 10) #10%
-        subprocess.getstatusoutput("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-        #print("Температуры сильно ниже таргета ",last_rpm)
-
-    elif (hot_gpu < terget_temp_min -2):
-        get_temp()
-        last_rpm = round(const_rpm / 100 * 15)
-        subprocess.getstatusoutput("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-        #print("температура ниже уровня, даю ",last_rpm)
-
-    elif (hot_gpu == terget_temp_min - 2):
-        get_temp()
-        last_rpm = int(const_rpm / 100 * 20)
-        subprocess.getstatusoutput("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-        #print("температура ниже уровня но подходит к уровню удержания, даю ",last_rpm)
-    
-    elif (hot_gpu == terget_temp_min - 1):
-        get_temp()
-        last_rpm = int(const_rpm / 100 * 25)
-        subprocess.getstatusoutput("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-        #print("температура впритык к началу таргета ",last_rpm)
-        #print(hot_gpu)
-
-    elif (hot_gpu == critical_temp):
-        get_temp()
-        subprocess.getstatusoutput("echo 250 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-        #print("температура критическая, выполняю защитный алгоритм!")
-        send_mess(' Температура достигла критического значения, вынужден остановить майнер', id_rig_in_server)
-        subprocess.getstatusoutput("miner stop")
-        time.sleep(7)
-        subprocess.getstatusoutput("miner stop")
-        #print("майнер остановлен")
-
-    elif (hot_gpu >= critical_temp +5) :
-        get_temp()
-        subprocess.getstatusoutput("echo 250 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-        print("температура выше критической на 5 , выполняю защитный алгоритм!")
-        send_mess(' Температура карты привышает критическую, выключаю риг', id_rig_in_server)
-        subprocess.getstatusoutput("sreboot shutdown")
 
 
     print("ПОРОГ ВКЛЮЧЕНИЯ ОПЕРЕЖЕНИЯ",int(hot_gpu) >= int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) + 3,int(terget_temp_min))
@@ -227,7 +178,12 @@ def active_cool_mod():
 
                 else:
                     optimum_temp = int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) 
-
+    else:
+        get_temp()
+        last_rpm = int(min_fan_rpm)
+        subprocess.getstatusoutput("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        print("температура сильно ниже таргета, даю  ",last_rpm)
+        print(hot_gpu)
 
 def addFanData(rpmfun, temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gpu5,temp_gpu6,temp_gpu7,rpm_fun_gpu, alertFan,problemNumberGpu, hot_gpu):
     #print('ЗАШЛИ В ВЫДАЧУ ДАННЫХ О КУЛЕРАХ')
@@ -726,9 +682,12 @@ def engine_start():
         while 1 > 0:
             test_select_mod()
             time.sleep(1)
-            get_setting_server(id_rig_in_server, key_slave)
-            get_temp()
-            active_cool_mod()
+            try:
+                get_setting_server(id_rig_in_server, key_slave)
+                get_temp()
+                active_cool_mod()
+            except Exception:
+                engine_start()
             r = r+1
             if r == 240:
                 r=0

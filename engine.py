@@ -85,7 +85,7 @@ def active_cool_mod():
         mem_t = 0
         boost_mem = 0
 
-    elif (hot_gpu < terget_temp_min - 4):
+    if (hot_gpu < terget_temp_min - 4):
         get_temp()
         last_rpm = int(min_fan_rpm)
         subprocess.call("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
@@ -165,7 +165,7 @@ def active_cool_mod():
                     subprocess.call("echo " + str(int(last_rpm_s)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                    
                     stable_temp_round = stable_temp_round + 1                                                                                        
                     print("///// АКТИВИРОВАН УСРЕДНЕНЫЙ РЕЖИМ", int(last_rpm),int(last_rpm_s), stable_temp_round)
-                    time.sleep(10)                                                                                                                   
+                    time.sleep(20)                                                                                                                   
                     get_temp()                                                                                                                       
                     start_optimum = last_rpm_s                                                                                                       
                 else:                                                                                                                                
@@ -173,7 +173,7 @@ def active_cool_mod():
                     get_temp()                                                                                                                       
                     stable_temp_round = stable_temp_round + 1                                                                                        
                     old_hot_gpu = hot_gpu
-                    time.sleep(10)
+                    time.sleep(20)
   
 
             elif optimum_on == 1:     

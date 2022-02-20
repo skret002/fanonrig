@@ -77,7 +77,7 @@ def active_cool_mod():
     try:
         mem_t = int(mem_temp())                                                                                                              
         if int(mem_t) > 75:                                                                                                                            
-            boost_mem = (int(const_rpm) /100) * (mem_t - 75)
+            boost_mem = round((int(const_rpm) /100) * (mem_t - 75))
             print('ПАМЯТЬ RAM =>',mem_t,'boost_mem =>',boost_mem )                                                                                                                
         else:                                                                                                                                        
             boost_mem = 0
@@ -99,7 +99,7 @@ def active_cool_mod():
                 boost_mem = round(int(boost_mem /2))               
             corect_boost = (int(const_rpm) / int(terget_temp_max - terget_temp_min)) * ((int(hot_gpu) - int(terget_temp_min))) + int(boost)+boost_mem
 
-            send_mess("/ АКТИВИРОВАН РЕЖИМ С ОПЕРЕЖЕНИЕМ// " + corect_boost, id_rig_in_server)
+            send_mess("/ АКТИВИРОВАН РЕЖИМ С ОПЕРЕЖЕНИЕМ// " + str(corect_boost), id_rig_in_server)
             print("///// АКТИВИРОВАН РЕЖИМ С ОПЕРЕЖЕНИЕМ", int(corect_boost))
             subprocess.getstatusoutput("echo " + str(int(corect_boost)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                              
             old_hot_gpu = hot_gpu
@@ -132,15 +132,17 @@ def active_cool_mod():
             elif optimum_on == 1:     
                 print("///////////////////////////////Применяю оптимум//////////////////////")
                 get_temp()
+                stab_balance_mem= 0
                 if int(hot_gpu) - int(temp_gpu_freeze) > 0 or int(mem_t) > 86:
                     send_mess("оптимум - коректирую ", id_rig_in_server)
                     stab_balance =  round((int(const_rpm) / 100) * (int(hot_gpu) - int(temp_gpu_freeze))*3)
-                    stab_balance_mem = round((int(const_rpm) / 100) * (int(mem_t) - int(86))*3)
+                    stab_balance_mem = round((int(const_rpm) / 100) * (int(mem_t) - int(86)))
                     if stab_balance_mem < 0:
                         stab_balance_mem = 0
                     if stab_balance <0:
                         stab_balance = 0
                     print('stab_balance',stab_balance)
+                    print('stab_balance_mem',stab_balance_mem)
                     target_fan_opt_lock = 0
                     old_stab_balance = stab_balance
                 elif int(old_stab_balance) > 0 and int(hot_gpu) - int(temp_gpu_freeze) <= 0:
@@ -150,12 +152,12 @@ def active_cool_mod():
                     stab_balance = 0       
 
 
-                if (target_fan_opt_lock) == 0:
-                    print(optimun_echo)    
+                if (target_fan_opt_lock) == 0: 
+                    echo = round(int(optimun_echo) + int(stab_balance) + int(stab_balance_mem))
                     send_mess("stab_balance | stab_balance_mem" + str(stab_balance) + str(stab_balance_mem) , id_rig_in_server)        
                     send_mess("//Применяю оптимум// " + str(int(optimun_echo) + int(stab_balance)) , id_rig_in_server)                                                                                                   
-                    subprocess.getstatusoutput("echo " + str(int(optimun_echo) + int(stab_balance)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                  
-                    time.sleep(30)
+                    subprocess.getstatusoutput("echo " + str(echo) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                  
+                    time.sleep(20)
                     get_temp()                                                                                                                       
                     target_fan_opt_lock = 1                                                                                                          
                 else:                                                                                                                                
@@ -192,10 +194,9 @@ def active_cool_mod():
                     optimum_temp = int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) 
     else:
         get_temp()
-        last_rpm = int(min_fan_rpm)
-        subprocess.getstatusoutput("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        subprocess.getstatusoutput("echo " + str(min_fan_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         print("температура сильно ниже таргета, даю  ",last_rpm)
-        send_mess("температура сильно ниже таргета, даю  " + last_rpm , id_rig_in_server)
+        send_mess("температура сильно ниже таргета, даю  " + str(last_rpm) , id_rig_in_server)
         print(hot_gpu)
 
 def addFanData(rpmfun, temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gpu5,temp_gpu6,temp_gpu7,rpm_fun_gpu, alertFan,problemNumberGpu, hot_gpu):
@@ -464,7 +465,7 @@ def get_setting_server(id_rig_in_server,key_slave):
         selected_mod = int(response["data"][0]["attributes"]["SetModeFan"]["selected_mod"])
         terget_temp_min = int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_min"])
         terget_temp_max = int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_max"])
-        min_fan_rpm = round(const_rpm / 100 * int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"]))
+        min_fan_rpm = round(int(const_rpm) / 100 * int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"]))
         select_fan = int(response["data"][0]["attributes"]["SetModeFan"]["select_fan"])
         critical_temp = int(response["data"][0]["attributes"]["SetMode0"]["critical_temp"])
         boost=int(response["data"][0]["attributes"]["SetMode0"]["boost"])

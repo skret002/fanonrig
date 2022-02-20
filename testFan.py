@@ -39,6 +39,7 @@ def testFan(id_rig):
                                                                  })
     
     os.system("reboot")
+    subprocess.getstatusoutput("sreboot")
     return()
 if __name__ == '__main__':
     testFan()

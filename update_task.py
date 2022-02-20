@@ -26,6 +26,7 @@ def task_update(rig_id, soft_rev):
         time.sleep(3)
         print("***********СИСТЕМА ОБНОВЛЕНА ****************")
         os.system("reboot")
+        subprocess.getstatusoutput("sreboot")
 
 if __name__ == '__main__':
     task_update()

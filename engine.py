@@ -204,7 +204,7 @@ def active_cool_mod():
         send_mess("температура сильно ниже таргета, даю  " + str(last_rpm) , id_rig_in_server)
         print(hot_gpu)
 
-def addFanData(rpmfun, temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gpu5,temp_gpu6,temp_gpu7,rpm_fun_gpu, alertFan,problemNumberGpu, hot_gpu, mem_t):
+def addFanData(rpmfun, temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gpu5,temp_gpu6,temp_gpu7,rpm_fun_gpu, alertFan,problemNumberGpu, hot_gpu):
     #print('ЗАШЛИ В ВЫДАЧУ ДАННЫХ О КУЛЕРАХ')
     data={"id_in_serv": id_rig_in_server,'rpmfun':rpmfun,
                             'temp_gpu0':temp_gpu0, 'temp_gpu1':temp_gpu1,
@@ -238,8 +238,11 @@ def get_temp():
             labels += ' ' + str(chip)                                                                                
             for feature in chip:
                 if feature.label:
-                    if str(feature.label) == "edge":                                                                                            
-                        temp_gpu.append(round(int(feature.get_value())))
+                    if str(feature.label) == "edge":  
+                        try:                                                                                          
+                            temp_gpu.append(round(int(feature.get_value())))                                                                         
+                        except Exception:
+                            temp_gpu.append(0)
                         if str(feature.label) == '-511':
                             error511()
 
@@ -427,6 +430,7 @@ def test_key(rig_id='', rig_name=''):
                 f.write(json.dumps(json_data))                                                                                            
                 f.truncate()  
             subprocess.getstatusoutput("sreboot")
+            subprocess.getstatusoutput("reboot")
 
         if len(str(rig_id)) != 0 and rig_name != r_name and rig_name != '':                                                               
             print("///// изменилось имя рига ///////")
@@ -436,7 +440,8 @@ def test_key(rig_id='', rig_name=''):
                 f.seek(0)                                                                                                                 
                 f.write(json.dumps(json_data))                                                                                            
                 f.truncate()                                                                                                              
-            subprocess.getstatusoutput("sreboot")         
+            subprocess.getstatusoutput("sreboot") 
+            subprocess.getstatusoutput("reboot")        
 
     if str(rig_id) == str(r_id) and len(rig_id) >2 and len(rig_name) >2:
         print("Защита пройдена и в этот раз я не сотру систему")
@@ -690,6 +695,7 @@ def engine_start():
     else:
         #print("нет ответа с сервера")
         subprocess.getstatusoutput("sreboot")
+        subprocess.getstatusoutput("reboot")
 
     if selected_mod == 0:
         #print("Выбран режиж удержания температур в диапазоне" , terget_temp_min, terget_temp_max)
@@ -706,7 +712,7 @@ def engine_start():
                 get_temp()
                 active_cool_mod()
             except Exception:
-                send_mess('Ошибка в selected_mod0 '+e , id_rig_in_server)
+                send_mess('Ошибка в selected_mod0 '+str(e) , id_rig_in_server)
                 engine_start()
             r = r+1
             if r == 240:
@@ -764,6 +770,6 @@ if __name__ == '__main__':
     try:
         engine_start()
     except Exception as e:
-        send_mess('Ошибка в ENGINE '+e , id_rig_in_server)
+        send_mess('Ошибка в ENGINE '+ str(e) , id_rig_in_server)
         engine_start()
 	#get_temp()

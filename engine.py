@@ -50,6 +50,7 @@ start_optimum = 0
 mem_t = 0
 temp_gpu_freeze = 0
 old_stab_balance = 0
+optimum_round = 0
 
 def error511():
     send_mess(' Замечена ошибка 511, проверьте блок питания и прилигание охлаждения к GPU.', id_rig_in_server)
@@ -70,6 +71,7 @@ def active_cool_mod():
     global mem_t
     global temp_gpu_freeze
     global old_stab_balance
+    global optimum_round
 
     if int(boost) < 1:
         boost = 1
@@ -133,10 +135,12 @@ def active_cool_mod():
                 print("///////////////////////////////Применяю оптимум//////////////////////")
                 get_temp()
                 stab_balance_mem= 0
-                if int(hot_gpu) - int(temp_gpu_freeze) > 0 or int(mem_t) > 86:
+                stab_balance = 0 
+                optimum_round = optimum_round + 1
+                if (int(hot_gpu) - int(temp_gpu_freeze) > 0) or (int(mem_t) > 86) or (optimum_round > 10):
                     send_mess("оптимум - коректирую ", id_rig_in_server)
-                    stab_balance =  round((int(const_rpm) / 100) * (int(hot_gpu) - int(temp_gpu_freeze))*3)
-                    stab_balance_mem = round((int(const_rpm) / 100) * (int(mem_t) - int(86)))
+                    stab_balance =  round((int(const_rpm) / 100) * (int(hot_gpu) - int(temp_gpu_freeze))*2)
+                    stab_balance_mem = round((int(const_rpm) / 100) * (int(mem_t) - int(86))*1.5)
                     if stab_balance_mem < 0:
                         stab_balance_mem = 0
                     if stab_balance <0:
@@ -145,6 +149,7 @@ def active_cool_mod():
                     print('stab_balance_mem',stab_balance_mem)
                     target_fan_opt_lock = 0
                     old_stab_balance = stab_balance
+                    optimum_round = 0
                 elif int(old_stab_balance) > 0 and int(hot_gpu) - int(temp_gpu_freeze) <= 0:
                     target_fan_opt_lock = 0
                     stab_balance = 0
@@ -199,7 +204,7 @@ def active_cool_mod():
         send_mess("температура сильно ниже таргета, даю  " + str(last_rpm) , id_rig_in_server)
         print(hot_gpu)
 
-def addFanData(rpmfun, temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gpu5,temp_gpu6,temp_gpu7,rpm_fun_gpu, alertFan,problemNumberGpu, hot_gpu):
+def addFanData(rpmfun, temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gpu5,temp_gpu6,temp_gpu7,rpm_fun_gpu, alertFan,problemNumberGpu, hot_gpu, mem_t):
     #print('ЗАШЛИ В ВЫДАЧУ ДАННЫХ О КУЛЕРАХ')
     data={"id_in_serv": id_rig_in_server,'rpmfun':rpmfun,
                             'temp_gpu0':temp_gpu0, 'temp_gpu1':temp_gpu1,
@@ -208,7 +213,7 @@ def addFanData(rpmfun, temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gp
                             'temp_gpu6':temp_gpu6,'temp_gpu7':temp_gpu7,
                             'rpm_fun_gpu':rpm_fun_gpu,
                             'alertFan':alertFan, 'problemNumberGpu':problemNumberGpu,
-                            'hot_gpu':hot_gpu
+                            'hot_gpu':hot_gpu, 'hot_mem':mem_t
                             }
     r = requests.post("http://ggc.center:8000/add_and_read_fandata/", data=data)
 	#print(response.json())

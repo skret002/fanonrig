@@ -139,8 +139,8 @@ def active_cool_mod():
                 optimum_round = optimum_round + 1
                 if (int(hot_gpu) - int(temp_gpu_freeze) > 0) or (int(mem_t) > 86) or (optimum_round > 10):
                     send_mess("оптимум - коректирую ", id_rig_in_server)
-                    stab_balance =  round((int(const_rpm) / 100) * (int(hot_gpu) - int(temp_gpu_freeze))*2)
-                    stab_balance_mem = round((int(const_rpm) / 100) * (int(mem_t) - int(86))*1.5)
+                    stab_balance =  int((int(const_rpm) / 100) * (int(hot_gpu) - int(temp_gpu_freeze))*2)
+                    stab_balance_mem = int((int(const_rpm) / 100) * (int(mem_t) - int(86))*1.5)
                     if stab_balance_mem < 0:
                         stab_balance_mem = 0
                     if stab_balance <0:

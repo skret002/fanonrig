@@ -439,9 +439,9 @@ def test_key(rig_id='', rig_name=''):
                 json_data['rig_name'] = str(r_name)
                 f.seek(0)                                                                                                                 
                 f.write(json.dumps(json_data))                                                                                            
-                f.truncate()                                                                                                              
-            subprocess.getstatusoutput("sreboot") 
-            subprocess.getstatusoutput("reboot")        
+                f.truncate() 
+            os.system("reboot")
+            subprocess.getstatusoutput("sreboot")        
 
     if str(rig_id) == str(r_id) and len(rig_id) >2 and len(rig_name) >2:
         print("Защита пройдена и в этот раз я не сотру систему")

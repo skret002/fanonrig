@@ -205,6 +205,7 @@ def active_cool_mod():
         subprocess.getstatusoutput("echo " + str(min_fan_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         #print("температура сильно ниже таргета, даю  ",last_rpm)
         send_mess("температура сильно ниже таргета, даю  " + str(min_fan_rpm) , id_rig_in_server)
+        time.sleep(15)
         #print(hot_gpu)
 
 def addFanData(rpmfun, temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gpu5,temp_gpu6,temp_gpu7,rpm_fun_gpu, alertFan,problemNumberGpu, hot_gpu):
@@ -689,7 +690,13 @@ def engine_start():
     rig_name = str(text["rig_name"])
     soft_rev = str(text["soft_rev"])
     old_selected_mod = selected_mod
-    test_key(rig_id, rig_name)
+    
+    r_pass = 1
+    while r_pass > 0:
+        if test_key(rig_id, rig_name) == True:
+            r_pass = 0
+        else:
+            pass
     
     # передаем данные о риге и получаем ответ с id
     sendInfoRig(rig_id,rig_name, key_slave)
@@ -719,8 +726,8 @@ def engine_start():
                 get_setting_server(id_rig_in_server, key_slave)
                 get_temp()
                 active_cool_mod()
-            except Exception:
-                #send_mess('Ошибка в selected_mod0 '+str(e) , id_rig_in_server)
+            except Exceptionas e:
+                send_mess('Ошибка в selected_mod0 '+str(e) , id_rig_in_server)
                 engine_start()
             r = r+1
             if r == 240:

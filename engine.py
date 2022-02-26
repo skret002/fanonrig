@@ -89,7 +89,7 @@ def active_cool_mod():
         boost_mem = 0
 
     #print("ПОРОГ ВКЛЮЧЕНИЯ ОПЕРЕЖЕНИЯ",int(hot_gpu) >= int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) + 3,int(terget_temp_min))
-    if (int(hot_gpu) == int(critical_temp)) and :
+    if int(hot_gpu) >= int(critical_temp):
         subprocess.getstatusoutput("echo 255" + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         subprocess.getstatusoutput("miner stop")
         send_mess("МАЙНЕР ОСТАНОВЛЕН, ОПАСНАЯ ТЕМПЕРАТУРА " + str(hot_gpu), id_rig_in_server)

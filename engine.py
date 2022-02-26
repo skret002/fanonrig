@@ -731,8 +731,8 @@ def engine_start():
                 task_update(id_rig_in_server, str(soft_rev))
             try:
                 get_setting_server1(id_rig_in_server, key_slave)
-                    #print("ответ с сервера получен")
-                    test_select_mod()
+                #print("ответ с сервера получен")
+                test_select_mod()
             except Exception as e:
                 print("ERROR selected_mod1 " + str(e))	
             for i in option1:

@@ -685,7 +685,7 @@ def engine_start():
         engine_start()
 
     try:
-        if get_setting_server(id_rig_in_server, key_slave) == "true":
+        get_setting_server(id_rig_in_server, key_slave)
         #print("ответ с сервера получен")
     except Exception:
         #print("нет ответа с сервера")
@@ -730,7 +730,7 @@ def engine_start():
                 r=0
                 task_update(id_rig_in_server, str(soft_rev))
             try:
-                if get_setting_server1(id_rig_in_server, key_slave) == "true":
+                get_setting_server1(id_rig_in_server, key_slave)
                     #print("ответ с сервера получен")
                     test_select_mod()
             except Exception as e:
@@ -754,7 +754,7 @@ def engine_start():
                 r=0
                 task_update(id_rig_in_server, str(soft_rev))
             try:
-                get_setting_server2(id_rig_in_server, key_slave) == "true":
+                get_setting_server2(id_rig_in_server, key_slave)
                 #print("ответ с сервера получен")
             except Exception as e:
                 print("ERROR selected_mod2 " + str(e))  

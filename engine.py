@@ -112,11 +112,16 @@ def active_cool_mod():
             get_temp()   
             return()
         else:    
-            if (optimum_on == 0) and (stable_temp_round <= 10) and (int(mem_t) <95):
-                if int(old_hot_gpu) != int(hot_gpu):
+            if (optimum_on == 0) and (stable_temp_round <= 15) and (int(mem_t) <95):
+                if int(old_hot_gpu) != int(hot_gpu) or int(hot_gpu) > int(optimum_temp):
                     print('усредненый пересчитываю')                                                                                                 
                     last_rpm = (int(const_rpm) / (int(terget_temp_max - terget_temp_min))) * ((int(hot_gpu) - int(terget_temp_min)))                   
-                    last_rpm_s = round(((int(last_rpm)/100)*80) + int(boost_mem))
+                    if int(hot_gpu) > int(optimum_temp):
+                        print('Применяю агресивно-усредненый') 
+                        last_rpm_s = ((int(last_rpm)/100) + int(boost_mem))
+                        stable_temp_round = 0
+                    else:
+                        last_rpm_s = round(((int(last_rpm)/100)*80) + int(boost_mem))
                     subprocess.getstatusoutput("echo " + str(int(last_rpm_s)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                    
                     stable_temp_round = stable_temp_round + 1
                     start_optimum = last_rpm_s   
@@ -133,7 +138,7 @@ def active_cool_mod():
                     time.sleep(20)
                     return()
   
-            elif (stable_temp_round > 10) and (optimum_on == 0) and (int(mem_t) <= 95):  
+            elif (stable_temp_round > 15) and (optimum_on == 0) and (int(mem_t) <= 95):  
                 print("/////Температура стабильна, ищу оптимум ///")
                 get_temp()
                 optimum_fan = optimum_fan + int(int(const_rpm) / 100) * 1                                                                 
@@ -143,7 +148,9 @@ def active_cool_mod():
                 subprocess.getstatusoutput("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                               
                 time.sleep(30)
                 get_temp()                                                                                                                           
-                old_hot_gpu = hot_gpu                                                                                                                
+                old_hot_gpu = hot_gpu    
+                if int(hot_gpu) > int(optimum_temp):
+                    stable_temp_round = 0                                                                                                                
                 if  (int(mem_t) >= 88) or (int(optimum_temp) == int(hot_gpu)):
                     print('optTRIGER', int(mem_t) >= 88 , int(optimum_temp) == int(hot_gpu))                                                             
                     optimum_on = 1                                                                                                                   

@@ -116,14 +116,12 @@ def active_cool_mod():
                 if int(old_hot_gpu) != int(hot_gpu) or int(hot_gpu) > int(optimum_temp):
                     print('усредненый пересчитываю')                                                                                                 
                     last_rpm = (int(const_rpm) / (int(terget_temp_max - terget_temp_min))) * ((int(hot_gpu) - int(terget_temp_min)))                   
-                    if int(hot_gpu) > int(optimum_temp) and int(hot_gpu) <= int(optimum_temp) + 1:
+                    if int(hot_gpu) >= int(optimum_temp)+1:
                         print('Применяю агресивно-усредненый 90') 
-                        last_rpm_s = round(((int(last_rpm)/100)*90) + int(boost_mem))
+                        last_rpm_s = (int(last_rpm)/100)*90 + int(boost_mem)
                         stable_temp_round = 0
-                    elif int(hot_gpu) > int(optimum_temp) + 1:
-                        last_rpm_s = int(last_rpm) + int(boost_mem)
                     else:
-                        last_rpm_s = round(((int(last_rpm)/100)*80) + int(boost_mem))
+                        last_rpm_s = int(((int(last_rpm)/100)*85) + int(boost_mem))
                     subprocess.getstatusoutput("echo " + str(int(last_rpm_s)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                    
                     stable_temp_round = stable_temp_round + 1
                     start_optimum = last_rpm_s   

@@ -4,7 +4,7 @@ from pprint import pprint #подключили Pprint для красоты в�
 from testFan import testFan
 from mem import mem_temp
 from handler_messeges import transmit_mess as send_mess
-from talk_from_hivi import communication_hive
+from talk_from_hive import communication_hive
 from update_task import task_update
 import os
 import subprocess
@@ -52,6 +52,7 @@ mem_t = 0
 temp_gpu_freeze = 0
 old_stab_balance = 0
 optimum_round = 0
+rigRpmFanMaximum = 0
 
 def error511():
     send_mess(' Замечена ошибка 511, проверьте блок питания и прилигание охлаждения к GPU.', id_rig_in_server)
@@ -452,6 +453,7 @@ def get_setting_server(id_rig_in_server,key_slave):
     print("ИЩУ MAX RPM", response["data"][0]["attributes"])
     if const_rpm == 0:
         #print("первое получение данных")
+        rigRpmFanMaximum = int(response["data"][0]["attributes"]["rigRpmFanMaximum"])
         const_rpm = int(response["data"][0]["attributes"]["effective_echo_fan"])
         typeGpu = int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"])
         gpuFanSetHive = int(response["data"][0]["attributes"]["AlertFan"]["gpuFanSetHive"])
@@ -531,6 +533,7 @@ def get_setting_server1(id_rig_in_server, key_slave):
     global const_rpm
     cache = 0
     if cache == 0:
+        rigRpmFanMaximum = int(response["data"][0]["attributes"]["rigRpmFanMaximum"])
         const_rpm = int(response["data"][0]["attributes"]["effective_echo_fan"])
         typeGpu = int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"])
         gpuFanSetHive = int(response["data"][0]["attributes"]["AlertFan"]["gpuFanSetHive"])
@@ -587,6 +590,7 @@ def get_setting_server2(id_rig_in_server, key_slave):
     global rigOnBoot
 
     if rigOnBoot ==0:
+        rigRpmFanMaximum = int(response["data"][0]["attributes"]["rigRpmFanMaximum"])
         typeGpu = int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"])
         gpuFanSetHive = int(response["data"][0]["attributes"]["AlertFan"]["gpuFanSetHive"])
         statusAlertSystem = response["data"][0]["attributes"]["AlertFan"]["statusAlertSystem"]
@@ -679,7 +683,7 @@ def engine_start():
     except Exception:
         print("Проблема с получением данных, возможно в риге нет карт")
         engine_start()
-    communication_hive(id_rig_in_server, key_slave, rigOnBoot)
+    communication_hive(id_rig_in_server, key_slave, rigOnBoot, const_rpm, rpmfun,rigRpmFanMaximum)
     try:
         get_setting_server(id_rig_in_server, key_slave)
         #print("ответ с сервера получен")
@@ -702,12 +706,14 @@ def engine_start():
                 get_setting_server(id_rig_in_server, key_slave)
                 get_temp()
                 active_cool_mod()
+                #communication_hive(id_rig_in_server, key_slave, rigOnBoot, const_rpm, rpmfun,rigRpmFanMaximum)
             except Exception as e:
                 print("ERROR selected_mod0 " + str(e))
                 #send_mess('Ошибка в selected_mod0 '+str(e) , id_rig_in_server)
                 engine_start()
             r = r+1
             if r == 240:
+                print('r',r)
                 r=0
                 task_update(id_rig_in_server, str(soft_rev))
 

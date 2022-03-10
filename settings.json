@@ -1,0 +1,24 @@
+{
+	"rig_id":"4325603",
+	"rig_name":"Aleksander_test",
+	"selected_mod":"0",
+	"select_fan":2,
+	"soft_rev": "beta_stable_with_progression_for_unstable_GPU",
+	
+		"0":{
+		"terget_temp_min":55,
+		"terget_temp_max":65,
+		"min_fan_rpm":30,
+		"critical_temp":72, 
+		"boost":5
+	},
+		"1":{
+			"30":[40,50], 
+			"40":[50,60],
+			"50":[60,65],
+			"60":[65,70],
+			"70":[70,75],
+			"100":[75,80]
+		},
+		"2": 60 
+} 

@@ -22,6 +22,7 @@ selected_mod = 0
 terget_temp_min = 0
 terget_temp_max = 0
 min_fan_rpm = 0
+target_mem_temp=88
 hot_gpu = 0
 old_hot_gpu =0
 critical_temp = 0
@@ -53,6 +54,7 @@ temp_gpu_freeze = 0
 old_stab_balance = 0
 optimum_round = 0
 rigRpmFanMaximum = 0
+mod_option_hive = 1
 
 def error511():
     send_mess(' Замечена ошибка 511, проверьте блок питания и прилигание охлаждения к GPU.', id_rig_in_server)
@@ -450,7 +452,8 @@ def get_setting_server(id_rig_in_server,key_slave):
     global typeGpu
     global const_rpm
     global rigOnBoot
-    print("ИЩУ MAX RPM", response["data"][0]["attributes"])
+    global rigRpmFanMaximum
+    #print("ИЩУ MAX RPM", response["data"][0]["attributes"])
     if const_rpm == 0:
         #print("первое получение данных")
         rigRpmFanMaximum = int(response["data"][0]["attributes"]["rigRpmFanMaximum"])
@@ -683,7 +686,7 @@ def engine_start():
     except Exception:
         print("Проблема с получением данных, возможно в риге нет карт")
         engine_start()
-    communication_hive(id_rig_in_server, key_slave, rigOnBoot, const_rpm, rpmfun,rigRpmFanMaximum)
+    communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, rpmfun,rigRpmFanMaximum, option2, terget_temp_min,terget_temp_max, min_fan_rpm, target_mem_temp, selected_mod)
     try:
         get_setting_server(id_rig_in_server, key_slave)
         #print("ответ с сервера получен")
@@ -698,12 +701,13 @@ def engine_start():
         send_mess(' Интеллектуальный режим активирован', id_rig_in_server)
         subprocess.getstatusoutput("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
         subprocess.getstatusoutput("echo " + str(round(const_rpm / 100 * 30)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-        r = 0
+        r = 4
         while 1 > 0:
-            test_select_mod()
-            time.sleep(1)
             try:
-                get_setting_server(id_rig_in_server, key_slave)
+                if (4 % r) ==0:
+                    test_select_mod()
+                    get_setting_server(id_rig_in_server, key_slave)
+                communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, rpmfun,rigRpmFanMaximum, option2, terget_temp_min,terget_temp_max, min_fan_rpm, target_mem_temp, selected_mod)
                 get_temp()
                 active_cool_mod()
                 #communication_hive(id_rig_in_server, key_slave, rigOnBoot, const_rpm, rpmfun,rigRpmFanMaximum)
@@ -712,9 +716,8 @@ def engine_start():
                 #send_mess('Ошибка в selected_mod0 '+str(e) , id_rig_in_server)
                 engine_start()
             r = r+1
-            if r == 240:
-                print('r',r)
-                r=0
+            if r == 120:
+                r=4
                 task_update(id_rig_in_server, str(soft_rev))
 
     elif selected_mod == 1:

@@ -9,16 +9,25 @@ def testFan(id_rig):
     max_rpm = 0                                                                                                                                                                                                                                                               
     one_data_fan = 0                                                                                                                                                                                                                                                          
     #print("начинаю РЕКОЛЕБРОВКУ КУЛЕРОВ")
-    os.system("echo 1 >>/sys/class/hwmon/hwmon1/pwm2_enable")
+    os.system("echo 1 >> /sys/class/hwmon/hwmon1/pwm2_enable")
     os.system("echo 0  >> /sys/class/hwmon/hwmon1/pwm2")
     time.sleep(3)                                                                                                                                                                                                                                                             
     old_rpm =  0                                                                                                                                                                                                                                                              
-    for i in range(1,55):                                                                                                                                                                                                                                                     
-        give_rpm = i*5
+    for i in range(1,55):                                                                                                                           $
+        give_rpm = i*5                                                                                                                               
+        print(give_rpm)                                                                                                                              
         os.system("echo " + str(give_rpm) +" >> /sys/class/hwmon/hwmon1/pwm2")
-        time.sleep(10)
+        time.sleep(5)                                                                                                                                
+        (status,output)=subprocess.getstatusoutput("sensors | grep -i fan2")                                                                         
+        rpm1 = output.replace('fan2:', '').replace('RPM', '').replace('(min = 0 RPM)', '').replace(' ', '').replace('(min=0)','')                   $
+        time.sleep(3)   
         (status,output)=subprocess.getstatusoutput("sensors | grep -i fan2")
-        rpm = output.replace('fan2:', '').replace('RPM', '').replace('(min = 0 RPM)', '').replace(' ', '').replace('(min=0)','')                                                                                                                                                                                                                                                                           
+        rpm2 = output.replace('fan2:', '').replace('RPM', '').replace('(min = 0 RPM)', '').replace(' ', '').replace('(min=0)','')
+        time.sleep(3)
+        (status,output)=subprocess.getstatusoutput("sensors | grep -i fan2")
+        rpm3 = output.replace('fan2:', '').replace('RPM', '').replace('(min = 0 RPM)', '').replace(' ', '').replace('(min=0)','')
+        rpm = max(int(rpm1),int(rpm2),int(rpm3))                                                                                                                                                                                                                                                 
+        
         if one_data_fan == 0:                                                                                                                                                                                                                                                 
             if int(old_rpm) < int(rpm):   
                 pass                                                                                                                                                                                                                                     
@@ -38,8 +47,8 @@ def testFan(id_rig):
                                                                  'effective_echo':effective_handler
                                                                  })
     
-    os.system("reboot")
-    subprocess.getstatusoutput("sreboot")
-    return("Максимальная скорость "+str(max_rpm)+' | Эффективная скорость ' + str(effective_rpm))
+
+    return("Максимальная скорость "+str(max_rpm))
+
 if __name__ == '__main__':
     testFan()

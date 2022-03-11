@@ -155,8 +155,8 @@ def active_cool_mod():
                 old_hot_gpu = hot_gpu    
                 if int(hot_gpu) > int(optimum_temp):
                     stable_temp_round = 0                                                                                                                
-                if  (int(mem_t) >= 88) or (int(optimum_temp) == int(hot_gpu)):
-                    print('optTRIGER', int(mem_t) >= 88 , int(optimum_temp) == int(hot_gpu))                                                             
+                if  (int(mem_t) >= 88) or (int(optimum_temp) == int(hot_gpu)) or (int(last_rpm) == 1):
+                    print('optTRIGER', int(mem_t) >= 88 , int(optimum_temp) == int(hot_gpu), (int(last_rpm) == 1))                                                             
                     optimum_on = 1                                                                                                                   
                     print("ОПТИМУМ ГОТОВ", optimun_echo, 'mem_t', mem_t)
                     old_hot_gpu = hot_gpu
@@ -170,7 +170,7 @@ def active_cool_mod():
                 stab_balance_mem= 0
                 stab_balance = 0 
                 #send_mess("оптимум - коректирую ", id_rig_in_server)
-                stab_balance =  int((int(const_rpm) / 100) * ((int(hot_gpu) - int(temp_gpu_freeze))*4)) 
+                stab_balance =  int((int(const_rpm) / 100) * ((int(hot_gpu) - int(temp_gpu_freeze))*5)) 
                 stab_balance_mem = int((int(const_rpm) / 100) * ((int(mem_t) - 86)*1.5))
                 if stab_balance_mem < 0:
                     stab_balance_mem = 0
@@ -185,14 +185,13 @@ def active_cool_mod():
                 subprocess.getstatusoutput("echo " + str(echo) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                  
                 print("echo", str(echo))
                 time.sleep(15)
-                get_temp()                                                                                                                       
-                return()
+                get_temp()
 
-            if int(hot_gpu) >= int(optimum_temp) + 2  or int(hot_gpu)< old_hot_gpu-1 or int(mem_t) > 92:            
-                print('сбросил optimum_on')                                                                
-                optimum_on = 0                                                                                                                   
-                stable_temp_round = 0                                                                                                            
-                return()
+                if int(hot_gpu) >= (int(optimum_temp) + 2)  or int(hot_gpu)< (old_hot_gpu-1) or int(mem_t) > 92:            
+                    print('сбросил optimum_on')                                                                
+                    optimum_on = 0                                                                                                                   
+                    stable_temp_round = 0                                                                                                            
+                    return()
     else:
         get_temp()
         subprocess.getstatusoutput("echo " + str(min_fan_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
@@ -211,9 +210,10 @@ def addFanData(rpmfun, temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gp
                             'alertFan':alertFan, 'problemNumberGpu':problemNumberGpu,
                             'hot_gpu':hot_gpu, 'hot_mem':mem_t
                             }
-    r = requests.post("http://ggc.center:8000/add_and_read_fandata/", data=data)
-	#print(response.json())
-	#response = response.json()
+    try:
+        r = requests.post("http://ggc.center:8000/add_and_read_fandata/", data=data,stream=True, timeout=10)
+	except Exception:
+        engine_start()
 
 def get_temp():
     global rpmfun
@@ -237,11 +237,13 @@ def get_temp():
             for feature in chip:
                 if feature.label:
                     if str(feature.label) == "edge":  
-                        try:                                                                                          
+                        try:                      
+                            if int(feature.get_value()) == 511:
+                                error511()                                                                        
                             temp_gpu.append(round(int(feature.get_value())))                                                                         
                         except Exception:
                             temp_gpu.append(0)
-                        if str(feature.label) == '-511':
+                        if str(feature.label) == '511':
                             error511()
 
     #добавляем данные температуры с карт AMD если они есть
@@ -427,7 +429,10 @@ def test_key(rig_id='', rig_name=''):
                 f.seek(0)                                                                                                                 
                 f.write(json.dumps(json_data))                                                                                            
                 f.truncate() 
-            requests.get('http://ggc.center:8000/rename_rig/', data = [('rig_id', rig_id),('r_name',r_name)])
+            try:
+                requests.get('http://ggc.center:8000/rename_rig/', data = [('rig_id', rig_id),('r_name',r_name)],stream=True, timeout=10)
+            except Exception:
+                engine_start()
             os.system("reboot")
             subprocess.getstatusoutput("sreboot")        
 
@@ -435,7 +440,10 @@ def test_key(rig_id='', rig_name=''):
         return(True)
 
 def get_setting_server(id_rig_in_server,key_slave):
-    response = requests.get('http://ggc.center:8000/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)] )
+    try:
+        response = requests.get('http://ggc.center:8000/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)],stream=True, timeout=10 )
+    except Exception:
+        engine_start()
     #print(response)
     response = response.json()
     #print('get_setting_server',response["data"][0]["attributes"])
@@ -523,7 +531,10 @@ def get_setting_server(id_rig_in_server,key_slave):
 
 def get_setting_server1(id_rig_in_server, key_slave):
     #print(id_rig_in_server)
-    response = requests.get('http://ggc.center:8000/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)] )
+    try:
+        response = requests.get('http://ggc.center:8000/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)] ,stream=True, timeout=10)
+    except Exception:
+        engine_start()
     #print(response)
     response = response.json()
     #print(response)
@@ -581,7 +592,10 @@ def get_setting_server1(id_rig_in_server, key_slave):
 def get_setting_server2(id_rig_in_server, key_slave):
     # передаем данные о риге и получаем ответ с id
     #print(id_rig_in_server)
-    response = requests.get('http://ggc.center:8000/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)] )
+    try:
+        response = requests.get('http://ggc.center:8000/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)],stream=True, timeout=10 )
+    except Exception:
+        engine_start()
     #print(response)
     response = response.json()
     #print(response)
@@ -627,7 +641,10 @@ def sendInfoRig(rig_id, rig_name, key_slave):
     global id_rig_in_server
     try:
         param= [('rigId', rig_id), ('rigName', rig_name), ('key_slave',key_slave)] 
-        response = requests.post('http://ggc.center:8000/add_rig_or_test/', data = param )
+        try:
+            response = requests.post('http://ggc.center:8000/add_rig_or_test/', data = param ,stream=True, timeout=10)
+        except Exception:
+            engine_start()
         id_rig_in_server = response.json()["data"]
         #print('id_rig_in_server тут смотреть',id_rig_in_server)
     except Exception as e:
@@ -678,7 +695,10 @@ def engine_start():
     # передаем данные о риге и получаем ответ с id
     sendInfoRig(rig_id,rig_name, key_slave)
     if ressetRig == True:
-        requests.post("http://ggc.center:8000/ressetRigAndFanData/", data={'ressetRig':'True', 'id_rig_in_server':id_rig_in_server})
+        try:
+            requests.post("http://ggc.center:8000/ressetRigAndFanData/", data={'ressetRig':'True', 'id_rig_in_server':id_rig_in_server},stream=True, timeout=10)
+        except Exception:
+            engine_start()
         ressetRig = False
 
     try:
@@ -703,8 +723,10 @@ def engine_start():
         subprocess.getstatusoutput("echo " + str(round(const_rpm / 100 * 30)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         r = 4
         while 1 > 0:
+            test_r = int(r) % 4                                                                                                                      
+            r = r + 1
             try:
-                if (4 % r) ==0:
+                if test_r == 0:
                     test_select_mod()
                     get_setting_server(id_rig_in_server, key_slave)
                 communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, rpmfun,rigRpmFanMaximum, option2, terget_temp_min,terget_temp_max, min_fan_rpm, target_mem_temp, selected_mod)
@@ -715,8 +737,7 @@ def engine_start():
                 print("ERROR selected_mod0 " + str(e))
                 #send_mess('Ошибка в selected_mod0 '+str(e) , id_rig_in_server)
                 engine_start()
-            r = r+1
-            if r == 120:
+            if int(r) == 300:
                 r=4
                 task_update(id_rig_in_server, str(soft_rev))
 
@@ -725,19 +746,19 @@ def engine_start():
         send_mess(' Ручной режим активирован', id_rig_in_server)
         subprocess.getstatusoutput("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
         subprocess.getstatusoutput("echo " + str(round(const_rpm / 100 * 30)) + ">> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-        r=0
+        r = 4
         while 1 > 0:
+            test_r = int(r) % 4                                                                                                                      
+            r = r + 1
             test_select_mod()
             time.sleep(20)
             get_temp()
-            r = r+1
-            if r == 240:
-                r=0
+            if int(r) == 300:
+                r = 4
                 task_update(id_rig_in_server, str(soft_rev))
             try:
-                get_setting_server1(id_rig_in_server, key_slave)
-                #print("ответ с сервера получен")
-                test_select_mod()
+                if test_r == 0:
+                    get_setting_server1(id_rig_in_server, key_slave)
             except Exception as e:
                 print("ERROR selected_mod1 " + str(e))	
             for i in option1:
@@ -751,16 +772,18 @@ def engine_start():
         #print("Выбран статичный режим")
         subprocess.getstatusoutput("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
         send_mess(' Статичный режим активирован', id_rig_in_server)
-        r=0
+        r = 2
         while 1 > 0:
-            time.sleep(10)
-            r = r+1
-            if r == 240:
-                r=0
+            test_r = int(r) % 2                                                                                                                      
+            r = r + 1
+            time.sleep(20)
+            if int(r) == 300:
+                r=2
                 task_update(id_rig_in_server, str(soft_rev))
             try:
-                get_setting_server2(id_rig_in_server, key_slave)
-                #print("ответ с сервера получен")
+                if test_r == 0:
+                    get_setting_server2(id_rig_in_server, key_slave)
+                    #print("ответ с сервера получен")
             except Exception as e:
                 print("ERROR selected_mod2 " + str(e))  
             get_temp()
@@ -776,4 +799,3 @@ if __name__ == '__main__':
         send_mess('Ошибка в ENGINE CORE - передайте разработчику текст сообщение | ' + str(e), id_rig_in_server)
         os.system("reboot")
         subprocess.getstatusoutput("sreboot")
-	#get_temp()

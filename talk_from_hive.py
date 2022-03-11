@@ -5,7 +5,7 @@ import requests
 import time
 import sys
 from testFan import testFan
-
+from handler_messeges import transmit_mess as send_mess
 req_link_hive       = '/run/hive/fan_controller_req'  #файл запроса в хайв json
 answer_link_hive    = '/run/hive/fan_controller_rsp' # файл ответа из hive json
 req_recallibrate    = '/run/hive/fan_controller_recallibrate_req' # запрос реколибровки если файл есть > потом удалить
@@ -58,12 +58,18 @@ def communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, 
                     fan_mode = 2
                 min_fan = json_data['min_fan']
             print("нужно отправить новые настройки на сервер",new_min_temp, new_max_temp,new_target_mem, new_manual_fan_speed,fan_mode,min_fan)
+            new_data = [('rig_id', id_rig_in_server),('new_min_temp',new_min_temp),('new_max_temp',new_max_temp),('new_target_mem',new_target_mem),('new_manual_fan_speed',new_manual_fan_speed),('fan_mode',fan_mode),('min_fan',min_fan)]
+            requests.get('http://ggc.center:8001/set_option_for_hive/', data = new_data,stream=True, timeout=10)
         if os.path.exists(req_recallibrate) == True:
-            print("начать реколебровку")
-            res_test_fan = testFan(id_rig_in_server)
+            print("начать реколебровку") 
+            send_mess(' Запуск реколебровки внешних кулеров, ожидайте результата. Это может занять около 5 мин.', id_rig_in_server)                                                                                                            
+            res_test_fan = testFan(id_rig_in_server)                                                                                                 
             os.system("rm " + req_recallibrate)
-            os.system("echo "+str(res_test_fan)+' > '+ answer_recallibrate )
-            
+            os.system("rm " +  answer_recallibrate )                                                                                                 
+            file_info = open(answer_recallibrate, "w+")                                                                                              
+            file_info.write(str(res_test_fan))                                                                                                       
+            file_info.close() 
+
 
     write_resp(rpmfun, rigRpmFanMaximum)
 

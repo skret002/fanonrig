@@ -212,7 +212,7 @@ def addFanData(rpmfun, temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gp
                             }
     try:
         r = requests.post("http://ggc.center:8000/add_and_read_fandata/", data=data,stream=True, timeout=10)
-	except Exception:
+    except Exception:
         engine_start()
 
 def get_temp():
@@ -783,6 +783,7 @@ def engine_start():
             try:
                 if test_r == 0:
                     get_setting_server2(id_rig_in_server, key_slave)
+                    communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, rpmfun,rigRpmFanMaximum, option2, terget_temp_min,terget_temp_max, min_fan_rpm, target_mem_temp, selected_mod)
                     #print("ответ с сервера получен")
             except Exception as e:
                 print("ERROR selected_mod2 " + str(e))  

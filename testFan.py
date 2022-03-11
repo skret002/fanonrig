@@ -12,26 +12,27 @@ def testFan(id_rig):
     os.system("echo 1 >> /sys/class/hwmon/hwmon1/pwm2_enable")
     os.system("echo 0  >> /sys/class/hwmon/hwmon1/pwm2")
     time.sleep(3)                                                                                                                                                                                                                                                             
-    old_rpm =  0                                                                                                                                                                                                                                                              
-    for i in range(1,55):                                                                                                                           $
+    old_rpm =  0   
+
+    for i in range(1, 55):
         give_rpm = i*5                                                                                                                               
         print(give_rpm)                                                                                                                              
         os.system("echo " + str(give_rpm) +" >> /sys/class/hwmon/hwmon1/pwm2")
         time.sleep(5)                                                                                                                                
-        (status,output)=subprocess.getstatusoutput("sensors | grep -i fan2")                                                                         
-        rpm1 = output.replace('fan2:', '').replace('RPM', '').replace('(min = 0 RPM)', '').replace(' ', '').replace('(min=0)','')                   $
+        (status,output)=subprocess.getstatusoutput("sensors | grep -i fan2")
+        rpm1 = output.replace('fan2:', '').replace('RPM', '').replace('(min = 0 RPM)', '').replace(' ', '').replace('(min=0)','')
         time.sleep(3)   
         (status,output)=subprocess.getstatusoutput("sensors | grep -i fan2")
         rpm2 = output.replace('fan2:', '').replace('RPM', '').replace('(min = 0 RPM)', '').replace(' ', '').replace('(min=0)','')
         time.sleep(3)
         (status,output)=subprocess.getstatusoutput("sensors | grep -i fan2")
         rpm3 = output.replace('fan2:', '').replace('RPM', '').replace('(min = 0 RPM)', '').replace(' ', '').replace('(min=0)','')
-        rpm = max(int(rpm1),int(rpm2),int(rpm3))                                                                                                                                                                                                                                                 
+        rpm = max(int(rpm1),int(rpm2),int(rpm3))
         
-        if one_data_fan == 0:                                                                                                                                                                                                                                                 
-            if int(old_rpm) < int(rpm):   
+        if one_data_fan == 0:
+            if int(old_rpm) < int(rpm):
                 pass                                                                                                                                                                                                                                     
-            else:                                                                                                                                                                                                                                  
+            else:
                 effective_rpm = int(rpm)
                 effective_handler = give_rpm
                 one_data_fan = 1

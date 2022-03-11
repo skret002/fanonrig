@@ -4,6 +4,7 @@ import os
 import requests
 import time
 import sys
+from testFan import testFan
 
 req_link_hive       = '/run/hive/fan_controller_req'  #файл запроса в хайв json
 answer_link_hive    = '/run/hive/fan_controller_rsp' # файл ответа из hive json
@@ -46,8 +47,8 @@ def communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, 
             json_data = json.load(f)
             if (json_data['target_temp'] != now_target_core) or (json_data['target_mtemp'] != now_target_mem) or (json_data['manual_fan_speed'] != now_manual_fan_speed) or (json_data['fan_mode'] != now_fan_mode) or (json_data['min_fan'] != now_min_fan_rpm):
                 print("настройки не одинаковые req_link_hive")
-                new_min_temp =  int(json_data['target_temp']) - int(str(json_data['target_temp'])[:1])
-                new_max_temp =  int(json_data['target_temp']) + int(str(json_data['target_temp'])[:1])
+                new_min_temp =  int(json_data['target_temp']) - int(str(json_data['target_temp'])[1:2])
+                new_max_temp =  int(json_data['target_temp']) + int(str(json_data['target_temp'])[1:2])
                 new_target_mem = json_data['target_mtemp']
                 new_manual_fan_speed = json_data['manual_fan_speed']
                 fan_mode = json_data['fan_mode']
@@ -57,7 +58,12 @@ def communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, 
                     fan_mode = 2
                 min_fan = json_data['min_fan']
             print("нужно отправить новые настройки на сервер",new_min_temp, new_max_temp,new_target_mem, new_manual_fan_speed,fan_mode,min_fan)
-
+        if os.path.exists(req_recallibrate) == True:
+            print("начать реколебровку")
+            res_test_fan = testFan(id_rig_in_server)
+            os.system("rm " + req_recallibrate)
+            os.system("echo "+str(res_test_fan)+' > '+ answer_recallibrate )
+            
 
     write_resp(rpmfun, rigRpmFanMaximum)
 

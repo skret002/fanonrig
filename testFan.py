@@ -40,6 +40,6 @@ def testFan(id_rig):
     
     os.system("reboot")
     subprocess.getstatusoutput("sreboot")
-    return()
+    return("Максимальная скорость "+str(max_rpm)+' | Эффективная скорость ' + str(effective_rpm))
 if __name__ == '__main__':
     testFan()

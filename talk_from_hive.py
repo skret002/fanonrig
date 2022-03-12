@@ -49,6 +49,10 @@ def communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, 
             j_target_mtemp     = int(json_data['target_mtemp'])
             j_manual_fan_speed = int(json_data['manual_fan_speed'])
             j_fan_mode         = int(json_data['fan_mode'])
+            if j_fan_mode == 2:
+                j_fan_mode = 0
+            else:
+                j_fan_mode = 2
             j_min_fan          = int(json_data['min_fan'])
             print(j_target_temp, j_target_mtemp, j_manual_fan_speed, j_fan_mode, j_min_fan)
             print(int(now_target_core), int(now_target_mem), int(now_manual_fan_speed), int(now_fan_mode), int(now_min_fan_rpm))
@@ -59,10 +63,6 @@ def communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, 
                 new_target_mem = j_target_mtemp
                 new_manual_fan_speed = j_manual_fan_speed
                 fan_mode = j_fan_mode
-                if fan_mode == 2:
-                    fan_mode = 0
-                elif fan_mode == 1:
-                    fan_mode = 2
                 min_fan = j_min_fan
             print("нужно отправить новые настройки на сервер",new_min_temp, new_max_temp,new_target_mem, new_manual_fan_speed,fan_mode,min_fan)
             new_data = [('rig_id', id_rig_in_server),('new_min_temp',new_min_temp),('new_max_temp',new_max_temp),('new_target_mem',new_target_mem),('new_manual_fan_speed',new_manual_fan_speed),('fan_mode',fan_mode),('min_fan',min_fan)]

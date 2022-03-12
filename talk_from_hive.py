@@ -50,7 +50,8 @@ def communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, 
             j_manual_fan_speed = int(json_data['manual_fan_speed'])
             j_fan_mode         = int(json_data['fan_mode'])
             j_min_fan          = int(json_data['min_fan'])
-            print(j_target_temp != int(now_target_core)), (j_target_mtemp != int(now_target_mem)), (j_manual_fan_speed != int(now_manual_fan_speed)),(j_fan_mode != int(now_fan_mode)), (j_min_fan != int(now_min_fan_rpm))
+            print(j_target_temp, j_target_mtemp, j_manual_fan_speed, j_fan_mode, j_min_fan)
+            print(int(now_target_core), int(now_target_mem), int(now_manual_fan_speed), int(now_fan_mode), int(now_min_fan_rpm))
             if (j_target_temp != int(now_target_core)) or (j_target_mtemp != int(now_target_mem)) or (j_manual_fan_speed != int(now_manual_fan_speed)) or (j_fan_mode != int(now_fan_mode)) or (j_min_fan != int(now_min_fan_rpm)):
                 print("настройки не одинаковые req_link_hive")
                 new_min_temp =  j_target_temp - int(str(j_target_temp)[1:2])
@@ -75,9 +76,12 @@ def communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, 
             file_info = open(answer_recallibrate, "w+")                                                                                              
             file_info.write(str(res_test_fan))                                                                                                       
             file_info.close() 
-
+    else:
+        pass
 
     write_resp(rpmfun, rigRpmFanMaximum)
+
+    return(True)
 
 if __name__ == '__main__':                                                                                                                           
     communication_hive()

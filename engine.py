@@ -55,6 +55,7 @@ old_stab_balance = 0
 optimum_round = 0
 rigRpmFanMaximum = 0
 mod_option_hive = 1
+min_fan_rpm_persent = 0
 
 def error511():
     send_mess(' Замечена ошибка 511, проверьте блок питания и прилигание охлаждения к GPU.', id_rig_in_server)
@@ -461,9 +462,13 @@ def get_setting_server(id_rig_in_server,key_slave):
     global const_rpm
     global rigOnBoot
     global rigRpmFanMaximum
+    global min_fan_rpm_persent
+    global mod_option_hive
+    global option2
     #print("ИЩУ MAX RPM", response["data"][0]["attributes"])
     if const_rpm == 0:
         #print("первое получение данных")
+        mod_option_hive = int(response["data"][0]["attributes"]["mod_option_hive"])
         rigRpmFanMaximum = int(response["data"][0]["attributes"]["rigRpmFanMaximum"])
         const_rpm = int(response["data"][0]["attributes"]["effective_echo_fan"])
         typeGpu = int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"])
@@ -472,10 +477,12 @@ def get_setting_server(id_rig_in_server,key_slave):
         selected_mod = int(response["data"][0]["attributes"]["SetModeFan"]["selected_mod"])
         terget_temp_min = int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_min"])
         terget_temp_max = int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_max"])
+        min_fan_rpm_persent = response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"]
         min_fan_rpm = round(int(const_rpm) / 100 * int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"]))
         select_fan = int(response["data"][0]["attributes"]["SetModeFan"]["select_fan"])
         critical_temp = int(response["data"][0]["attributes"]["SetMode0"]["critical_temp"])
         boost=int(response["data"][0]["attributes"]["SetMode0"]["boost"])
+        option2 = response["data"][0]["attributes"]["SetMode2"]["SetRpm"]
         rigOnBoot = 1
     else:
         #print("Настройки изменены")
@@ -522,6 +529,9 @@ def get_setting_server(id_rig_in_server,key_slave):
         if boost != int(response["data"][0]["attributes"]["SetMode0"]["boost"]):
             boost=int(response["data"][0]["attributes"]["SetMode0"]["boost"])
             engine_start()
+
+        if option2 != response["data"][0]["attributes"]["SetMode2"]["SetRpm"]:
+            option2 = response["data"][0]["attributes"]["SetMode2"]["SetRpm"]
 
     # проверяем включена ли реколебровка и если нужно запускаем
     if response["data"][0]["attributes"]["recalibrationFanRig"] == True:
@@ -706,7 +716,6 @@ def engine_start():
     except Exception:
         print("Проблема с получением данных, возможно в риге нет карт")
         engine_start()
-    communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, rpmfun,rigRpmFanMaximum, option2, terget_temp_min,terget_temp_max, min_fan_rpm, target_mem_temp, selected_mod)
     try:
         get_setting_server(id_rig_in_server, key_slave)
         #print("ответ с сервера получен")
@@ -714,6 +723,8 @@ def engine_start():
         #print("нет ответа с сервера")
         subprocess.getstatusoutput("sreboot")
         subprocess.getstatusoutput("reboot")
+
+    get_setting_server(id_rig_in_server, key_slave) # если работает статика, надо получить один раз для хайва
 
     if selected_mod == 0:
         #print("Выбран режиж удержания температур в диапазоне" , terget_temp_min, terget_temp_max)
@@ -729,7 +740,7 @@ def engine_start():
                 if test_r == 0:
                     test_select_mod()
                     get_setting_server(id_rig_in_server, key_slave)
-                communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, rpmfun,rigRpmFanMaximum, option2, terget_temp_min,terget_temp_max, min_fan_rpm, target_mem_temp, selected_mod)
+                communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, rpmfun,rigRpmFanMaximum, option2, terget_temp_min,terget_temp_max, min_fan_rpm_persent, target_mem_temp, selected_mod)
                 get_temp()
                 active_cool_mod()
                 #communication_hive(id_rig_in_server, key_slave, rigOnBoot, const_rpm, rpmfun,rigRpmFanMaximum)
@@ -772,18 +783,18 @@ def engine_start():
         #print("Выбран статичный режим")
         subprocess.getstatusoutput("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
         send_mess(' Статичный режим активирован', id_rig_in_server)
-        r = 2
+        r = 4
         while 1 > 0:
-            test_r = int(r) % 2                                                                                                                      
+            test_r = int(r) % 4                                                                                                                      
             r = r + 1
-            time.sleep(20)
+            time.sleep(10)
             if int(r) == 300:
-                r=2
+                r=4
                 task_update(id_rig_in_server, str(soft_rev))
             try:
                 if test_r == 0:
                     get_setting_server2(id_rig_in_server, key_slave)
-                    communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, rpmfun,rigRpmFanMaximum, option2, terget_temp_min,terget_temp_max, min_fan_rpm, target_mem_temp, selected_mod)
+                communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, rpmfun,rigRpmFanMaximum, option2, terget_temp_min,terget_temp_max, min_fan_rpm_persent, target_mem_temp, selected_mod)
                     #print("ответ с сервера получен")
             except Exception as e:
                 print("ERROR selected_mod2 " + str(e))  

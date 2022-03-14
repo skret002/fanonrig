@@ -113,7 +113,8 @@ def active_cool_mod():
             old_hot_gpu = hot_gpu
             stable_temp_round = 0                                                                                                                    
             optimum_on = 0                                                                                                                          
-            get_temp()   
+            get_temp()  
+            time.sleep(10) 
             return()
         else:    
             if (optimum_on == 0) and (stable_temp_round <= 15) and (int(mem_t) <95):
@@ -130,7 +131,7 @@ def active_cool_mod():
                     stable_temp_round = stable_temp_round + 1
                     start_optimum = last_rpm_s   
                     old_hot_gpu = hot_gpu   
-                    time.sleep(5)                                                                                                                   
+                    time.sleep(20)                                                                                                                   
                     get_temp()
                     #send_mess("АКТИВИРОВАН УСРЕДНЕНЫЙ РЕЖИМ " + str(int(last_rpm_s)), id_rig_in_server)  
                     return()                                                                                           

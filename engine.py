@@ -250,17 +250,16 @@ def get_temp():
 
     #добавляем данные кулеров с карт AMD если они есть
     labels = ''
-    numGpu=-1
     for chip in sensors.iter_detected_chips():                         
         if 'amd' in str(chip) and str(chip) not in labels:
             labels += ' ' + str(chip)
-            numGpu = numGpu+1                                                                                                                                              
             for feature in chip:
                 if str(feature.label) == "fan1": 
+                    numGpu= str(chip).replace('amdgpu-', '')
                     try:
                         rpm_fun_gpu[str(numGpu)] = round(feature.get_value())
                     except Exception:
-                        rpm_fun_gpu[str(numGpu)] = 0
+                        pass
     
     #добавляем данные температуры с карт nvidia если они есть
     (status,output)=subprocess.getstatusoutput("nvidia-smi -q | grep 'GPU Current Temp'")
@@ -273,18 +272,23 @@ def get_temp():
                 error511()
 
     #добавляем данные кулеров с карт nvidia если они есть
-    (status,output_fan)=subprocess.getstatusoutput("nvidia-smi -q | grep 'Fan'")
+    (status,output_fan)=subprocess.getstatusoutput("nvidia-smi -q | grep 'Bus Id\|Fan'")
     green_fan = output_fan.replace('Fan Speed', '').replace(' ', '').replace(':', '').replace('%', ',').replace('\n', ',').split(',')
+    pci = ''
+    fan_speed = ''
     for fan in green_fan:
         if len(str(fan)) != 0:
-            numGpu = numGpu+1
-            rpm_fun_gpu[str(numGpu)] = round(int(3600 / 100 * int(fan)))
+            if  "Bus" in str(fan):
+                pci = 'pci-'+ str(fan.replace('BusId00000000', ''))
+            else:
+                fan_speed = fan
+                rpm_fun_gpu[str(pci)] = round(int(3600 / 100 * int(fan_speed)))
 
     hot_gpu = max(temp_gpu)
     try:
         if statusAlertSystem == True and gpuFanSetHive == 1 and typeGpu == 0:
             #проверка кулеров на картах
-            if round(rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)] - rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)]/5) > round(rpm_fun_gpu[min(rpm_fun_gpu, key=rpm_fun_gpu.get)]):
+            if round(rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)] - rpm_fun_gpu[max(rpm_fun_gpu, key=rpm_fun_gpu.get)]/10) > round(rpm_fun_gpu[min(rpm_fun_gpu, key=rpm_fun_gpu.get)]):
                 #print("обнаружена проблема с кулерами")
                 alertFan = True
                 problemNumberGpu = min(rpm_fun_gpu, key=rpm_fun_gpu.get)

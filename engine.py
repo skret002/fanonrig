@@ -197,6 +197,7 @@ def active_cool_mod():
     else:
         get_temp()
         subprocess.getstatusoutput("echo " + str(min_fan_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        time.sleep(20)
         #print("температура сильно ниже таргета, даю  ",last_rpm)
         #send_mess("температура сильно ниже таргета, даю  " + str(last_rpm) , id_rig_in_server)
         #print(hot_gpu)

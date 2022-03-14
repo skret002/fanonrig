@@ -116,7 +116,7 @@ def active_cool_mod():
             get_temp()   
             return()
         else:    
-            if (optimum_on == 0) and (stable_temp_round <= 5) and (int(mem_t) <95):
+            if (optimum_on == 0) and (stable_temp_round <= 15) and (int(mem_t) <95):
                 if int(old_hot_gpu) != int(hot_gpu) or int(hot_gpu) > int(optimum_temp):
                     print('усредненый пересчитываю')                                                                                                 
                     last_rpm = (int(const_rpm) / (int(terget_temp_max - terget_temp_min))) * ((int(hot_gpu) - int(terget_temp_min)))                   
@@ -142,7 +142,7 @@ def active_cool_mod():
                     time.sleep(20)
                     return()
   
-            elif (stable_temp_round > 5) and (optimum_on == 0) and (int(mem_t) <= 95):  
+            elif (stable_temp_round > 15) and (optimum_on == 0) and (int(mem_t) <= 95):  
                 print("/////Температура стабильна, ищу оптимум ///")
                 get_temp()
                 optimum_fan = optimum_fan + int(int(const_rpm) / 100) * 1                                                                 
@@ -184,7 +184,6 @@ def active_cool_mod():
                 #send_mess("//Применяю оптимум// " + str(int(optimun_echo) + int(stab_balance)) , id_rig_in_server)                                                                                                   
                 subprocess.getstatusoutput("echo " + str(echo) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                  
                 print("echo", str(echo))
-                time.sleep(20)
                 get_temp()
 
                 if int(hot_gpu) >= (int(optimum_temp) + 2)  or int(hot_gpu)< (old_hot_gpu-1) or int(mem_t) > 92:            
@@ -193,6 +192,7 @@ def active_cool_mod():
                     stable_temp_round = 0      
                     optimum_fan = 0                                                                                                      
                     return()
+                time.sleep(30)
     else:
         get_temp()
         subprocess.getstatusoutput("echo " + str(min_fan_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
@@ -248,7 +248,7 @@ def get_temp():
                         if str(feature.label) == '511':
                             error511()
 
-    #добавляем данные температуры с карт AMD если они есть
+    #добавляем данные кулеров с карт AMD если они есть
     labels = ''
     numGpu=-1
     for chip in sensors.iter_detected_chips():                         
@@ -445,6 +445,14 @@ def test_key(rig_id='', rig_name=''):
     if str(rig_id) == str(r_id) and len(rig_id) >2 and len(rig_name) >2:
         return(True)
 
+def send_mess_of_change_option(id_rig_in_server):
+    try:
+        send_mess(' Настройки изменены', id_rig_in_server)
+    except Exception as e:
+        send_mess(' Error - please pass this message on to the developer ' + str(e), id_rig_in_server)
+    return(True)
+
+
 def get_setting_server(id_rig_in_server,key_slave):
     try:
         response = requests.get('http://ggc.center:8000/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)],stream=True, timeout=10 )
@@ -490,58 +498,58 @@ def get_setting_server(id_rig_in_server,key_slave):
         target_mem_temp = int(response["data"][0]["attributes"]["SetMode0"]["target_mem"])
         rigOnBoot = 1
     else:
-        #print("Настройки изменены")
         send_mess(' Настройки изменены', id_rig_in_server)
         if const_rpm != int(response["data"][0]["attributes"]["effective_echo_fan"]):
             const_rpm = int(response["data"][0]["attributes"]["effective_echo_fan"])
-            #send_mess(' Настройки изменены', id_rig_in_server)
+            send_mess_of_change_option(id_rig_in_server)
 
         if typeGpu != int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"]):
             typeGpu = int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"])
-            #send_mess(' Настройки изменены', id_rig_in_server)
+            send_mess_of_change_option(id_rig_in_server)
 
         if gpuFanSetHive != int(response["data"][0]["attributes"]["AlertFan"]["gpuFanSetHive"]):
             gpuFanSetHive = int(response["data"][0]["attributes"]["AlertFan"]["gpuFanSetHive"])
-            #send_mess(' Настройки изменены', id_rig_in_server)
+            send_mess_of_change_option(id_rig_in_server)
 
         if statusAlertSystem != response["data"][0]["attributes"]["AlertFan"]["statusAlertSystem"]:
             statusAlertSystem = response["data"][0]["attributes"]["AlertFan"]["statusAlertSystem"]
-            #send_mess(' Настройки изменены', id_rig_in_server)
+            send_mess_of_change_option(id_rig_in_server)
 
         if selected_mod != int(response["data"][0]["attributes"]["SetModeFan"]["selected_mod"]):
             selected_mod = int(response["data"][0]["attributes"]["SetModeFan"]["selected_mod"])
-            #send_mess(' Настройки изменены', id_rig_in_server)
+            send_mess_of_change_option(id_rig_in_server)
 
         if terget_temp_min != int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_min"]):
             terget_temp_min = int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_min"])
-            #send_mess(' Настройки изменены', id_rig_in_server)
+            send_mess_of_change_option(id_rig_in_server)
 
         if terget_temp_max != int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_max"]):
             terget_temp_max = int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_max"])
-            #send_mess(' Настройки изменены', id_rig_in_server)
+            send_mess_of_change_option(id_rig_in_server)
 
         if min_fan_rpm !=  round(const_rpm / 100 * int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"])):
             min_fan_rpm = round(const_rpm / 100 * int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"]))
-            #send_mess(' Настройки изменены', id_rig_in_server)
+            send_mess_of_change_option(id_rig_in_server)
 
         if select_fan != int(response["data"][0]["attributes"]["SetModeFan"]["select_fan"]):
             select_fan = int(response["data"][0]["attributes"]["SetModeFan"]["select_fan"])
-            #send_mess(' Настройки изменены', id_rig_in_server)
+            send_mess_of_change_option(id_rig_in_server)
 
         if critical_temp != int(response["data"][0]["attributes"]["SetMode0"]["critical_temp"]):
             critical_temp = int(response["data"][0]["attributes"]["SetMode0"]["critical_temp"])
-            #send_mess(' Настройки изменены', id_rig_in_server)
+            send_mess_of_change_option(id_rig_in_server)
 
         if boost != int(response["data"][0]["attributes"]["SetMode0"]["boost"]):
             boost=int(response["data"][0]["attributes"]["SetMode0"]["boost"])
-            #send_mess(' Настройки изменены', id_rig_in_server)
+            send_mess_of_change_option(id_rig_in_server)
 
         if option2 != response["data"][0]["attributes"]["SetMode2"]["SetRpm"]:
             option2 = response["data"][0]["attributes"]["SetMode2"]["SetRpm"]
+            send_mess_of_change_option(id_rig_in_server)
 
         if target_mem_temp !=  int(response["data"][0]["attributes"]["SetMode0"]["target_mem"]):
             target_mem_temp =  int(response["data"][0]["attributes"]["SetMode0"]["target_mem"])
-            #send_mess(' Настройки изменены', id_rig_in_server)
+            send_mess_of_change_option(id_rig_in_server)
 
     # проверяем включена ли реколебровка и если нужно запускаем
     if response["data"][0]["attributes"]["recalibrationFanRig"] == True:
@@ -574,22 +582,22 @@ def get_setting_server1(id_rig_in_server, key_slave):
         cache = response["data"][0]["attributes"]["SetMode1"]
         rigOnBoot =1
     else:
-        send_mess(' Настройки изменены', id_rig_in_server)
         if typeGpu != int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"]):
             typeGpu = int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"])
+            send_mess_of_change_option(id_rig_in_server)
 
         if gpuFanSetHive != int(response["data"][0]["attributes"]["AlertFan"]["gpuFanSetHive"]):
             gpuFanSetHive = int(response["data"][0]["attributes"]["AlertFan"]["gpuFanSetHive"])
-
+            send_mess_of_change_option(id_rig_in_server)
         if statusAlertSystem != response["data"][0]["attributes"]["AlertFan"]["statusAlertSystem"]:
             statusAlertSystem = response["data"][0]["attributes"]["AlertFan"]["statusAlertSystem"]
-
+            send_mess_of_change_option(id_rig_in_server)
         if selected_mod != int(response["data"][0]["attributes"]["SetModeFan"]["selected_mod"]):
             selected_mod = int(response["data"][0]["attributes"]["SetModeFan"]["selected_mod"])
-
+            send_mess_of_change_option(id_rig_in_server)
         if cache != response["data"][0]["attributes"]["SetMode1"]:
             cache = response["data"][0]["attributes"]["SetMode1"]
-
+            send_mess_of_change_option(id_rig_in_server)
 
     del cache['id']
     for i in cache:
@@ -627,19 +635,20 @@ def get_setting_server2(id_rig_in_server, key_slave):
     else:
         if typeGpu != int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"]):
             typeGpu = int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"])
+            send_mess_of_change_option(id_rig_in_server)
 
         if gpuFanSetHive != int(response["data"][0]["attributes"]["AlertFan"]["gpuFanSetHive"]):
             gpuFanSetHive = int(response["data"][0]["attributes"]["AlertFan"]["gpuFanSetHive"])
-
+            send_mess_of_change_option(id_rig_in_server)
         if statusAlertSystem != response["data"][0]["attributes"]["AlertFan"]["statusAlertSystem"]:
             statusAlertSystem = response["data"][0]["attributes"]["AlertFan"]["statusAlertSystem"]
- 
+            send_mess_of_change_option(id_rig_in_server) 
         if selected_mod != int(response["data"][0]["attributes"]["SetModeFan"]["selected_mod"]):
             selected_mod = int(response["data"][0]["attributes"]["SetModeFan"]["selected_mod"])
-
+            send_mess_of_change_option(id_rig_in_server)
         if option2 != response["data"][0]["attributes"]["SetMode2"]["SetRpm"]:
             option2 = response["data"][0]["attributes"]["SetMode2"]["SetRpm"]
-    
+            send_mess_of_change_option(id_rig_in_server)
     return("true")
 
 def sendInfoRig(rig_id, rig_name, key_slave):
@@ -720,7 +729,10 @@ def engine_start():
         #print("нет ответа с сервера")
         subprocess.getstatusoutput("sreboot")
         subprocess.getstatusoutput("reboot")
-
+    try:
+        task_update(id_rig_in_server, str(soft_rev))
+    except Exception:
+        print("ошибка запроса на обновление")
 
     if selected_mod == 0:
         #print("Выбран режиж удержания температур в диапазоне" , terget_temp_min, terget_temp_max)

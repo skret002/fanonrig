@@ -5,7 +5,7 @@ import requests
 import time
 import sys
 from testFan import testFan
-from engine import testing
+from test_box import testing
 from handler_messeges import transmit_mess as send_mess
 req_link_hive       = '/run/hive/fan_controller_req'  #файл запроса в хайв json
 answer_link_hive    = '/run/hive/fan_controller_rsp' # файл ответа из hive json

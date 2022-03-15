@@ -12,8 +12,9 @@ answer_link_hive    = '/run/hive/fan_controller_rsp' # файл ответа и�
 req_recallibrate    = '/run/hive/fan_controller_recallibrate_req' # запрос реколибровки если файл есть > потом удалить
 answer_recallibrate ='/run/hive/fan_controller_recallibrate_rsp' # вывести рез. реколиб. текстом
 hive_conf_autofan   = '/hive-config/ykeda_autofan.conf' # основной конфиг автофана
-fan_diagn_report    = '/run/hive/fan_controller_report_req' #при запросе пользователем отчёта будет создан пустой файл
+fan_diagn_req       = '/run/hive/fan_controller_report_req' #при запросе пользователем отчёта будет создан пустой файл
 hive_dir            = '/hive-config/device.wtt'
+fan_diagn_report    = '/run/hive/fan_controller_report_rsp'        # репорт диагностики
 
 
 def write_resp(rpmfun, rigRpmFanMaximum):
@@ -92,10 +93,10 @@ def communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, 
             file_info = open(answer_recallibrate, "w+")                                                                                              
             file_info.write('device_name' + '\n' + str(res_test_fan))                                                                                                       
             file_info.close() 
-        if os.path.exists(fan_diagn_report) == True:
+        if os.path.exists(fan_diagn_req) == True:
             print("Запрос диагностики") 
             send_mess(' Запрос диагностики из Hive OS', id_rig_in_server)                                                                                                 
-            os.system("rm " + fan_diagn_report)
+            os.system("rm " + fan_diagn_req)
                                                                                                 
             file_info = open(fan_diagn_report, "w+") 
             test_box_rsp = testing()

@@ -503,55 +503,47 @@ def get_setting_server(id_rig_in_server,key_slave):
     else:
         if const_rpm != int(response["data"][0]["attributes"]["effective_echo_fan"]):
             const_rpm = int(response["data"][0]["attributes"]["effective_echo_fan"])
-            send_mess_of_change_option(id_rig_in_server)
 
         if typeGpu != int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"]):
             typeGpu = int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"])
-            send_mess_of_change_option(id_rig_in_server)
 
         if gpuFanSetHive != int(response["data"][0]["attributes"]["AlertFan"]["gpuFanSetHive"]):
             gpuFanSetHive = int(response["data"][0]["attributes"]["AlertFan"]["gpuFanSetHive"])
-            send_mess_of_change_option(id_rig_in_server)
 
         if statusAlertSystem != response["data"][0]["attributes"]["AlertFan"]["statusAlertSystem"]:
             statusAlertSystem = response["data"][0]["attributes"]["AlertFan"]["statusAlertSystem"]
-            send_mess_of_change_option(id_rig_in_server)
 
         if selected_mod != int(response["data"][0]["attributes"]["SetModeFan"]["selected_mod"]):
             selected_mod = int(response["data"][0]["attributes"]["SetModeFan"]["selected_mod"])
-            send_mess_of_change_option(id_rig_in_server)
 
         if terget_temp_min != int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_min"]):
             terget_temp_min = int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_min"])
-            send_mess_of_change_option(id_rig_in_server)
 
         if terget_temp_max != int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_max"]):
             terget_temp_max = int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_max"])
-            send_mess_of_change_option(id_rig_in_server)
 
         if min_fan_rpm !=  round(const_rpm / 100 * int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"])):
             min_fan_rpm = round(const_rpm / 100 * int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"]))
-            send_mess_of_change_option(id_rig_in_server)
 
         if select_fan != int(response["data"][0]["attributes"]["SetModeFan"]["select_fan"]):
             select_fan = int(response["data"][0]["attributes"]["SetModeFan"]["select_fan"])
-            send_mess_of_change_option(id_rig_in_server)
+
 
         if critical_temp != int(response["data"][0]["attributes"]["SetMode0"]["critical_temp"]):
             critical_temp = int(response["data"][0]["attributes"]["SetMode0"]["critical_temp"])
-            send_mess_of_change_option(id_rig_in_server)
+
 
         if boost != int(response["data"][0]["attributes"]["SetMode0"]["boost"]):
             boost=int(response["data"][0]["attributes"]["SetMode0"]["boost"])
-            send_mess_of_change_option(id_rig_in_server)
+
 
         if option2 != response["data"][0]["attributes"]["SetMode2"]["SetRpm"]:
             option2 = response["data"][0]["attributes"]["SetMode2"]["SetRpm"]
-            send_mess_of_change_option(id_rig_in_server)
+
 
         if target_mem_temp !=  int(response["data"][0]["attributes"]["SetMode0"]["target_mem"]):
             target_mem_temp =  int(response["data"][0]["attributes"]["SetMode0"]["target_mem"])
-            send_mess_of_change_option(id_rig_in_server)
+
 
     # проверяем включена ли реколебровка и если нужно запускаем
     if response["data"][0]["attributes"]["recalibrationFanRig"] == True:
@@ -586,20 +578,20 @@ def get_setting_server1(id_rig_in_server, key_slave):
     else:
         if typeGpu != int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"]):
             typeGpu = int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"])
-            send_mess_of_change_option(id_rig_in_server)
+
 
         if gpuFanSetHive != int(response["data"][0]["attributes"]["AlertFan"]["gpuFanSetHive"]):
             gpuFanSetHive = int(response["data"][0]["attributes"]["AlertFan"]["gpuFanSetHive"])
-            send_mess_of_change_option(id_rig_in_server)
+
         if statusAlertSystem != response["data"][0]["attributes"]["AlertFan"]["statusAlertSystem"]:
             statusAlertSystem = response["data"][0]["attributes"]["AlertFan"]["statusAlertSystem"]
-            send_mess_of_change_option(id_rig_in_server)
+
         if selected_mod != int(response["data"][0]["attributes"]["SetModeFan"]["selected_mod"]):
             selected_mod = int(response["data"][0]["attributes"]["SetModeFan"]["selected_mod"])
-            send_mess_of_change_option(id_rig_in_server)
+
         if cache != response["data"][0]["attributes"]["SetMode1"]:
             cache = response["data"][0]["attributes"]["SetMode1"]
-            send_mess_of_change_option(id_rig_in_server)
+
 
     del cache['id']
     for i in cache:
@@ -639,23 +631,23 @@ def get_setting_server2(id_rig_in_server, key_slave):
     else:
         if typeGpu != int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"]):
             typeGpu = int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"])
-            send_mess_of_change_option(id_rig_in_server)
+
 
         if gpuFanSetHive != int(response["data"][0]["attributes"]["AlertFan"]["gpuFanSetHive"]):
             gpuFanSetHive = int(response["data"][0]["attributes"]["AlertFan"]["gpuFanSetHive"])
-            send_mess_of_change_option(id_rig_in_server)
+
         if statusAlertSystem != response["data"][0]["attributes"]["AlertFan"]["statusAlertSystem"]:
             statusAlertSystem = response["data"][0]["attributes"]["AlertFan"]["statusAlertSystem"]
-            send_mess_of_change_option(id_rig_in_server) 
+ 
         if selected_mod != int(response["data"][0]["attributes"]["SetModeFan"]["selected_mod"]):
             selected_mod = int(response["data"][0]["attributes"]["SetModeFan"]["selected_mod"])
-            send_mess_of_change_option(id_rig_in_server)
+
         if option2 != response["data"][0]["attributes"]["SetMode2"]["SetRpm"]:
             option2 = response["data"][0]["attributes"]["SetMode2"]["SetRpm"]
-            send_mess_of_change_option(id_rig_in_server)
+
         if mod_option_hive != int(response["data"][0]["attributes"]["mod_option_hive"]):
             mod_option_hive = int(response["data"][0]["attributes"]["mod_option_hive"])
-            send_mess_of_change_option(id_rig_in_server)
+
 
 
     return("true")

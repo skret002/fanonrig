@@ -39,6 +39,7 @@ def get_temp():
         pass
 
     hot_gpu = max(temp_gpu)
+    print(hot_gpu)
     if int(hot_gpu) > 0:
         return(True)     
     else:

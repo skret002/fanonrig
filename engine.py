@@ -56,6 +56,7 @@ optimum_round = 0
 rigRpmFanMaximum = 0
 mod_option_hive = 1
 min_fan_rpm_persent = 0
+device_name = ''
 
 def error511():
     send_mess(' Замечена ошибка 511, проверьте блок питания и прилигание охлаждения к GPU.', id_rig_in_server)
@@ -185,6 +186,7 @@ def active_cool_mod():
                 #send_mess("//Применяю оптимум// " + str(int(optimun_echo) + int(stab_balance)) , id_rig_in_server)                                                                                                   
                 subprocess.getstatusoutput("echo " + str(echo) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                  
                 print("echo", str(echo))
+                time.sleep(30)
                 get_temp()
 
                 if int(hot_gpu) >= (int(optimum_temp) + 2)  or int(hot_gpu)< (old_hot_gpu-1) or int(mem_t) > 92:            
@@ -344,6 +346,7 @@ def get_temp():
                         rpmfun = int(feature.get_value())
                     else:
                        rpmfun = 0
+
     addFanData(rpmfun,temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gpu5,temp_gpu6,temp_gpu7, rpm_fun_gpu, alertFan,problemNumberGpu,hot_gpu)
     return(True)
 
@@ -362,23 +365,17 @@ def testing():
         pass
         #print("внешние кулера управляемые и крутятся")
     else:
-        print("внешних кулеров нет или они не управляемые")
+        print("Внешних кулеров нет или они не управляемые")
         time.sleep(10)
         testing()
-    for chip in sensors.iter_detected_chips():                                                                                        
-        if str(chip.adapter_name) == "PCI adapter":                                                                                   
-            for feature in chip:                                                                                                      
-                try:                                                                                                                  
-                    if str(feature.label) == "edge":                                                                                  
-                        # температура
-                        temp_gpu.append(feature.get_value())
-                    if str(feature.label) == "fan1": 
-                        # скорость кулеров
-                        rpm_fun_gpu.append(feature.get_value())
-                except Exception as e:                                                                                                
-                    pass
+        return("There are no external coolers or they are not controlled, check the connections of the coolers to the motherboard. Make sure you are using WIND TANK TECHNOLOGIES L.L.C box")
+    try:
+        get_temp()
+    except Exception:
+        return("Data about video cards cannot be read, GPU may not be installed")
 
     print("тест завершился успешно")
+    return(True)
 
 def test_key(rig_id='', rig_name=''):                                                                                                 
     print("Зашли в test_key", len(str(rig_id)))                                                                                       
@@ -504,7 +501,6 @@ def get_setting_server(id_rig_in_server,key_slave):
         target_mem_temp = int(response["data"][0]["attributes"]["SetMode0"]["target_mem"])
         rigOnBoot = 1
     else:
-        send_mess(' Настройки изменены', id_rig_in_server)
         if const_rpm != int(response["data"][0]["attributes"]["effective_echo_fan"]):
             const_rpm = int(response["data"][0]["attributes"]["effective_echo_fan"])
             send_mess_of_change_option(id_rig_in_server)
@@ -629,8 +625,10 @@ def get_setting_server2(id_rig_in_server, key_slave):
     global gpuFanSetHive
     global typeGpu
     global rigOnBoot
+    global mod_option_hive
 
     if rigOnBoot ==0:
+        mod_option_hive = int(response["data"][0]["attributes"]["mod_option_hive"])
         rigRpmFanMaximum = int(response["data"][0]["attributes"]["rigRpmFanMaximum"])
         typeGpu = int(response["data"][0]["attributes"]["AlertFan"]["typeGpu"])
         gpuFanSetHive = int(response["data"][0]["attributes"]["AlertFan"]["gpuFanSetHive"])
@@ -655,12 +653,17 @@ def get_setting_server2(id_rig_in_server, key_slave):
         if option2 != response["data"][0]["attributes"]["SetMode2"]["SetRpm"]:
             option2 = response["data"][0]["attributes"]["SetMode2"]["SetRpm"]
             send_mess_of_change_option(id_rig_in_server)
+        if mod_option_hive != int(response["data"][0]["attributes"]["mod_option_hive"]):
+            mod_option_hive = int(response["data"][0]["attributes"]["mod_option_hive"])
+            send_mess_of_change_option(id_rig_in_server)
+
+
     return("true")
 
-def sendInfoRig(rig_id, rig_name, key_slave):
+def sendInfoRig(rig_id, rig_name, key_slave, device_name):
     global id_rig_in_server
     try:
-        param= [('rigId', rig_id), ('rigName', rig_name), ('key_slave',key_slave)] 
+        param= [('rigId', rig_id), ('rigName', rig_name), ('key_slave',key_slave), ('device_name', device_name)] 
         try:
             response = requests.post('http://ggc.center:8000/add_rig_or_test/', data = param ,stream=True, timeout=10)
             print('sendInfoRig ',response)
@@ -701,6 +704,7 @@ def engine_start():
     global id_rig_in_server
     global ressetRig
     global soft_rev
+    global device_name
 
     testing()  # проверяем работоспособность самого рига
 
@@ -709,12 +713,16 @@ def engine_start():
     rig_id = str(text["rig_id"])
     rig_name = str(text["rig_name"])
     soft_rev = str(text["soft_rev"])
+    try:
+        device_name = str(text["device_name"])
+    except Exception:
+        device_name = 'Wind Tank V1'
     old_selected_mod = selected_mod
 
     test_key(rig_id, rig_name) # проверям имя рига, ключ, и т.д
     
     # передаем данные о риге и получаем ответ с id
-    sendInfoRig(rig_id,rig_name, key_slave)
+    sendInfoRig(rig_id,rig_name, key_slave, device_name)
     if ressetRig == True:
         try:
             requests.post("http://ggc.center:8000/ressetRigAndFanData/", data={'ressetRig':'True', 'id_rig_in_server':id_rig_in_server},stream=True, timeout=10)
@@ -754,8 +762,7 @@ def engine_start():
                 if test_r == 0:
                     test_select_mod()
                     get_setting_server(id_rig_in_server, key_slave)
-                communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, rpmfun,rigRpmFanMaximum, option2, terget_temp_min,terget_temp_max, min_fan_rpm_persent, target_mem_temp, selected_mod)
-                get_temp()
+                communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, rpmfun,rigRpmFanMaximum, option2, terget_temp_min,terget_temp_max, min_fan_rpm_persent, target_mem_temp, selected_mod,device_name)
                 active_cool_mod()
                 #communication_hive(id_rig_in_server, key_slave, rigOnBoot, const_rpm, rpmfun,rigRpmFanMaximum)
             except Exception as e:
@@ -808,7 +815,7 @@ def engine_start():
             try:
                 if test_r == 0:
                     get_setting_server2(id_rig_in_server, key_slave)
-                communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, rpmfun,rigRpmFanMaximum, option2, terget_temp_min,terget_temp_max, min_fan_rpm_persent, target_mem_temp, selected_mod)
+                communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, rpmfun,rigRpmFanMaximum, option2, terget_temp_min,terget_temp_max, min_fan_rpm_persent, target_mem_temp, selected_mod,device_name)
                     #print("ответ с сервера получен")
             except Exception as e:
                 print("ERROR selected_mod2 " + str(e))  

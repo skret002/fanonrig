@@ -5,12 +5,16 @@ import requests
 import time
 import sys
 from testFan import testFan
+from engine import testing
 from handler_messeges import transmit_mess as send_mess
 req_link_hive       = '/run/hive/fan_controller_req'  #файл запроса в хайв json
 answer_link_hive    = '/run/hive/fan_controller_rsp' # файл ответа из hive json
 req_recallibrate    = '/run/hive/fan_controller_recallibrate_req' # запрос реколибровки если файл есть > потом удалить
 answer_recallibrate ='/run/hive/fan_controller_recallibrate_rsp' # вывести рез. реколиб. текстом
 hive_conf_autofan   = '/hive-config/ykeda_autofan.conf' # основной конфиг автофана
+fan_diagn_report    = '/run/hive/fan_controller_report_req' #при запросе пользователем отчёта будет создан пустой файл
+hive_dir            = '/hive-config/'
+
 
 def write_resp(rpmfun, rigRpmFanMaximum):
     fan_persent = []
@@ -28,7 +32,13 @@ def write_resp(rpmfun, rigRpmFanMaximum):
     print("Записал данные по кулерам")
     return()
 
-def communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, rpmfun,rigRpmFanMaximum, option2, terget_temp_min,terget_temp_max, min_fan_rpm, target_mem_temp, selected_mod):
+def communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, rpmfun,rigRpmFanMaximum, option2, terget_temp_min,terget_temp_max, min_fan_rpm, target_mem_temp, selected_mod, device_name):
+    if os.path.exists(hive_dir+str(device_name)+'.wtt') == False:
+        send_mess(str(device_name)' -подключен к Hive OS, "краткий" мониторинг так же доступен в интерфейсе Hive', id_rig_in_server)                                                                                                 
+        file_info = open(hive_dir+str(device_name)+'.wtt', "w+")                                                                                              
+        file_info.write('WIND TANK TECHNOLOGIES L.L.C'+ '\n' +'Model: '+ str(device_name)  + '\n' +  '@ designed by Alexander Mevlutov')                                                                                                       
+        file_info.close()     
+
     if mod_option_hive == 1:
         now_manual_fan_speed = option2
         now_terget_temp_min = terget_temp_min
@@ -80,7 +90,21 @@ def communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, 
             os.system("rm " + req_recallibrate)
             os.system("rm " +  answer_recallibrate )                                                                                                 
             file_info = open(answer_recallibrate, "w+")                                                                                              
-            file_info.write(str(res_test_fan))                                                                                                       
+            file_info.write('device_name' + '\n' + str(res_test_fan))                                                                                                       
+            file_info.close() 
+        if os.path.exists(fan_diagn_report) == True:
+            print("Запрос диагностики") 
+            send_mess(' Запрос диагностики из Hive OS', id_rig_in_server)                                                                                                 
+            os.system("rm " + fan_diagn_report)
+                                                                                                
+            file_info = open(fan_diagn_report, "w+") 
+            test_box_rsp = testing()
+            if test_box_rsp == True:
+                file_info.write('Company: WIND TANK TECHNOLOGIES L.L.C' + '\n' +'Model: '+ str(device_name)  + '\n' + 'Diagnostics completed successfully' + '\n' + '@ designed by Alexander Mevlutov')    
+                send_mess(' Company: WIND TANK TECHNOLOGIES L.L.C' + '\n' +'Model: '+ str(device_name)  + '\n' + 'Diagnostics completed successfully' + '\n' + '@ designed by Alexander Mevlutov', id_rig_in_server)  
+            else:
+                file_info.write('Company: WIND TANK TECHNOLOGIES L.L.C' + '\n' +'Model: '+ str(device_name)  + '\n' + str(test_box_rsp) + '\n' + '@ designed by Alexander Mevlutov')                                                                                               
+                send_mess(' Company: WIND TANK TECHNOLOGIES L.L.C' + '\n' +'Model: '+ str(device_name)  + '\n' + str(test_box_rsp) + '\n' + '@ designed by Alexander Mevlutov', id_rig_in_server)
             file_info.close() 
     else:
         pass

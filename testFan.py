@@ -49,7 +49,7 @@ def testFan(id_rig):
                                                                  })
     
 
-    return("Максимальная скорость "+str(max_rpm))
+    return("Максимальная скорость внешних кулеров :"+str(max_rpm))
 
 if __name__ == '__main__':
     testFan()

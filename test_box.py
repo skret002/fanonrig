@@ -1,8 +1,49 @@
 import os
 import subprocess
 import requests
+
 import sensors
 sensors.init()
+
+def get_temp():
+    temp_gpu = []
+    labels = ''
+    try:
+        for chip in sensors.iter_detected_chips():
+            numGpu = numGpu+1                                                                                  
+            if 'amdgpu' in str(chip) and str(chip) not in labels: 
+                labels += ' ' + str(chip)                                                                                
+                for feature in chip:
+                    if feature.label:
+                        if str(feature.label) == "edge":  
+                            try:                      
+                                if int(feature.get_value()) == 511:
+                                    error511()                                                                        
+                                temp_gpu.append(round(int(feature.get_value())))                                                                         
+                            except Exception:
+                                temp_gpu.append(0)
+    except Exception:
+        pass
+
+    try:
+        #добавляем данные температуры с карт nvidia если они есть
+        (status,output)=subprocess.getstatusoutput("nvidia-smi -q | grep 'GPU Current Temp'")
+        green_gpu_temp = output.replace('GPU Current Temp', '').replace(':', '').replace(' ', '').replace('C', ',').replace('\n38', ',').split(',')
+        #print('green_gpu_temp', green_gpu_temp)
+        for i in green_gpu_temp:
+            if len(str(i)) != 0:
+                temp_gpu.append(int(i))
+                if str(i) == '511':
+                    error511()
+    except Exception:
+        pass
+
+    hot_gpu = max(temp_gpu)
+    if int(hot_gpu) > 0:
+        return(True)     
+    else:
+        return(False)
+
 
 def testing():
     # начинаю тест железа

@@ -13,7 +13,7 @@ req_recallibrate    = '/run/hive/fan_controller_recallibrate_req' # запрос
 answer_recallibrate ='/run/hive/fan_controller_recallibrate_rsp' # вывести рез. реколиб. текстом
 hive_conf_autofan   = '/hive-config/ykeda_autofan.conf' # основной конфиг автофана
 fan_diagn_report    = '/run/hive/fan_controller_report_req' #при запросе пользователем отчёта будет создан пустой файл
-hive_dir            = '/hive-config/'
+hive_dir            = '/hive-config/device.wtt'
 
 
 def write_resp(rpmfun, rigRpmFanMaximum):
@@ -33,10 +33,10 @@ def write_resp(rpmfun, rigRpmFanMaximum):
     return()
 
 def communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, rpmfun,rigRpmFanMaximum, option2, terget_temp_min,terget_temp_max, min_fan_rpm, target_mem_temp, selected_mod, device_name):
-    if os.path.exists(hive_dir+str(device_name)+'.wtt') == False:
+    if os.path.exists(hive_dir) == False:
         send_mess(str(device_name)+' -подключен к Hive OS, "краткий" мониторинг так же доступен в интерфейсе Hive', id_rig_in_server)                                                                                                 
-        file_info = open(hive_dir+str(device_name)+'.wtt', "w+")                                                                                              
-        file_info.write('WIND TANK TECHNOLOGIES L.L.C'+ '\n' +'Model: '+ str(device_name)  + '\n' +  '@ designed by Alexander Mevlutov')                                                                                                       
+        file_info = open(hive_dir, "w+")                                                                                              
+        file_info.write(str(device_name))                                                                                                       
         file_info.close()     
 
     if mod_option_hive == 1:

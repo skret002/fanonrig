@@ -439,25 +439,6 @@ def test_key(rig_id='', rig_name=''):
             subprocess.getstatusoutput("sreboot")
             subprocess.getstatusoutput("reboot")
 
-        #if len(str(rig_id)) != 0 and rig_name != r_name and rig_name != '':                                                               
-        #    print("///// изменилось имя рига ///////")
-        #    try:
-        #        rename_in_serv = requests.get('http://ggc.center:8000/rename_rig/', data = [('rig_id', rig_id),('r_name',r_name)],stream=True, timeout=10)
-        #    except Exception:
-        #        rename_in_serv = 'False'
-        #    new_name=rename_in_serv.json()["data"]
-        #    if new_name == r_name:
-        #        with open('settings.json', 'r+') as f:                                                                                        
-        #            json_data = json.load(f)                                                                                                  
-        #            json_data['rig_name'] = str(r_name)
-        #            f.seek(0)                                                                                                                 
-        #            f.write(json.dumps(json_data))                                                                                            
-        #            f.truncate() 
-        #        os.system("reboot")
-        #        subprocess.getstatusoutput("sreboot") 
- 
-        #    else:
-        #        engine_start()  
 
     if str(rig_id) == str(r_id) and len(rig_id) >2 and len(rig_name) >2 and str(r_name) == str(rig_name):
         return(True)

@@ -409,12 +409,12 @@ def test_key(rig_id='', rig_name=''):
                     if str(r_id) != str(rig_id) or rig_name != r_name:
                         print("***Изменился RIG ID или RIG NAME****")
                         with open('settings.json', 'r+') as f:
-                        json_data = json.load(f)                                                                                                  
-                        json_data['rig_id'] = str(r_id)                                                                                           
-                        json_data['rig_name'] = str(r_name)                                                                                       
-                        f.seek(0)                                                                                                                 
-                        f.write(json.dumps(json_data))                                                                                            
-                        f.truncate() 
+                            json_data = json.load(f)                                                                                                  
+                            json_data['rig_id'] = str(r_id)                                                                                           
+                            json_data['rig_name'] = str(r_name)                                                                                       
+                            f.seek(0)                                                                                                                 
+                            f.write(json.dumps(json_data))                                                                                            
+                            f.truncate() 
                         subprocess.getstatusoutput("sreboot")
                         subprocess.getstatusoutput("reboot")
 

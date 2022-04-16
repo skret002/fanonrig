@@ -69,7 +69,7 @@ def communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, 
             print(int(now_target_core), int(now_target_mem), int(now_manual_fan_speed), int(now_fan_mode), int(now_min_fan_rpm))
             if (j_target_temp != int(now_target_core)) or (j_target_mtemp != int(now_target_mem)) or (j_manual_fan_speed != int(now_manual_fan_speed)) or (j_fan_mode != int(now_fan_mode)) or (j_min_fan != int(now_min_fan_rpm)):
                 print("настройки не одинаковые req_link_hive")
-                if int(str(j_target_temp)[1:2]) >=4:
+                if int(str(j_target_temp)[1:2]) <=4:
                     new_min_temp =  j_target_temp - 10
                     new_max_temp =  j_target_temp + 10
                 else:

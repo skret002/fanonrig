@@ -810,7 +810,7 @@ def engine_start():
             if int(r) == 300:
                 r=4
                 task_update(id_rig_in_server, str(soft_rev))
-
+        print("CPU LOAD",total)
     elif selected_mod == 1:
         #print("Выбран ручной режим")
         send_mess(' Manual mode activated', id_rig_in_server)

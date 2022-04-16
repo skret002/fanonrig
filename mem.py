@@ -16,14 +16,15 @@ def mem_temp():
      #ищем температуру на зеленых  картах   
     try:         
         (status,output)=subprocess.getstatusoutput("nvidia-smi -q | grep 'Memory Current Temp'")
-        green_memory_temp = output.replace('Memory Current Temp', '').replace(':', '').replace(' ', '').replace('C', ',').replace('\n38', ',').split(',')
-        print('::::::::::green_memory_temp::::::::::', green_memory_temp)
-        for i in green_memory_temp:
-            if len(str(i)) != 0:
-                mem_temp.append(int(i))    
+        if len(output) != 0:
+            green_memory_temp = output.replace('Memory Current Temp', '').replace(':', '').replace(' ', '').replace('C', ',').replace('\n38', ',').split(',')
+            print('::::::::::green_memory_temp::::::::::', green_memory_temp)
+            for i in green_memory_temp:
+                if len(str(i)) != 0:
+                    mem_temp.append(int(i))    
     except Exception as e:
         print("!!!!!!!!!!!!!ошибка в получении данных температуры памяти NVIDIA!!!!!!!!!!!!!")
-        
+
     return(max(mem_temp))                                                                                                                            
 
 if __name__ == '__main__':                                                                                                                           

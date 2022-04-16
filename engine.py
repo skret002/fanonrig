@@ -57,7 +57,6 @@ rigRpmFanMaximum = 0
 mod_option_hive = 0
 min_fan_rpm_persent = 0
 device_name = ''
-total = dict(F1=0, F2=0, F3=0,F4=0, F5=0, F6=0,F7=0, F8=0, F9=0,F10=0, F11=0, F12=0) 
 
 def error511():
     send_mess(' Error 511 noticed, check the power supply and cooling connection to the GPU.', id_rig_in_server)
@@ -79,19 +78,13 @@ def active_cool_mod():
     global temp_gpu_freeze
     global old_stab_balance
     global optimum_round
-    timeStart = time.time_ns()
-
     optimum_temp = int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2)
 
     if int(boost) < 1:
         boost = 1
 
     try:
-        timeStart = time.time_ns()
-        mem_t = int(mem_temp())   
-        timeEnd = time.time_ns()
-        duration = timeEnd - timeStart
-        total['F8'] += duration                                                                                                           
+        mem_t = int(mem_temp())                                                                                                              
         if int(mem_t) > 75:                                                                                                                            
             boost_mem = round((int(const_rpm) /100) * (mem_t - 75))
             #print('ПАМЯТЬ RAM =>',mem_t,'boost_mem =>',boost_mem )                                                                                                                
@@ -103,7 +96,7 @@ def active_cool_mod():
 
     #print("ПОРОГ ВКЛЮЧЕНИЯ ОПЕРЕЖЕНИЯ",int(hot_gpu) >= int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) + 3,int(terget_temp_min))
     if int(hot_gpu) >= int(critical_temp):
-        subprocess.getstatusoutput("echo 255" + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        subprocess.getstatusoutput("echo 255 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         subprocess.getstatusoutput("miner stop")
         send_mess("MINER STOPPED, DANGEROUS TEMPERATURE " + str(hot_gpu), id_rig_in_server)
 
@@ -126,12 +119,14 @@ def active_cool_mod():
             return()
         else:    
             if (optimum_on == 0) and (stable_temp_round <= 15) and (int(mem_t) <100):
+                if stable_temp_round == 0:
+                    subprocess.getstatusoutput("echo 15 >> /sys/class/hwmon/hwmon1/pwm" +str(select_fan))
                 if int(old_hot_gpu) != int(hot_gpu) or int(hot_gpu) > int(optimum_temp):
                     print('усредненый пересчитываю')                                                                                                 
                     last_rpm = (int(const_rpm) / (int(terget_temp_max - terget_temp_min))) * ((int(hot_gpu) - int(terget_temp_min)))                   
                     if int(hot_gpu) > int(optimum_temp):
                         print('Применяю адаптивно-усредненый') 
-                        last_rpm_s = (int(last_rpm)/100) * (80+((int(hot_gpu) - int(optimum_temp))*5)) + int(boost_mem)
+                        last_rpm_s = (int(last_rpm)/100) * (80+((int(hot_gpu) - int(optimum_temp))*2)) + int(boost_mem)
                         stable_temp_round = 0
                     else:
                         last_rpm_s = int(((int(last_rpm)/100)*80) + int(boost_mem))
@@ -210,13 +205,9 @@ def active_cool_mod():
         #print("температура сильно ниже таргета, даю  ",last_rpm)
         #send_mess("температура сильно ниже таргета, даю  " + str(last_rpm) , id_rig_in_server)
         #print(hot_gpu)
-    timeEnd = time.time_ns()
-    duration = timeEnd - timeStart
-    total['F1'] += duration
     return()
 
 def addFanData(rpmfun, temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gpu5,temp_gpu6,temp_gpu7,rpm_fun_gpu, alertFan,problemNumberGpu, hot_gpu):
-    timeStart = time.time_ns()
     data={"id_in_serv": id_rig_in_server,'rpmfun':rpmfun,
                             'temp_gpu0':temp_gpu0, 'temp_gpu1':temp_gpu1,
                             'temp_gpu2':temp_gpu2,'temp_gpu3':temp_gpu3,
@@ -231,11 +222,8 @@ def addFanData(rpmfun, temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gp
     except Exception:
         print('ошибка в отправке данных по кулерам')
         engine_start()
-    timeEnd = time.time_ns()
-    duration = timeEnd - timeStart
-    total['F2'] += duration
+
 def get_temp():
-    timeStart = time.time_ns()
     sensors.init()
     global rpmfun
     global hot_gpu
@@ -363,9 +351,6 @@ def get_temp():
                        rpmfun = 0
 
     addFanData(rpmfun,temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gpu5,temp_gpu6,temp_gpu7, rpm_fun_gpu, alertFan,problemNumberGpu,hot_gpu)
-    timeEnd = time.time_ns()
-    duration = timeEnd - timeStart
-    total['F3'] += duration
     return(True)
 
 def testing():
@@ -395,8 +380,7 @@ def testing():
     print("тест завершился успешно")
     return(True)
 
-def test_key(rig_id='', rig_name=''):  
-    timeStart = time.time_ns()                                                                                               
+def test_key(rig_id='', rig_name=''):                                                                                                 
     print("Зашли в test_key", len(str(rig_id)))                                                                                       
     global key_slave
                                                                                                           
@@ -471,14 +455,10 @@ def send_mess_of_change_option(id_rig_in_server):
         send_mess(' Settings changed', id_rig_in_server)
     except Exception as e:
         send_mess(' Error - please pass this message on to the developer ' + str(e), id_rig_in_server)
-    timeEnd = time.time_ns()
-    duration = timeEnd - timeStart
-    total['F4'] += duration
     return(True)
 
 
 def get_setting_server(id_rig_in_server,key_slave):
-    timeStart = time.time_ns()
     try:
         response = requests.get('http://ggc.center:8000/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)],stream=True, timeout=10 )
     except Exception:
@@ -573,9 +553,6 @@ def get_setting_server(id_rig_in_server,key_slave):
     if response["data"][0]["attributes"]["recalibrationFanRig"] == True:
         testFan(id_rig_in_server)
         get_setting_server(id_rig_in_server, key_slave)
-    timeEnd = time.time_ns()
-    duration = timeEnd - timeStart
-    total['F5'] += duration
     return("true")
 
 def get_setting_server1(id_rig_in_server, key_slave):
@@ -680,7 +657,6 @@ def get_setting_server2(id_rig_in_server, key_slave):
     return("true")
 
 def sendInfoRig(rig_id, rig_name, key_slave, device_name):
-    timeStart = time.time_ns()
     global id_rig_in_server
     try:
         param= [('rigId', rig_id), ('rigName', rig_name), ('key_slave',key_slave), ('device_name', device_name)] 
@@ -695,9 +671,6 @@ def sendInfoRig(rig_id, rig_name, key_slave, device_name):
         print('ошибка в sendInfoRig', e)
         time.sleep(3)
         engine_start()
-    timeEnd = time.time_ns()
-    duration = timeEnd - timeStart
-    total['F5'] += duration
     return(True)
 
 def test_select_mod():
@@ -783,19 +756,11 @@ def engine_start():
             r = r + 1
             try:
                 if test_r == 0:
-                    timeStart = time.time_ns()
                     test_select_mod()
-                    timeEnd = time.time_ns()
-                    duration = timeEnd - timeStart
-                    total['F6'] += duration
                     get_setting_server(id_rig_in_server, key_slave)
                 try:
                     if mod_option_hive == 1:
-                        timeStart = time.time_ns()
                         communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, rpmfun,rigRpmFanMaximum, option2, terget_temp_min,terget_temp_max, min_fan_rpm_persent, target_mem_temp, selected_mod,device_name)
-                        timeEnd = time.time_ns()
-                        duration = timeEnd - timeStart
-                        total['F7'] += duration
                         print("*** Активно управление из HIVE ***")
                     else:
                         pass
@@ -810,7 +775,7 @@ def engine_start():
             if int(r) == 300:
                 r=4
                 task_update(id_rig_in_server, str(soft_rev))
-        print("CPU LOAD",total)
+
     elif selected_mod == 1:
         #print("Выбран ручной режим")
         send_mess(' Manual mode activated', id_rig_in_server)
@@ -873,6 +838,7 @@ def apdate_fan_sh():
     subprocess.getstatusoutput("cp -u /home/fanonrig/fan.sh /home/")
     subprocess.getstatusoutput("sudo chmod ugo+x /home/fanonrig/fan.sh")
     subprocess.getstatusoutput("sudo rm /home/fanonrig/fan.sh")
+    
 if __name__ == '__main__':
     if os.path.exists("/home/fanonrig/fan.sh") == True:
         apdate_fan_sh()

@@ -128,6 +128,10 @@ def active_cool_mod():
                         stable_temp_round = 0
                     else:
                         last_rpm_s = int(((int(last_rpm)/100)*80) + int(boost_mem))
+
+                    if int(last_rpm_s) < int(min_fan_rpm): # ограничеваем минимальной скоростью
+                        last_rpm_s = int(min_fan_rpm)
+
                     subprocess.getstatusoutput("echo " + str(int(last_rpm_s)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                    
                     stable_temp_round = stable_temp_round + 1
                     start_optimum = last_rpm_s   
@@ -150,15 +154,19 @@ def active_cool_mod():
                 optimum_fan = optimum_fan + int(int(const_rpm) / 100) * 1                                                                 
                 last_rpm = int(start_optimum) - int(optimum_fan)                                                                                  
                 print("значения после корекции", last_rpm)
-                #send_mess("/////Температура стабильна, ищу оптимум /// значения после корекции " + str(last_rpm) , id_rig_in_server)                                                                                        
+                #send_mess("/////Температура стабильна, ищу оптимум /// значения после корекции " + str(last_rpm) , id_rig_in_server)  
+                if int(last_rpm) < int(min_fan_rpm):
+                    last_rpm = int(min_fan_rpm)
                 subprocess.getstatusoutput("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                               
                 time.sleep(30)
                 get_temp()                                                                                                                           
                 old_hot_gpu = hot_gpu    
+
                 if int(hot_gpu) > int(optimum_temp):
-                    stable_temp_round = 0                                                                                                                
-                if  (int(mem_t) >= 88) or (int(optimum_temp) == int(hot_gpu)) or (int(last_rpm) == 1):
-                    print('optTRIGER', int(mem_t) >= int(target_mem_temp) , int(optimum_temp) == int(hot_gpu), (int(last_rpm) == 1))                                                             
+                    stable_temp_round = 0     
+
+                if  (int(mem_t) >= 88) or (int(optimum_temp) == int(hot_gpu)) or (int(last_rpm) == 1) or (int(last_rpm) < int(min_fan_rpm)):
+                    print('optTRIGER', int(mem_t) >= int(target_mem_temp) , int(optimum_temp) == int(hot_gpu), (int(last_rpm) == 1),(int(last_rpm) < int(min_fan_rpm)))                                                             
                     optimum_on = 1                                                                                                                   
                     print("ОПТИМУМ ГОТОВ", optimun_echo, 'mem_t', mem_t)
                     old_hot_gpu = hot_gpu
@@ -183,12 +191,14 @@ def active_cool_mod():
 
                 echo = int(optimun_echo) + int(stab_balance) + int(stab_balance_mem)
                 #send_mess("stab_balance | stab_balance_mem" + str(stab_balance) + str(stab_balance_mem) , id_rig_in_server)        
-                #send_mess("//Применяю оптимум// " + str(int(optimun_echo) + int(stab_balance)) , id_rig_in_server)                                                                                                   
+                #send_mess("//Применяю оптимум// " + str(int(optimun_echo) + int(stab_balance)) , id_rig_in_server)  
+                if int(echo) < int(min_fan_rpm):
+                    echo = int(min_fan_rpm)                                                                                                
                 subprocess.getstatusoutput("echo " + str(echo) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                  
                 print("echo", str(echo))
                 get_temp()
-
-                if int(hot_gpu) >= (int(optimum_temp) + 2)  or int(hot_gpu)< (old_hot_gpu-1) or int(mem_t) > 92:            
+                time.sleep(20)
+                if int(hot_gpu) >= (int(optimum_temp) + 2)  or int(hot_gpu)< (old_hot_gpu-1) or int(mem_t) >= 92:            
                     print('::::::::::::::::::сбросил optimum_on::::::::::::::::::')                                                                
                     optimum_on = 0                                                                                                                   
                     stable_temp_round = 0      
@@ -218,7 +228,14 @@ def addFanData(rpmfun, temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gp
         r = requests.post("http://ggc.center:8000/add_and_read_fandata/", data=data,stream=True, timeout=10)
     except Exception:
         print('ошибка в отправке данных по кулерам')
-        engine_start()
+        time.sleep(20)
+        try:
+            r = requests.post("http://ggc.center:8000/add_and_read_fandata/", data=data,stream=True, timeout=10)
+        except Exception:
+            time.sleep(10)
+            send_mess('Failed to connect to the server, try to restart the rig | ', id_rig_in_server)
+            os.system("reboot")
+            subprocess.getstatusoutput("sreboot")
 
 def get_temp():
     #sensors.init()
@@ -492,7 +509,7 @@ def get_setting_server(id_rig_in_server,key_slave):
         terget_temp_min = int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_min"])
         terget_temp_max = int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_max"])
         min_fan_rpm_persent = response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"]
-        min_fan_rpm = round(int(const_rpm) / 100 * int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"]))
+        min_fan_rpm = int(int(const_rpm) / 100 * int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"]))
         select_fan = int(response["data"][0]["attributes"]["SetModeFan"]["select_fan"])
         critical_temp = int(response["data"][0]["attributes"]["SetMode0"]["critical_temp"])
         boost=int(response["data"][0]["attributes"]["SetMode0"]["boost"])
@@ -521,8 +538,8 @@ def get_setting_server(id_rig_in_server,key_slave):
         if terget_temp_max != int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_max"]):
             terget_temp_max = int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_max"])
 
-        if min_fan_rpm !=  round(const_rpm / 100 * int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"])):
-            min_fan_rpm = round(const_rpm / 100 * int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"]))
+        if min_fan_rpm !=  int(const_rpm / 100 * int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"])):
+            min_fan_rpm = int(const_rpm / 100 * int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"]))
 
         if select_fan != int(response["data"][0]["attributes"]["SetModeFan"]["select_fan"]):
             select_fan = int(response["data"][0]["attributes"]["SetModeFan"]["select_fan"])
@@ -786,7 +803,7 @@ def engine_start():
         #print("Выбран ручной режим")
         send_mess(' Manual mode activated', id_rig_in_server)
         subprocess.getstatusoutput("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
-        subprocess.getstatusoutput("echo " + str(round(const_rpm / 100 * int(option2))) + ">> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        subprocess.getstatusoutput("echo " + str(int(const_rpm / 100 * int(option2))) + ">> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         r = 4
         while 1 > 0:
             test_r = int(r) % 4                                                                                                                      
@@ -805,7 +822,7 @@ def engine_start():
             for i in option1:
                 #print(option1[i][0],option1[i][1])
                 if hot_gpu >= option1[i][0] and  hot_gpu <= option1[i][1]:
-                    last_rpm = round(int(const_rpm / 100) * int(i))
+                    last_rpm = int(int(const_rpm / 100) * int(i))
                     #print("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
                     subprocess.getstatusoutput("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
                     #print("выдаю  ",i,"%",  "горячая карта ", hot_gpu)
@@ -836,7 +853,7 @@ def engine_start():
                 print("ERROR selected_mod2 " + str(e))  
             get_temp()
             test_select_mod()
-            option = round(const_rpm / 100 * int(option2))
+            option = int(const_rpm / 100 * int(option2))
             subprocess.getstatusoutput("echo " + str(option) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
             #print("echo " + str(option) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
 
@@ -859,5 +876,5 @@ if __name__ == '__main__':
         engine_start()
     except Exception as e:
         send_mess('ОError in ENGINE CORE - send a text message to the developer | ' + str(e), id_rig_in_server)
-        #os.system("reboot")
-        #subprocess.getstatusoutput("sreboot")
+        os.system("reboot")
+        subprocess.getstatusoutput("sreboot")

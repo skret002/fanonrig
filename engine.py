@@ -476,22 +476,23 @@ def search_min_fan_rpm_now():
     global min_fan_rpm                                                                                                                                                                                 
     global real_min_fan_rpm                                                                                                                                                                                                                                                                                                                    
     print("::::::::  начинаю определять реальный min fan   :::::::::::")
-    mr = (int(rigRpmFanMaximum) / 100) * min_fan_rpm
+    mr = (int(rigRpmFanMaximum) / 100) * int(min_fan_rpm_persent)
+    send_mess(' Run еxpress сalibration', id_rig_in_server)
     os.system("echo 1 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")                                                                                                                       
     os.system("echo 1 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                                                                                                                 
-    time.sleep(30)        # убираем остаточное движение если до этого были раскручены
-    point = int(min_f) / 2                                                                                                                                                                             
+    time.sleep(10)        # убираем остаточное движение если до этого были раскручены
+    point = int(min_fan_rpm) / 2                                                                                                                                                                             
     for i in range(1, int(point)):                                                                                                                                                                     
         give_rpm = i*3                                                                                                                                                                                 
         print(give_rpm)                                                                                                                                                                                
         os.system("echo " + str(give_rpm) +" >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-        time.sleep(3)                                                                                                                                                                                  
+        time.sleep(2)                                                                                                                                                                                  
         (status,output)=subprocess.getstatusoutput("sensors | grep -i fan2")                                                                                                                           
         rpm1 = output.replace('fan2:', '').replace('RPM', '').replace('(min = 0 RPM)', '').replace(' ', '').replace('(min=0)','')
-        time.sleep(3)                                                                                                                                                                                  
+        time.sleep(1)                                                                                                                                                                                  
         (status,output)=subprocess.getstatusoutput("sensors | grep -i fan2")                                                                                                                           
         rpm2 = output.replace('fan2:', '').replace('RPM', '').replace('(min = 0 RPM)', '').replace(' ', '').replace('(min=0)','')
-        time.sleep(3)                                                                                                                                                                                  
+        time.sleep(1)                                                                                                                                                                                  
         (status,output)=subprocess.getstatusoutput("sensors | grep -i fan2")                                                                                                                           
         rpm3 = output.replace('fan2:', '').replace('RPM', '').replace('(min = 0 RPM)', '').replace(' ', '').replace('(min=0)','')                                                                      
         rpm = max(int(rpm1),int(rpm2),int(rpm3))                                                                                                                                                       
@@ -499,8 +500,11 @@ def search_min_fan_rpm_now():
         print(int(mr),rpm)
         if (int(rpm) >= (int(mr) - 80)) and (int(rpm) <= (int(mr) + 80)):                                                                                                                              
             real_min_fan_rpm = int(give_rpm)                                                                                                                                                           
-            print("::::::::  наден MINFAN  :::::::::::", int(i))
-            return(int(i))                                                                                                                                                                             
+            print("::::::::  найден MINFAN  :::::::::::", int(i))
+            send_mess(' Minimum speed set ' + str(rpm), id_rig_in_server)
+            return(int(i))  
+        real_min_fan_rpm =  int(min_fan_rpm)       
+        send_mess(' It was not possible to set the desired minimum speed, the external coolers are of poor quality or are manufactured. Well, we set the closest possible value, in accordance with the possibility of coolers ', id_rig_in_server)                                                                                                                                                                   
     print(":::::::: MINFAN не найден  :::::::::::")
 
 def get_setting_server(id_rig_in_server,key_slave):
@@ -571,7 +575,6 @@ def get_setting_server(id_rig_in_server,key_slave):
 
         if min_fan_rpm !=  int(const_rpm / 100 * int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"])):
             min_fan_rpm = int(const_rpm / 100 * int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"]))
-            search_min_fan_rpm_now()
 
         if select_fan != int(response["data"][0]["attributes"]["SetModeFan"]["select_fan"]):
             select_fan = int(response["data"][0]["attributes"]["SetModeFan"]["select_fan"])
@@ -594,6 +597,10 @@ def get_setting_server(id_rig_in_server,key_slave):
             
         if mod_option_hive != int(response["data"][0]["attributes"]["mod_option_hive"]):
             mod_option_hive = int(response["data"][0]["attributes"]["mod_option_hive"])
+
+        if min_fan_rpm_persent != response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"]:
+            min_fan_rpm_persent = int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"])
+            search_min_fan_rpm_now()
 
     # проверяем включена ли реколебровка и если нужно запускаем
     if response["data"][0]["attributes"]["recalibrationFanRig"] == True:
@@ -796,6 +803,7 @@ def engine_start():
         send_mess(' Intelligent mode activated', id_rig_in_server)
         subprocess.getstatusoutput("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
         subprocess.getstatusoutput("echo " + str(round(const_rpm / 100 * int(option2))) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+        search_min_fan_rpm_now()       
         r = 4
         while 1 > 0:
             test_r = int(r) % 4                                                                                                                      

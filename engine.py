@@ -474,7 +474,11 @@ def send_mess_of_change_option(id_rig_in_server):
 
 def search_min_fan_rpm_now():
     global min_fan_rpm                                                                                                                                                                                 
-    global real_min_fan_rpm                                                                                                                                                                                                                                                                                                                    
+    global real_min_fan_rpm  
+    subprocess.getstatusoutput("miner stop")
+    time.sleep(2)
+    send_mess(' miner stop', id_rig_in_server)
+    set_ok = 0                                                                                                                                                                                                                                                                                                                   
     print("::::::::  начинаю определять реальный min fan   :::::::::::")
     mr = (int(rigRpmFanMaximum) / 100) * int(min_fan_rpm_persent)
     send_mess(' Run еxpress сalibration', id_rig_in_server)
@@ -502,10 +506,16 @@ def search_min_fan_rpm_now():
             real_min_fan_rpm = int(give_rpm)                                                                                                                                                           
             print("::::::::  найден MINFAN  :::::::::::", int(i))
             send_mess(' Minimum speed set ' + str(rpm), id_rig_in_server)
+            set_ok = 1
             return(int(i))  
-        real_min_fan_rpm =  int(min_fan_rpm)       
-        send_mess(' It was not possible to set the desired minimum speed, the external coolers are of poor quality or are manufactured. Well, we set the closest possible value, in accordance with the possibility of coolers ', id_rig_in_server)                                                                                                                                                                   
-    print(":::::::: MINFAN не найден  :::::::::::")
+    if set_ok == 0:                                                                                                                                                                                     
+        real_min_fan_rpm =  int(min_fan_rpm)                                                                                                                                                           
+        send_mess(' It was not possible to set the desired minimum speed, the external coolers are of poor quality or are manufactured. Well, we set the closest possible value, in accordance with the possibility of coolers')
+        print(":::::::: MINFAN не найден  :::::::::::")
+    subprocess.getstatusoutput("miner start")
+    send_mess(' miner start', id_rig_in_server)
+    time.sleep(2)
+
 
 def get_setting_server(id_rig_in_server,key_slave):
     try:

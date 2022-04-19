@@ -3,7 +3,8 @@ import time
 import requests                                                                                                                                                                                                                                             
 import subprocess
 
-def testFan(id_rig):                                                                                                                                                                                                                                                          
+def testFan(id_rig):   
+    subprocess.run(['miner', 'stop'], stdout=subprocess.PIPE)                                                                                                                                                                                                                                                       
     effective_rpm = 0                                                                                                                                                                                                                                                         
     effective_handler = 0
     max_rpm = 0                                                                                                                                                                                                                                                               
@@ -48,7 +49,7 @@ def testFan(id_rig):
                                                                  'effective_echo':effective_handler
                                                                  })
     
-
+    subprocess.run(['miner', 'start'], stdout=subprocess.PIPE)
     return("Maximum speed of external coolers :"+str(max_rpm))
 
 if __name__ == '__main__':

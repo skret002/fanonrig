@@ -471,6 +471,35 @@ def send_mess_of_change_option(id_rig_in_server):
         send_mess(' Error - please pass this message on to the developer ' + str(e), id_rig_in_server)
     return(True)
 
+def search_min_fan_rpm_now(min_f):
+    global min_fan_rpm
+    global real_min_fan_rpm
+    min_fan_rpm = int(int(const_rpm) / 100 * int(min_f))
+    print("::::::::  начинаю определять реальный min fan   :::::::::::")
+    mr = (int(rigRpmFanMaximum) / 100) * int(min_f)
+    os.system("echo 1 >> /sys/class/hwmon/hwmon1/pwm2_enable")
+    os.system("echo" + str(min_f) + ">> /sys/class/hwmon/hwmon1/pwm2")
+    time.sleep(30)        # убираем остаточное движение если до этого были раскручены   
+    point = int(min_f) / 2
+    for i in range(1, int(point)):
+        give_rpm = i*3                                                                                                                               
+        print(give_rpm)                                                                                                                              
+        os.system("echo " + str(give_rpm) +" >> /sys/class/hwmon/hwmon1/"+str(select_fan))
+        time.sleep(5)                                                                                                                                
+        (status,output)=subprocess.getstatusoutput("sensors | grep -i fan2")
+        rpm1 = output.replace('fan2:', '').replace('RPM', '').replace('(min = 0 RPM)', '').replace(' ', '').replace('(min=0)','')
+        time.sleep(3)   
+        (status,output)=subprocess.getstatusoutput("sensors | grep -i fan2")
+        rpm2 = output.replace('fan2:', '').replace('RPM', '').replace('(min = 0 RPM)', '').replace(' ', '').replace('(min=0)','')
+        time.sleep(3)
+        (status,output)=subprocess.getstatusoutput("sensors | grep -i fan2")
+        rpm3 = output.replace('fan2:', '').replace('RPM', '').replace('(min = 0 RPM)', '').replace(' ', '').replace('(min=0)','')
+        rpm = max(int(rpm1),int(rpm2),int(rpm3))
+        if (int(rpm) >= (int(mr) + 50)) and (int(rpm) <= (int(mr) - 50)):
+            real_min_fan_rpm = int(i)
+            print("::::::::  наден MINFAN  :::::::::::", int(i))
+            return(int(i))
+    print(":::::::: MINFAN не найден  :::::::::::")
 
 def get_setting_server(id_rig_in_server,key_slave):
     try:
@@ -509,7 +538,7 @@ def get_setting_server(id_rig_in_server,key_slave):
         terget_temp_min = int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_min"])
         terget_temp_max = int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_max"])
         min_fan_rpm_persent = response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"]
-        min_fan_rpm = int(int(const_rpm) / 100 * int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"]))
+        min_fan_rpm = search_min_fan_rpm_now(int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"]))#int(int(const_rpm) / 100 * int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"]))
         select_fan = int(response["data"][0]["attributes"]["SetModeFan"]["select_fan"])
         critical_temp = int(response["data"][0]["attributes"]["SetMode0"]["critical_temp"])
         boost=int(response["data"][0]["attributes"]["SetMode0"]["boost"])
@@ -539,7 +568,7 @@ def get_setting_server(id_rig_in_server,key_slave):
             terget_temp_max = int(response["data"][0]["attributes"]["SetMode0"]["terget_temp_max"])
 
         if min_fan_rpm !=  int(const_rpm / 100 * int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"])):
-            min_fan_rpm = int(const_rpm / 100 * int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"]))
+            min_fan_rpm = search_min_fan_rpm_now(int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"])) #int(const_rpm / 100 * int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"]))
 
         if select_fan != int(response["data"][0]["attributes"]["SetModeFan"]["select_fan"]):
             select_fan = int(response["data"][0]["attributes"]["SetModeFan"]["select_fan"])

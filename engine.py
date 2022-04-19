@@ -98,7 +98,7 @@ def active_cool_mod():
     #print("ПОРОГ ВКЛЮЧЕНИЯ ОПЕРЕЖЕНИЯ",int(hot_gpu) >= int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) + 3,int(terget_temp_min))
     if int(hot_gpu) >= int(critical_temp):
         subprocess.getstatusoutput("echo 255 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-        subprocess.getstatusoutput("miner stop")
+        subprocess.run(['miner', 'stop'], stdout=subprocess.PIPE)
         send_mess("MINER STOPPED, DANGEROUS TEMPERATURE " + str(hot_gpu), id_rig_in_server)
 
     if (int(hot_gpu) >= int(terget_temp_min)+1) and (int(hot_gpu) < int(critical_temp)):
@@ -235,8 +235,7 @@ def addFanData(rpmfun, temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gp
         except Exception:
             time.sleep(10)
             send_mess('Failed to connect to the server, try to restart the rig | ', id_rig_in_server)
-            os.system("reboot")
-            subprocess.getstatusoutput("sreboot")
+            subprocess.run(['reboot'], stdout=subprocess.PIPE)
 
 def get_temp():
     #sensors.init()
@@ -433,8 +432,7 @@ def test_key(rig_id='', rig_name=''):
                             f.seek(0)                                                                                                                 
                             f.write(json.dumps(json_data))                                                                                            
                             f.truncate() 
-                        subprocess.getstatusoutput("sreboot")
-                        subprocess.getstatusoutput("reboot")
+                        subprocess.run(['reboot'], stdout=subprocess.PIPE)
 
 
     except Exception:
@@ -454,8 +452,7 @@ def test_key(rig_id='', rig_name=''):
                 f.seek(0)                                                                                                                 
                 f.write(json.dumps(json_data))                                                                                            
                 f.truncate()  
-            subprocess.getstatusoutput("sreboot")
-            subprocess.getstatusoutput("reboot")
+            subprocess.run(['reboot'], stdout=subprocess.PIPE)
 
 
     if str(rig_id) == str(r_id) and len(rig_id) >=1 and len(rig_name) >=1 and str(r_name) == str(rig_name):
@@ -475,7 +472,7 @@ def send_mess_of_change_option(id_rig_in_server):
 def search_min_fan_rpm_now():
     global min_fan_rpm                                                                                                                                                                                 
     global real_min_fan_rpm  
-    subprocess.getstatusoutput("miner stop")
+    subprocess.run(['miner', 'stop'], stdout=subprocess.PIPE)
     time.sleep(2)
     send_mess(' miner stop', id_rig_in_server)
     set_ok = 0                                                                                                                                                                                                                                                                                                                   
@@ -505,16 +502,17 @@ def search_min_fan_rpm_now():
         if (int(rpm) >= (int(mr) - 80)) and (int(rpm) <= (int(mr) + 80)):                                                                                                                              
             real_min_fan_rpm = int(give_rpm)                                                                                                                                                           
             print("::::::::  найден MINFAN  :::::::::::", int(i))
-            send_mess(' Minimum speed set ' + str(rpm), id_rig_in_server)
+            send_mess(' Minimum speed set ' + str(rpm) + ' rpm', id_rig_in_server)
             set_ok = 1
             return(int(i))  
     if set_ok == 0:                                                                                                                                                                                     
         real_min_fan_rpm =  int(min_fan_rpm)                                                                                                                                                           
         send_mess(' It was not possible to set the desired minimum speed, the external coolers are of poor quality or are manufactured. Well, we set the closest possible value, in accordance with the possibility of coolers')
         print(":::::::: MINFAN не найден  :::::::::::")
-    subprocess.getstatusoutput("miner start")
-    send_mess(' miner start', id_rig_in_server)
+    subprocess.run(['miner', 'start'], stdout=subprocess.PIPE)
     time.sleep(2)
+    subprocess.run(['miner', 'start'], stdout=subprocess.PIPE)
+    send_mess(' miner start', id_rig_in_server)
 
 
 def get_setting_server(id_rig_in_server,key_slave):
@@ -800,8 +798,7 @@ def engine_start():
         #print("ответ с сервера получен")
     except Exception:
         #print("нет ответа с сервера")
-        subprocess.getstatusoutput("sreboot")
-        subprocess.getstatusoutput("reboot")
+        subprocess.run(['reboot'], stdout=subprocess.PIPE)
     try:
         task_update(id_rig_in_server, str(soft_rev))
     except Exception:
@@ -917,7 +914,7 @@ if __name__ == '__main__':
         apdate_fan_sh()
         time.sleep(5)
         os.system("reboot")
-        subprocess.getstatusoutput("sreboot")
+        subprocess.run(['reboot'], stdout=subprocess.PIPE)
     else:
         pass
     try:
@@ -927,4 +924,4 @@ if __name__ == '__main__':
     except Exception as e:
         send_mess('ОError in ENGINE CORE - send a text message to the developer | ' + str(e), id_rig_in_server)
         os.system("reboot")
-        subprocess.getstatusoutput("sreboot")
+        subprocess.run(['reboot'], stdout=subprocess.PIPE)

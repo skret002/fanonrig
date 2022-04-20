@@ -4,7 +4,8 @@ import requests
 import subprocess
 
 def testFan(id_rig):   
-    subprocess.run(['miner', 'stop'], stdout=subprocess.PIPE)                                                                                                                                                                                                                                                       
+
+    subprocess.run('miner stop',shell=True)                                                                                                                                                                                                                                                       
     effective_rpm = 0                                                                                                                                                                                                                                                         
     effective_handler = 0
     max_rpm = 0                                                                                                                                                                                                                                                               
@@ -30,26 +31,29 @@ def testFan(id_rig):
         rpm3 = output.replace('fan2:', '').replace('RPM', '').replace('(min = 0 RPM)', '').replace(' ', '').replace('(min=0)','')
         rpm = max(int(rpm1),int(rpm2),int(rpm3))
         
-        if one_data_fan == 0:
-            if int(old_rpm) < int(rpm):
-                pass                                                                                                                                                                                                                                     
-            else:
-                effective_rpm = int(rpm)
-                effective_handler = give_rpm
-                one_data_fan = 1
-                break
+        if int(rpm) != 0:
+            if one_data_fan == 0:
+                if int(old_rpm) < int(rpm):
+                    pass                                                                                                                                                                                                                                     
+                else:
+                    effective_rpm = int(rpm)
+                    effective_handler = give_rpm
+                    one_data_fan = 1
+                    break
 
-        old_rpm=rpm
-
+            old_rpm=rpm
+        else:
+            pass
 
         max_rpm = rpm
+
     response = requests.post('http://ggc.center:8000/recalibrationOff/', data = {'id_rig': id_rig,
                                                                 'effective_rpm':int(effective_rpm),
                                                                  'max_rpm':int(max_rpm),
                                                                  'effective_echo':effective_handler
                                                                  })
     
-    subprocess.run(['miner', 'start'], stdout=subprocess.PIPE)
+    subprocess.run('miner start',shell=True)
     return("Maximum speed of external coolers :"+str(max_rpm))
 
 if __name__ == '__main__':

@@ -98,7 +98,7 @@ def active_cool_mod():
     #print("ПОРОГ ВКЛЮЧЕНИЯ ОПЕРЕЖЕНИЯ",int(hot_gpu) >= int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) + 3,int(terget_temp_min))
     if int(hot_gpu) >= int(critical_temp):
         subprocess.getstatusoutput("echo 255 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-        subprocess.run(['miner', 'stop'], stdout=subprocess.PIPE)
+        subprocess.run('miner stop',shell=True)
         send_mess("MINER STOPPED, DANGEROUS TEMPERATURE " + str(hot_gpu), id_rig_in_server)
 
     if (int(hot_gpu) >= int(terget_temp_min)+1) and (int(hot_gpu) < int(critical_temp)):
@@ -235,7 +235,7 @@ def addFanData(rpmfun, temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gp
         except Exception:
             time.sleep(10)
             send_mess('Failed to connect to the server, try to restart the rig | ', id_rig_in_server)
-            subprocess.run(['reboot'], stdout=subprocess.PIPE)
+            subprocess.run('reboot',shell=True)
 
 def get_temp():
     #sensors.init()
@@ -370,21 +370,27 @@ def get_temp():
 def testing():
     # начинаю тест железа
     global rpmfun
-    temp_gpu = []
-    rpm_fun_gpu = []
-    for chip in sensors.iter_detected_chips():
-        if str(chip) == "nct6779-isa-0a30" :
-            for feature in chip:                                                                                                      
-                if str(feature.label) == "fan2":                                                                                      
-                    #print("скорость внешних кулеров  ",feature.get_value())
-                    rpmfun = feature.get_value()
+    def get_fan_rpm():
+        temp_gpu = []
+        rpm_fun_gpu = []
+        for chip in sensors.iter_detected_chips():
+            if str(chip) == "nct6779-isa-0a30" :
+                for feature in chip:                                                                                                      
+                    if str(feature.label) == "fan2":                                                                                      
+                        #print("скорость внешних кулеров  ",feature.get_value())
+                        rpmfun = feature.get_value()
+                        return(int(rpmfun))
     if rpmfun != 0:
         pass
         #print("внешние кулера управляемые и крутятся")
     else:
-        print("Внешних кулеров нет или они не управляемые")
+        subprocess.getstatusoutput("echo 1 >>/sys/class/hwmon/hwmon1/pwm2_enable")
+        subprocess.getstatusoutput("echo 150 >> /sys/class/hwmon/hwmon1/pwm2")
+        #print("Внешних кулеров нет или они не управляемые")
         time.sleep(10)
-        testing()
+        get_fan_rpm()
+        if rpmfun != 0:
+            print("Внешних кулеров нет или они не управляемые")
         return("There are no external coolers or they are not controlled, check the connections of the coolers to the motherboard. Make sure you are using WIND TANK TECHNOLOGIES L.L.C box")
     try:
         get_temp()
@@ -432,7 +438,7 @@ def test_key(rig_id='', rig_name=''):
                             f.seek(0)                                                                                                                 
                             f.write(json.dumps(json_data))                                                                                            
                             f.truncate() 
-                        subprocess.run(['reboot'], stdout=subprocess.PIPE)
+                        subprocess.run('reboot',shell=True)
 
 
     except Exception:
@@ -452,7 +458,7 @@ def test_key(rig_id='', rig_name=''):
                 f.seek(0)                                                                                                                 
                 f.write(json.dumps(json_data))                                                                                            
                 f.truncate()  
-            subprocess.run(['reboot'], stdout=subprocess.PIPE)
+            subprocess.run('reboot',shell=True)
 
 
     if str(rig_id) == str(r_id) and len(rig_id) >=1 and len(rig_name) >=1 and str(r_name) == str(rig_name):
@@ -472,7 +478,7 @@ def send_mess_of_change_option(id_rig_in_server):
 def search_min_fan_rpm_now():
     global min_fan_rpm                                                                                                                                                                                 
     global real_min_fan_rpm  
-    subprocess.run(['miner', 'stop'], stdout=subprocess.PIPE)
+    subprocess.run('miner stop',shell=True)
     time.sleep(2)
     send_mess(' miner stop', id_rig_in_server)
     set_ok = 0                                                                                                                                                                                                                                                                                                                   
@@ -499,21 +505,26 @@ def search_min_fan_rpm_now():
         rpm = max(int(rpm1),int(rpm2),int(rpm3))                                                                                                                                                       
         get_temp()                                                                                                                                                                                     
         print(int(mr),rpm)
-        if (int(rpm) >= (int(mr) - 80)) and (int(rpm) <= (int(mr) + 80)):                                                                                                                              
-            real_min_fan_rpm = int(give_rpm)                                                                                                                                                           
-            print("::::::::  найден MINFAN  :::::::::::", int(i))
-            send_mess(' Minimum speed set ' + str(rpm) + ' rpm', id_rig_in_server)
-            set_ok = 1
-            return(int(i))  
+        if (int(rpm) >= int(mr)) and (give_rpm == 3):
+            real_min_fan_rpm = int(give_rpm)
+            send_mess(' Desired minimum speed could not be set, set ' + str(rpm) + ' rpm', id_rig_in_server)
+            break 
+        else:
+            if (int(rpm) >= (int(mr) - 80)) and (int(rpm) <= (int(mr) + 80)):                                                                                                                         $
+                real_min_fan_rpm = int(give_rpm)                                                                                                                                                      $
+                print("::::::::  найден MINFAN  :::::::::::", int(i))                                                                                                                                  
+                send_mess(' Minimum speed set ' + str(rpm) + ' rpm', id_rig_in_server)                                                                                                                 
+                set_ok = 1 
+                break                                                                                                                                                                             
+                #return(int(i))  
     if set_ok == 0:                                                                                                                                                                                     
         real_min_fan_rpm =  int(min_fan_rpm)                                                                                                                                                           
-        send_mess(' It was not possible to set the desired minimum speed, the external coolers are of poor quality or are manufactured. Well, we set the closest possible value, in accordance with the possibility of coolers')
+        send_mess(' It was not possible to set the desired minimum speed, the external coolers are of poor quality or are manufactured. Well, we set the closest possible value, in accordance with the possibility of coolers', id_rig_in_server)
         print(":::::::: MINFAN не найден  :::::::::::")
-    subprocess.run(['miner', 'start'], stdout=subprocess.PIPE)
+    subprocess.run('miner start',shell=True)
     time.sleep(2)
-    subprocess.run(['miner', 'start'], stdout=subprocess.PIPE)
+    subprocess.run('miner start',shell=True)
     send_mess(' miner start', id_rig_in_server)
-
 
 def get_setting_server(id_rig_in_server,key_slave):
     try:
@@ -608,7 +619,6 @@ def get_setting_server(id_rig_in_server,key_slave):
 
         if min_fan_rpm_persent != response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"]:
             min_fan_rpm_persent = int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"])
-            search_min_fan_rpm_now()
 
     # проверяем включена ли реколебровка и если нужно запускаем
     if response["data"][0]["attributes"]["recalibrationFanRig"] == True:
@@ -779,7 +789,13 @@ def engine_start():
     test_key(rig_id, rig_name) # проверям имя рига, ключ, и т.д
     
     # передаем данные о риге и получаем ответ с id
-    sendInfoRig(rig_id,rig_name, key_slave, device_name)
+    try:
+        sendInfoRig(rig_id,rig_name, key_slave, device_name)
+    except Exception as e:
+        time.sleep(20)
+        engine_start()
+
+
     if ressetRig == True:
         try:
             requests.post("http://ggc.center:8000/ressetRigAndFanData/", data={'ressetRig':'True', 'id_rig_in_server':id_rig_in_server},stream=True, timeout=10)
@@ -798,21 +814,21 @@ def engine_start():
         #print("ответ с сервера получен")
     except Exception:
         #print("нет ответа с сервера")
-        subprocess.run(['reboot'], stdout=subprocess.PIPE)
+        subprocess.run('reboot',shell=True)
     try:
         task_update(id_rig_in_server, str(soft_rev))
     except Exception:
         print("ошибка запроса на обновление")
-
+    old_min_fan = 0
     if selected_mod == 0:
-        #print("Выбран режиж удержания температур в диапазоне" , terget_temp_min, terget_temp_max)
-        #print("начинаю вычесления, а пока что продуем систему")
         send_mess(' Intelligent mode activated', id_rig_in_server)
         subprocess.getstatusoutput("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
-        subprocess.getstatusoutput("echo " + str(round(const_rpm / 100 * int(option2))) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-        search_min_fan_rpm_now()       
+        subprocess.getstatusoutput("echo " + str(round(const_rpm / 100 * int(option2))) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))       
         r = 4
         while 1 > 0:
+            if int(min_fan_rpm) != int(old_min_fan):
+                old_min_fan = int(min_fan_rpm)
+                search_min_fan_rpm_now()       
             test_r = int(r) % 4                                                                                                                      
             r = r + 1
             try:
@@ -914,7 +930,7 @@ if __name__ == '__main__':
         apdate_fan_sh()
         time.sleep(5)
         os.system("reboot")
-        subprocess.run(['reboot'], stdout=subprocess.PIPE)
+        subprocess.run('reboot',shell=True)
     else:
         pass
     try:
@@ -924,4 +940,4 @@ if __name__ == '__main__':
     except Exception as e:
         send_mess('ОError in ENGINE CORE - send a text message to the developer | ' + str(e), id_rig_in_server)
         os.system("reboot")
-        subprocess.run(['reboot'], stdout=subprocess.PIPE)
+        subprocess.run('reboot',shell=True)

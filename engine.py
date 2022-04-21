@@ -55,9 +55,10 @@ old_stab_balance = 0
 optimum_round = 0
 rigRpmFanMaximum = 0
 mod_option_hive = 0
-min_fan_rpm_persent = 0
+min_fan_rpm_persent = None
 device_name = ''
 real_min_fan_rpm = 0
+
 
 def error511():
     send_mess(' Error 511 noticed, check the power supply and cooling connection to the GPU.', id_rig_in_server)
@@ -475,16 +476,19 @@ def send_mess_of_change_option(id_rig_in_server):
         send_mess(' Error - please pass this message on to the developer ' + str(e), id_rig_in_server)
     return(True)
 
-def search_min_fan_rpm_now():
+def search_min_fan_rpm_now(static_option = None):
     global min_fan_rpm                                                                                                                                                                                 
     global real_min_fan_rpm  
     subprocess.run('miner stop',shell=True)
     time.sleep(2)
-    send_mess(' miner stop', id_rig_in_server)
     set_ok = 0                                                                                                                                                                                                                                                                                                                   
     print("::::::::  начинаю определять реальный min fan   :::::::::::")
-    mr = (int(rigRpmFanMaximum) / 100) * int(min_fan_rpm_persent)
-    send_mess(' Run еxpress сalibration', id_rig_in_server)
+    if static_option == None:
+        mr = (int(rigRpmFanMaximum) / 100) * int(min_fan_rpm_persent)
+        send_mess(' Run еxpress сalibration', id_rig_in_server)
+    else:
+        mr = (int(rigRpmFanMaximum) / 100) * int(static_option)
+
     os.system("echo 1 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")                                                                                                                       
     os.system("echo 1 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                                                                                                                 
     time.sleep(10)        # убираем остаточное движение если до этого были раскручены
@@ -507,13 +511,19 @@ def search_min_fan_rpm_now():
         print(int(mr),rpm)
         if (int(rpm) >= int(mr)) and (give_rpm == 3):
             real_min_fan_rpm = int(give_rpm)
-            send_mess(' Desired minimum speed could not be set, set ' + str(rpm) + ' rpm', id_rig_in_server)
+            if static_option == None:
+                send_mess(' Desired minimum speed could not be set, set ' + str(rpm) + ' rpm', id_rig_in_server)
+            else:
+                send_mess(' Desired static speed could not be set, set ' + str(rpm) + ' rpm', id_rig_in_server)
             break 
         else:
-            if (int(rpm) >= (int(mr) - 80)) and (int(rpm) <= (int(mr) + 80)):                                                                                                                         $
-                real_min_fan_rpm = int(give_rpm)                                                                                                                                                      $
-                print("::::::::  найден MINFAN  :::::::::::", int(i))                                                                                                                                  
-                send_mess(' Minimum speed set ' + str(rpm) + ' rpm', id_rig_in_server)                                                                                                                 
+            if (int(rpm) >= (int(mr) - 80)) and (int(rpm) <= (int(mr) + 80)):
+                real_min_fan_rpm = int(give_rpm)
+                print("::::::::  найден MINFAN  :::::::::::", int(i))     
+                if static_option == None:                                                                                                                             
+                    send_mess(' Minimum speed set ' + str(rpm) + ' rpm', id_rig_in_server)  
+                else:
+                    send_mess(' Static speed set ' + str(rpm) + ' rpm', id_rig_in_server)                                                                                                                     
                 set_ok = 1 
                 break                                                                                                                                                                             
                 #return(int(i))  
@@ -524,7 +534,6 @@ def search_min_fan_rpm_now():
     subprocess.run('miner start',shell=True)
     time.sleep(2)
     subprocess.run('miner start',shell=True)
-    send_mess(' miner start', id_rig_in_server)
 
 def get_setting_server(id_rig_in_server,key_slave):
     try:
@@ -772,6 +781,9 @@ def engine_start():
     global ressetRig
     global soft_rev
     global device_name
+    #снижаем шум до загрузки мода
+    subprocess.getstatusoutput("echo 1 >>/sys/class/hwmon/hwmon1/pwm2_enable")
+    subprocess.getstatusoutput("echo 15 >> /sys/class/hwmon/hwmon1/pwm2") 
 
     testing()  # проверяем работоспособность самого рига
 
@@ -784,7 +796,8 @@ def engine_start():
         device_name = str(text["device_name"])
     except Exception:
         device_name = 'Wind Tank V1'
-    old_selected_mod = selected_mod
+
+    old_selected_mod = selected_mod # проверяем какой мод установлен
 
     test_key(rig_id, rig_name) # проверям имя рига, ключ, и т.д
     
@@ -792,7 +805,7 @@ def engine_start():
     try:
         sendInfoRig(rig_id,rig_name, key_slave, device_name)
     except Exception as e:
-        time.sleep(20)
+        time.sleep(10)
         engine_start()
 
 
@@ -813,14 +826,21 @@ def engine_start():
         get_setting_server(id_rig_in_server, key_slave)
         #print("ответ с сервера получен")
     except Exception:
-        #print("нет ответа с сервера")
-        subprocess.run('reboot',shell=True)
+        print("нет ответа с сервера, перезапускаю engine")
+        engine_start()
+
     try:
         task_update(id_rig_in_server, str(soft_rev))
     except Exception:
         print("ошибка запроса на обновление")
+
     old_min_fan = 0
+
     if selected_mod == 0:
+        if int(min_fan_rpm_persent) == None:  # если это первый страрт с реколибровкой, то будет NONE
+            os.system("reboot")
+            subprocess.run('reboot',shell=True)
+
         send_mess(' Intelligent mode activated', id_rig_in_server)
         subprocess.getstatusoutput("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
         subprocess.getstatusoutput("echo " + str(round(const_rpm / 100 * int(option2))) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))       
@@ -828,9 +848,11 @@ def engine_start():
         while 1 > 0:
             if int(min_fan_rpm) != int(old_min_fan):
                 old_min_fan = int(min_fan_rpm)
-                search_min_fan_rpm_now()       
+                search_min_fan_rpm_now() 
+
             test_r = int(r) % 4                                                                                                                      
             r = r + 1
+
             try:
                 if test_r == 0:
                     try:
@@ -842,6 +864,7 @@ def engine_start():
                         get_setting_server(id_rig_in_server, key_slave)
                     except Exception as e:
                         print("!!!Ошибка получения ID  с сервера!!!",e)
+                        time.sleep(10)
                         engine_start()
                 
                 try:
@@ -898,7 +921,7 @@ def engine_start():
             test_r = int(r) % 4                                                                                                                      
             r = r + 1
             time.sleep(25)
-            if int(r) == 300:
+            if int(r) == 150:
                 r=4
                 task_update(id_rig_in_server, str(soft_rev))
             try:
@@ -914,10 +937,15 @@ def engine_start():
                     print('erroe in hive mode',e)
             except Exception as e:
                 print("ERROR selected_mod2 " + str(e))  
+
             get_temp()
             test_select_mod()
-            option = int(const_rpm / 100 * int(option2))
-            subprocess.getstatusoutput("echo " + str(option) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+            if int(min_fan_rpm) != int(old_min_fan):
+                old_min_fan = int(min_fan_rpm)
+                search_min_fan_rpm_now(int(option2))
+
+            #option = int(const_rpm / 100 * int(option2))
+            #subprocess.getstatusoutput("echo " + str(option) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
             #print("echo " + str(option) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
 
 def apdate_fan_sh():

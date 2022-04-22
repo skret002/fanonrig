@@ -13,7 +13,6 @@ import time
 import sys
 import glob
 import sensors
-import asyncio
 
 sensors.init()
 # общие переменные
@@ -64,7 +63,7 @@ real_min_fan_rpm = 0
 def error511():
     send_mess(' Error 511 noticed, check the power supply and cooling connection to the GPU.', id_rig_in_server)
 
-async def active_cool_mod():                                                                                                                               
+def active_cool_mod():                                                                                                                               
     global last_rpm                                                                                                                                  
     global boost                                                                                                                                     
     global min_fan_rpm                                                                                                                               
@@ -477,7 +476,7 @@ def send_mess_of_change_option(id_rig_in_server):
         send_mess(' Error - please pass this message on to the developer ' + str(e), id_rig_in_server)
     return(True)
 
-async def search_min_fan_rpm_now(static_option = None):
+def search_min_fan_rpm_now(static_option = None):
     global min_fan_rpm                                                                                                                                                                                 
     global real_min_fan_rpm  
     set_ok = 0                                                                                                                                                                                                                                                                                                                   
@@ -529,7 +528,7 @@ async def search_min_fan_rpm_now(static_option = None):
         send_mess(' It was not possible to set the desired minimum speed, the external coolers are of poor quality or are manufactured. Well, we set the closest possible value, in accordance with the possibility of coolers', id_rig_in_server)
         print(":::::::: MINFAN не найден  :::::::::::")
 
-async def get_setting_server(id_rig_in_server,key_slave):
+def get_setting_server(id_rig_in_server,key_slave):
     try:
         response = requests.get('http://ggc.center:8000/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)],stream=True, timeout=10 )
     except Exception:
@@ -629,7 +628,7 @@ async def get_setting_server(id_rig_in_server,key_slave):
         get_setting_server(id_rig_in_server, key_slave)
     return("true")
 
-async def get_setting_server1(id_rig_in_server, key_slave):
+def get_setting_server1(id_rig_in_server, key_slave):
     #print(id_rig_in_server)
     try:
         response = requests.get('http://ggc.center:8000/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)] ,stream=True, timeout=10)
@@ -683,7 +682,7 @@ async def get_setting_server1(id_rig_in_server, key_slave):
 
     #print(option1)
     return("true")
-async def get_setting_server2(id_rig_in_server, key_slave):
+def get_setting_server2(id_rig_in_server, key_slave):
     try:
         response = requests.get('http://ggc.center:8000/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)],stream=True, timeout=10 )
     except Exception:
@@ -844,9 +843,9 @@ def engine_start():
         while 1 > 0:
             if int(min_fan_rpm) != int(old_min_fan):
                 old_min_fan = int(min_fan_rpm)
-                asyncio.run(search_min_fan_rpm_now() )
-            asyncio.run(active_cool_mod() )       
-
+                search_min_fan_rpm_now() 
+            active_cool_mod()
+                                                                                                                     
             p1 = p1 + 1
             p2 = p2 + 1
             try:
@@ -857,7 +856,7 @@ def engine_start():
                         print("!!!Ошибка запроса режима работы!!!",e)
                         pass
                     try:
-                        asyncio.run(get_setting_server(id_rig_in_server, key_slave) )
+                        get_setting_server(id_rig_in_server, key_slave)
                     except Exception as e:
                         print("!!!Ошибка получения ID  с сервера!!!",e)
                         engine_start()
@@ -895,7 +894,7 @@ def engine_start():
                 r = 4
                 task_update(id_rig_in_server, str(soft_rev))
             try:
-                asyncio.run(get_setting_server1(id_rig_in_server, key_slave) )
+                get_setting_server1(id_rig_in_server, key_slave)
             except Exception as e:
                 print("ERROR selected_mod1 " + str(e))	
             for i in option1:
@@ -918,7 +917,7 @@ def engine_start():
                 r=4
                 task_update(id_rig_in_server, str(soft_rev))
             try:
-                asyncio.run(get_setting_server2(id_rig_in_server, key_slave) )
+                get_setting_server2(id_rig_in_server, key_slave)
                 try:
                     if mod_option_hive == 1:
                         communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, rpmfun,rigRpmFanMaximum, option2, terget_temp_min,terget_temp_max, min_fan_rpm_persent, target_mem_temp, selected_mod,device_name)
@@ -934,7 +933,11 @@ def engine_start():
             test_select_mod()
             if int(option2) != int(old_option2):
                 old_option2 = int(option2)
-                asyncio.run(search_min_fan_rpm_now(int(option2)) )
+                search_min_fan_rpm_now(int(option2))
+
+            #option = int(const_rpm / 100 * int(option2))
+            #subprocess.getstatusoutput("echo " + str(option) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+            #print("echo " + str(option) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
 
 def apdate_fan_sh():
     subprocess.getstatusoutput("cp -u /home/onrig/fan.sh /home/")
@@ -955,5 +958,5 @@ if __name__ == '__main__':
         engine_start()
     except Exception as e:
         send_mess('ОError in ENGINE CORE - send a text message to the developer | ' + str(e), id_rig_in_server)
-        #os.system("reboot")
-        #subprocess.run('reboot',shell=True)
+        os.system("reboot")
+        subprocess.run('reboot',shell=True)

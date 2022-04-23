@@ -59,6 +59,7 @@ min_fan_rpm_persent = None
 device_name = ''
 real_min_fan_rpm = 0
 last_rpm_s = 0
+boost_in_s =0
 
 
 def error511():
@@ -82,6 +83,7 @@ def active_cool_mod():
     global old_stab_balance
     global optimum_round
     global last_rpm_s
+    global boost_in_s
     optimum_temp = int(terget_temp_min) + int(int(terget_temp_max - terget_temp_min)/2) - 1
     if int(boost) < 1:
         boost = 1
@@ -121,14 +123,18 @@ def active_cool_mod():
             return()
         else:    
             if (optimum_on == 0) and (stable_temp_round <= 15) and (int(mem_t) <110):
-                if int(old_hot_gpu) != int(hot_gpu) or int(hot_gpu) > int(optimum_temp):
+                if int(old_hot_gpu) != int(hot_gpu) or int(hot_gpu) > int(optimum_temp) or int(mem_t) > int(target_mem_temp):
                     print('усредненый пересчитываю')                                                                                                 
-                    last_rpm = int((int(const_rpm) / (int(terget_temp_max - terget_temp_min))) * ((int(hot_gpu) - int(terget_temp_min))) + int(boost))                   
+                    last_rpm = int((int(const_rpm) / (int(terget_temp_max - terget_temp_min))) * ((int(hot_gpu) - int(terget_temp_min))))                   
                     if int(hot_gpu) > int(optimum_temp) or int(mem_t) > int(target_mem_temp):
                         print('Применяю адаптивно-усредненый') 
-                        last_rpm_s = int((int(last_rpm)/100) * (80+((int(hot_gpu) - int(optimum_temp))*2)) + int(boost_mem) + int(boost))
+                        last_rpm_s = (last_rpm/100)* (80 + (int(hot_gpu) - int(optimum_temp))*2)
+                        print('1',last_rpm_s)
+                        last_rpm_s = int(last_rpm_s) + int(boost_mem) + int(boost) + int(boost_in_s)
+                        print('2',last_rpm_s)
+                    
                     else:
-                        last_rpm_s = int(((int(last_rpm)/100)*80) + int(boost_mem) + int(boost))
+                        last_rpm_s = int(((int(last_rpm)/100)*80) + int(boost_mem) + int(boost) + int(boost_in_s))
                     if int(last_rpm_s) < int(real_min_fan_rpm): # ограничеваем минимальной скоростью
                         last_rpm_s = int(real_min_fan_rpm)
                     subprocess.getstatusoutput("echo " + str(int(last_rpm_s)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                    
@@ -146,9 +152,9 @@ def active_cool_mod():
                     stable_temp_round = stable_temp_round + 1 
                     print("::::::::Все стабильно, готовлюсь к search optimum:::::::::", stable_temp_round)
                 else:
-                    boost = boost + int(int(int(const_rpm) / 100) * 2 )
+                    boost_in_s = boost_in_s + int(int(int(const_rpm) / 100) * 1 )
                     stable_temp_round = 0 
-                    print("::::::::сбросил stable_temp_round до входа search optimum:::::::::",boost, last_rpm_s)
+                    print("::::::::сбросил stable_temp_round до входа search optimum:::::::::",boost_in_s, last_rpm_s)
 
             elif (stable_temp_round > 15) and (optimum_on == 0) and (int(mem_t) <= (int(target_mem_temp) + 2)):  
                 print("/////Температура стабильна, ищу оптимум ///")
@@ -760,7 +766,7 @@ def test_select_mod():
 
 def engine_start():
     global last_rpm
-    global boost
+    global boost_in_s
     global stable_temp_round
     global optimum_fan
     global optimum_temp
@@ -774,7 +780,7 @@ def engine_start():
     #скидываем в 0 если там были данные
     last_rpm_s = 0
     last_rpm = 0
-    boost = 0
+    boost_in_s = 0
     stable_temp_round = 0
     optimum_fan = 0
     optimum_temp= 0
@@ -793,7 +799,6 @@ def engine_start():
     global critical_temp
     global const_rpm
     global select_fan
-    global boost
     global rpmfun
     global option1
     global option2

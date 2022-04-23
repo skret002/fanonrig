@@ -136,11 +136,12 @@ def active_cool_mod():
                     else:
                         last_rpm_s = int(((int(last_rpm)/100)*80) + int(boost_mem) + int(boost) + int(boost_in_s))
                     if int(last_rpm_s) < int(real_min_fan_rpm): # ограничеваем минимальной скоростью
-                        last_rpm_s = int(real_min_fan_rpm)
-                    subprocess.getstatusoutput("echo " + str(int(last_rpm_s)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                    
-                    start_optimum = last_rpm_s   
-                    old_hot_gpu = hot_gpu   
-                    time.sleep(29)                                                                                                                   
+                        subprocess.getstatusoutput("echo " + str(int(real_min_fan_rpm)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+                    else:
+                        subprocess.getstatusoutput("echo " + str(int(last_rpm_s)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                    
+                        start_optimum = last_rpm_s   
+                        old_hot_gpu = hot_gpu   
+                        time.sleep(29)                                                                                                                   
                     get_temp()                                                                                       
                 else:                                                                                                                                
                     print('усредненый оставляю как есть ')                                                                                        
@@ -152,7 +153,7 @@ def active_cool_mod():
                     stable_temp_round = stable_temp_round + 1 
                     print("::::::::Все стабильно, готовлюсь к search optimum:::::::::", stable_temp_round)
                 else:
-                    boost_in_s = boost_in_s + int(int(int(const_rpm) / 100) * 1 )
+                    boost_in_s = boost_in_s + int(int(int(const_rpm) / 100) * 2 )
                     stable_temp_round = 0 
                     print("::::::::сбросил stable_temp_round до входа search optimum:::::::::",boost_in_s, last_rpm_s)
 

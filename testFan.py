@@ -63,6 +63,7 @@ def testFan(id_rig):
         for i in range(0, 100):
             try:
                 del data["minf"+str(i)]
+                del data["minf_rpm"+str(i)]
             except Exception:
                 pass
         file.seek(0)

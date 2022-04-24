@@ -1,4 +1,4 @@
-import os                                                                                                                             
+import os, json                                                                                                                             
 import time                                                                                                                           
 import requests                                                                                                                                                                                                                                             
 import subprocess
@@ -16,17 +16,17 @@ def testFan(id_rig):
     time.sleep(30)        # убираем остаточное движение если до этого были раскручены                                                                                                                                                                                                                                                     
     old_rpm =  0   
 
-    for i in range(1, 150):
-        give_rpm = i*2                                                                                                                               
+    for i in range(1, 60):
+        give_rpm = i*5                                                                                                                               
         print(give_rpm)                                                                                                                              
         os.system("echo " + str(give_rpm) +" >> /sys/class/hwmon/hwmon1/pwm2")
-        time.sleep(3)                                                                                                                                
+        time.sleep(5)                                                                                                                                
         (status,output)=subprocess.getstatusoutput("sensors | grep -i fan2")
         rpm1 = output.replace('fan2:', '').replace('RPM', '').replace('(min = 0 RPM)', '').replace(' ', '').replace('(min=0)','')
-        #time.sleep(3)   
+        time.sleep(1)   
         (status,output)=subprocess.getstatusoutput("sensors | grep -i fan2")
         rpm2 = output.replace('fan2:', '').replace('RPM', '').replace('(min = 0 RPM)', '').replace(' ', '').replace('(min=0)','')
-        #time.sleep(1)
+        time.sleep(1)
         (status,output)=subprocess.getstatusoutput("sensors | grep -i fan2")
         rpm3 = output.replace('fan2:', '').replace('RPM', '').replace('(min = 0 RPM)', '').replace(' ', '').replace('(min=0)','')
         rpm = max(int(rpm1),int(rpm2),int(rpm3))
@@ -56,9 +56,9 @@ def testFan(id_rig):
 
     with open('settings.json', "r+") as file:
         data = json.load(file)
-        if data["const"]:
+        try:
            data["const"]  =  int(effective_rpm)
-        else:
+        except Exception:
             data.append(const)
         for i in range(0, 100):
             try:

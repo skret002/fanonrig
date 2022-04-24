@@ -495,59 +495,41 @@ def search_min_fan_rpm_now(static_option = None):
         mr = (int(rigRpmFanMaximum) / 100) * int(static_option)
 
     os.system("echo 1 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")                                                                                                                       
-    os.system("echo 1 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))    
-    with open('settings.json', "r+") as file:
-        data = json.load(file)
-    try:
-        if data["minf"+str(min_fan_rpm_persent)]:
-            print("Такой минфан уже есть, ставлю")
-            send_mess(' Static speed set ' + str(rpm) + ' rpm', id_rig_in_server)                                                                                                                     
-            set_ok = 1 
-            real_min_fan_rpm = int(data["minf"+str(min_fan_rpm_persent)])
-    except Exception:
-        time.sleep(20)        # убираем остаточное движение если до этого были раскручены
-        #point = int(min_fan_rpm) / 2                                     
-        get_temp()                                                                                                                                        
-        for i in range(0, int(const_rpm)):                                                                                                                                                                     
-            give_rpm = i*2                                                                                                                                                                                 
-            print(give_rpm)                                                                                                                                                                                
-            os.system("echo " + str(give_rpm) +" >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan)) 
-            time.sleep(3)                                                                                                                                                                                
-            (status,output)=subprocess.getstatusoutput("sensors | grep -i fan2")                                                                                                                           
-            rpm1 = output.replace('fan2:', '').replace('RPM', '').replace('(min = 0 RPM)', '').replace(' ', '').replace('(min=0)','')                                                                                                                                                                              
-            (status,output)=subprocess.getstatusoutput("sensors | grep -i fan2")                                                                                                                           
-            rpm2 = output.replace('fan2:', '').replace('RPM', '').replace('(min = 0 RPM)', '').replace(' ', '').replace('(min=0)','')                                                                                                                                                                          
-            (status,output)=subprocess.getstatusoutput("sensors | grep -i fan2")                                                                                                                           
-            rpm3 = output.replace('fan2:', '').replace('RPM', '').replace('(min = 0 RPM)', '').replace(' ', '').replace('(min=0)','')                                                                      
-            rpm = max(int(rpm1),int(rpm2),int(rpm3))                                                                                                                                                                                     
-            print(int(mr),rpm)
-            if (int(rpm) >= int(mr)):
-                real_min_fan_rpm = int(give_rpm)
-                if static_option == None:
-                    send_mess(' Desired minimum speed could not be set, set ' + str(rpm) + ' rpm', id_rig_in_server)
-                else:
-                    send_mess(' Desired static speed could not be set, set ' + str(rpm) + ' rpm', id_rig_in_server)
-                break 
+    os.system("echo 1 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                                                                                                                 
+    time.sleep(20)        # убираем остаточное движение если до этого были раскручены
+    #point = int(min_fan_rpm) / 2                                     
+    get_temp()                                                                                                                                        
+    for i in range(0, int(const_rpm)):                                                                                                                                                                     
+        give_rpm = i*2                                                                                                                                                                                 
+        print(give_rpm)                                                                                                                                                                                
+        os.system("echo " + str(give_rpm) +" >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan)) 
+        time.sleep(3)                                                                                                                                                                                
+        (status,output)=subprocess.getstatusoutput("sensors | grep -i fan2")                                                                                                                           
+        rpm1 = output.replace('fan2:', '').replace('RPM', '').replace('(min = 0 RPM)', '').replace(' ', '').replace('(min=0)','')                                                                                                                                                                              
+        (status,output)=subprocess.getstatusoutput("sensors | grep -i fan2")                                                                                                                           
+        rpm2 = output.replace('fan2:', '').replace('RPM', '').replace('(min = 0 RPM)', '').replace(' ', '').replace('(min=0)','')                                                                                                                                                                          
+        (status,output)=subprocess.getstatusoutput("sensors | grep -i fan2")                                                                                                                           
+        rpm3 = output.replace('fan2:', '').replace('RPM', '').replace('(min = 0 RPM)', '').replace(' ', '').replace('(min=0)','')                                                                      
+        rpm = max(int(rpm1),int(rpm2),int(rpm3))                                                                                                                                                                                     
+        print(int(mr),rpm)
+        if (int(rpm) >= int(mr)):
+            real_min_fan_rpm = int(give_rpm)
+            if static_option == None:
+                send_mess(' Desired minimum speed could not be set, set ' + str(rpm) + ' rpm', id_rig_in_server)
             else:
-                if (int(rpm) >= (int(mr) - 80)) and (int(rpm) <= (int(mr) + 80)):
-                    real_min_fan_rpm = int(give_rpm)
-                    print("::::::::  найден MINFAN  :::::::::::", int(i))     
-                    name = "minf"+str(min_fan_rpm_persent)
-                    print('min_for_persent',min_for_persent)
-                    with open('settings.json', "r+") as file:
-                        data = json.load(file)
-                        data[str(name)]  = real_min_fan_rpm
-                        file.seek(0)                                                                                                                 
-                        file.write(json.dumps(data))                                                                                            
-                        file.truncate() 
-
-                    if static_option == None:                                                                                                                             
-                        send_mess(' Minimum speed set ' + str(rpm) + ' rpm', id_rig_in_server)  
-                    else:
-                        send_mess(' Static speed set ' + str(rpm) + ' rpm', id_rig_in_server)                                                                                                                     
-                    set_ok = 1 
-                    break                                                                                                                                                                             
-                    #return(int(i))  
+                send_mess(' Desired static speed could not be set, set ' + str(rpm) + ' rpm', id_rig_in_server)
+            break 
+        else:
+            if (int(rpm) >= (int(mr) - 80)) and (int(rpm) <= (int(mr) + 80)):
+                real_min_fan_rpm = int(give_rpm)
+                print("::::::::  найден MINFAN  :::::::::::", int(i))     
+                if static_option == None:                                                                                                                             
+                    send_mess(' Minimum speed set ' + str(rpm) + ' rpm', id_rig_in_server)  
+                else:
+                    send_mess(' Static speed set ' + str(rpm) + ' rpm', id_rig_in_server)                                                                                                                     
+                set_ok = 1 
+                break                                                                                                                                                                             
+                #return(int(i))  
     get_temp()
     if set_ok == 0:                                                                                                                                                                                     
         real_min_fan_rpm =  int(min_fan_rpm)                                                                                                                                                           
@@ -1008,5 +990,5 @@ if __name__ == '__main__':
         engine_start()
     except Exception as e:
         send_mess('ОError in ENGINE CORE - send a text message to the developer | ' + str(e), id_rig_in_server)
-        #os.system("reboot")
-        #subprocess.run('reboot',shell=True)
+        os.system("reboot")
+        subprocess.run('reboot',shell=True)

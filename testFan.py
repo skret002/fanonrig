@@ -52,22 +52,22 @@ def testFan(id_rig):
                                                                  'max_rpm':int(max_rpm),
                                                                  'effective_echo':effective_handler
                                                                  })
-    const = {'const': int(effective_rpm)}
+    #const = {'const': int(effective_rpm)}
 
-    with open('settings.json', "r+") as file:
-        data = json.load(file)
-        if data["const"]:
-           data["const"]  =  int(effective_rpm)
-        else:
-            data.append(const)
-        for i in range(0, 100):
-            try:
-                del data["minf"+str(i)]
-            except Exception:
-                pass
-        file.seek(0)
-        file.write(json.dumps(data))
-        file.truncate()
+    #with open('settings.json', "r+") as file:
+    #    data = json.load(file)
+    #    if data["const"]:
+    #       data["const"]  =  int(effective_rpm)
+    #    else:
+    #        data.append(const)
+    #    for i in range(0, 100):
+    #        try:
+    #            del data["minf"+str(i)]
+    #        except Exception:
+    #            pass
+    #    file.seek(0)
+    #    file.write(json.dumps(data))
+    #    file.truncate()
 
     try:
         subprocess.getstatusoutput("/hive/bin/miner start")

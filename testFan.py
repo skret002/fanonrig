@@ -54,7 +54,7 @@ def testFan(id_rig):
                                                                  })
     const = {'const': int(effective_rpm)}
 
-    with open('/home/onrig/settings.json', "r+") as file:
+    with open('settings.json', "r+") as file:
         data = json.load(file)
         if data["const"]:
            data["const"]  =  int(effective_rpm)
@@ -66,8 +66,8 @@ def testFan(id_rig):
             except Exception:
                 pass
         file.seek(0)
-        json.dump(data, file)
-
+        file.write(json.dumps(data))
+        file.truncate()
 
     try:
         subprocess.getstatusoutput("/hive/bin/miner start")

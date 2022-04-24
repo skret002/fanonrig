@@ -496,14 +496,15 @@ def search_min_fan_rpm_now(static_option = None):
 
     os.system("echo 1 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")                                                                                                                       
     os.system("echo 1 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))    
-    with open('/home/onrig/settings.json', "r+") as file:
+    with open('settings.json', "r+") as file:
         data = json.load(file)
-    if data["minf"+str(min_fan_rpm_persent)]:
-        print("Такой минфан уже есть, ставлю")
-        send_mess(' Static speed set ' + str(rpm) + ' rpm', id_rig_in_server)                                                                                                                     
-        set_ok = 1 
-        real_min_fan_rpm = int(data["minf"+str(min_fan_rpm_persent)])
-    else:
+    try:
+        if data["minf"+str(min_fan_rpm_persent)]:
+            print("Такой минфан уже есть, ставлю")
+            send_mess(' Static speed set ' + str(rpm) + ' rpm', id_rig_in_server)                                                                                                                     
+            set_ok = 1 
+            real_min_fan_rpm = int(data["minf"+str(min_fan_rpm_persent)])
+    except Exception:
         time.sleep(20)        # убираем остаточное движение если до этого были раскручены
         #point = int(min_fan_rpm) / 2                                     
         get_temp()                                                                                                                                        
@@ -531,13 +532,14 @@ def search_min_fan_rpm_now(static_option = None):
                 if (int(rpm) >= (int(mr) - 80)) and (int(rpm) <= (int(mr) + 80)):
                     real_min_fan_rpm = int(give_rpm)
                     print("::::::::  найден MINFAN  :::::::::::", int(i))     
-                    min_for_persent = {"minf"+str(min_fan_rpm_persent): int(real_min_fan_rpm)}
+                    name = "minf"+str(min_fan_rpm_persent)
                     print('min_for_persent',min_for_persent)
-                    with open('/home/onrig/settings.json', "r+") as file:
+                    with open('settings.json', "r+") as file:
                         data = json.load(file)
-                        data.append(min_for_persent)
-                        file.seek(0)
-                        json.dump(data, file)
+                        data[str(name)]  = real_min_fan_rpm
+                        file.seek(0)                                                                                                                 
+                        file.write(json.dumps(data))                                                                                            
+                        file.truncate() 
 
                     if static_option == None:                                                                                                                             
                         send_mess(' Minimum speed set ' + str(rpm) + ' rpm', id_rig_in_server)  

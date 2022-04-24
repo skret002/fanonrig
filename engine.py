@@ -499,8 +499,8 @@ def search_min_fan_rpm_now(static_option = None):
     time.sleep(20)        # убираем остаточное движение если до этого были раскручены
     #point = int(min_fan_rpm) / 2                                     
     get_temp()                                                                                                                                        
-    for i in range(0, int(const_rpm)):                                                                                                                                                                     
-        give_rpm = i*2                                                                                                                                                                                 
+    for i in range(1, int(const_rpm)):                                                                                                                                                                     
+        give_rpm = i*3                                                                                                                                                                                 
         print(give_rpm)                                                                                                                                                                                
         os.system("echo " + str(give_rpm) +" >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan)) 
         time.sleep(3)                                                                                                                                                                                

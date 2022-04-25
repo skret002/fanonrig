@@ -493,6 +493,7 @@ def send_mess_of_change_option(id_rig_in_server):
 def search_min_fan_rpm_now(static_option = None):
     global min_fan_rpm                                                                                                                                                                                 
     global real_min_fan_rpm  
+    global optimum_round
     set_ok = 0                                                                                                                                                                                                                                                                                                                   
     print("::::::::  начинаю определять реальный min fan   :::::::::::")
 
@@ -519,7 +520,7 @@ def search_min_fan_rpm_now(static_option = None):
             mr = (int(rigRpmFanMaximum) / 100) * int(static_option)
             send_mess(' Run static set', id_rig_in_server)
         for i in range(1, int(const_rpm)):                                                                                                                                                                     
-            give_rpm = i*4                                                                                                                                                                                 
+            give_rpm = i*3                                                                                                                                                                                 
             print(give_rpm)                                                                                                                                                                                
             os.system("echo " + str(give_rpm) +" >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan)) 
             time.sleep(3)                                                                                                                                                                                
@@ -527,15 +528,15 @@ def search_min_fan_rpm_now(static_option = None):
             rpm1 = output.replace('fan2:', '').replace('RPM', '').replace('(min = 0 RPM)', '').replace(' ', '').replace('(min=0)','')  
             time.sleep(1)                                                                                                                                                                            
             (status,output)=subprocess.getstatusoutput("sensors | grep -i fan2")                                                                                                                           
-            rpm2 = output.replace('fan2:', '').replace('RPM', '').replace('(min = 0 RPM)', '').replace(' ', '').replace('(min=0)','')     
-            time.sleep(1)                                                                                                                                                                     
+            rpm2 = output.replace('fan2:', '').replace('RPM', '').replace('(min = 0 RPM)', '').replace(' ', '').replace('(min=0)','')                                                                                                                                                                        
             (status,output)=subprocess.getstatusoutput("sensors | grep -i fan2")                                                                                                                           
             rpm3 = output.replace('fan2:', '').replace('RPM', '').replace('(min = 0 RPM)', '').replace(' ', '').replace('(min=0)','')                                                                      
             rpm = max(int(rpm1),int(rpm2),int(rpm3))                                                                                                                                                                                     
             print(int(mr),rpm)
             if (int(rpm) >= int(mr)):
                 real_min_fan_rpm = int(give_rpm)
-                with open('settings.json', "r+") as file:                                                                                                                                          
+                with open('settings.json', "r+") as file:
+                    data = json.load(file)                                                                                                                                          
                     data["minf"+str(min_fan_rpm_persent)] = int(give_rpm)   # записываем в файл                                                                                                    
                     data["minf_rpm"+str(min_fan_rpm_persent)] = int(rpm)                                                                                                                           
                     file.seek(0)                                                                                                                                                                   
@@ -551,7 +552,8 @@ def search_min_fan_rpm_now(static_option = None):
                     real_min_fan_rpm = int(give_rpm)
                     print("::::::::  найден MINFAN  :::::::::::", int(i))   
                     if static_option == None: 
-                        with open('settings.json', "r+") as file:                                                                                                                                          
+                        with open('settings.json', "r+") as file:
+                            data = json.load(file)                                                                                                                                          
                             data["minf"+str(min_fan_rpm_persent)] = int(give_rpm)   # записываем в файл                                                                                                    
                             data["minf_rpm"+str(min_fan_rpm_persent)] = int(rpm)                                                                                                                           
                             file.seek(0)                                                                                                                                                                   
@@ -566,10 +568,11 @@ def search_min_fan_rpm_now(static_option = None):
                     #return(int(i))  
         if set_ok == 0:                                                                                                                                                                                     
             real_min_fan_rpm =  int(min_fan_rpm)                                                                                                                                                           
-            send_mess(' Installed coolers cannot run at extra low speed. The closest value is set, in accordance with the capabilities of the coolers', id_rig_in_server)
+            #send_mess(' Installed coolers cannot run at extra low speed. The closest value is set, in accordance with the capabilities of the coolers', id_rig_in_server)
             print(":::::::: MINFAN не найден  :::::::::::")
+    optimum_round = 0
     get_temp()
-
+    return(True)
 def get_setting_server(id_rig_in_server,key_slave):
     try:
         response = requests.get('http://ggc.center:8000/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)],stream=True, timeout=10 )

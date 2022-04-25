@@ -500,17 +500,17 @@ def search_min_fan_rpm_now(static_option = None):
     os.system("echo 1 >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))                                                                                                                                 
     time.sleep(30)        # убираем остаточное движение если до этого были раскручены                                   
     get_temp()             
-    try:                                                                                                                                                                                               
-        with open('settings.json', "r+") as file:
-            data = json.load(file)
-            if static_option == None:
-                raise Exception("Some exception")
-            else:
-
-                if data["minf"+str(min_fan_rpm_persent)]:                                                                                                                       
+    try:            
+        if static_option == None:                                                                                                                                                                                   
+            with open('settings.json', "r+") as file:
+                data = json.load(file)
+                if data["minf"+str(min_fan_rpm_persent)]:               
+                    print("такой минфан уже есть ", data["minf"+str(min_fan_rpm_persent)])                                                                                                        
                     set_ok = 1                                                                                                                                                                             
                     real_min_fan_rpm = int(data["minf"+str(min_fan_rpm_persent)])                                                                                                                          
                     send_mess(' Minimum speed set ' + str(data["minf_rpm"+str(min_fan_rpm_persent)]) + ' rpm', id_rig_in_server) 
+        else:
+            a = 1/0
     except Exception:
         if static_option == None:
             mr = (int(rigRpmFanMaximum) / 100) * int(min_fan_rpm_persent)
@@ -519,7 +519,7 @@ def search_min_fan_rpm_now(static_option = None):
             mr = (int(rigRpmFanMaximum) / 100) * int(static_option)
             send_mess(' Run static set', id_rig_in_server)
         for i in range(1, int(const_rpm)):                                                                                                                                                                     
-            give_rpm = i*2                                                                                                                                                                                 
+            give_rpm = i*4                                                                                                                                                                                 
             print(give_rpm)                                                                                                                                                                                
             os.system("echo " + str(give_rpm) +" >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan)) 
             time.sleep(3)                                                                                                                                                                                

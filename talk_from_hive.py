@@ -88,13 +88,15 @@ def communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, 
                 print('настройки хайва и сервера одинаковые')
         if os.path.exists(req_recallibrate) == True:
             print("начать реколебровку") 
-            send_mess(' Starting recalibration of external coolers, wait for the result. It may take about 5 minutes.', id_rig_in_server)                                                                                                            
+            send_mess(' Starting recalibration of external coolers, wait for the result. It may take about 10 minutes.', id_rig_in_server)                                                                                                            
             res_test_fan = testFan(id_rig_in_server)                                                                                                 
             os.system("rm " + req_recallibrate)
             os.system("rm " +  answer_recallibrate )                                                                                                 
             file_info1 = open(answer_recallibrate, "w+")                                                                                              
             file_info1.write('device_name: '+ str(device_name) + '\n' + str(res_test_fan))                                                                                                       
             file_info1.close() 
+            os.system("reboot")
+            subprocess.run('reboot',shell=True)
         if os.path.exists(fan_diagn_req) == True:
             print("Запрос диагностики") 
             send_mess(' Query diagnostics from Hive OS', id_rig_in_server)                                                                                                 

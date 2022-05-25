@@ -1048,15 +1048,15 @@ if __name__ == '__main__':
     if os.path.exists("/home/onrig/fan.sh") == True:
         apdate_fan_sh()
         time.sleep(5)
-        os.system("reboot")
-        subprocess.run('reboot',shell=True)
+        #os.system("reboot")
+        #subprocess.run('reboot',shell=True)
     else:
         pass
     try:
-        subprocess.getstatusoutput("echo 1 >>/sys/class/hwmon/hwmon1/pwm2_enable")
-        subprocess.getstatusoutput("echo 30 >> /sys/class/hwmon/hwmon1/pwm2")
+        #subprocess.getstatusoutput("echo 1 >>/sys/class/hwmon/hwmon1/pwm2_enable")
+        #subprocess.getstatusoutput("echo 30 >> /sys/class/hwmon/hwmon1/pwm2")
         engine_start()
     except Exception as e:
         send_mess('ОError in ENGINE CORE - send a text message to the developer | ' + str(e), id_rig_in_server)
-        os.system("reboot")
-        subprocess.run('reboot',shell=True)
+        #os.system("reboot")
+        #subprocess.run('reboot',shell=True)

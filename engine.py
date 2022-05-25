@@ -795,6 +795,31 @@ def checking_new_settings(id):
             pass
     except Exception as e:
         print("Ошибка получения статуса настроек",e)
+def touch_pci_status_file(id, w):
+    with open('coolers.json', "w+") as file:
+        file.seek(0)
+        file.write(json.dumps(work_pci))
+        file.truncate()
+    if id != None:
+        param= [('rigId', id), ('work_pci', work_pci)]
+        response = requests.post('http://ggc.center:8000/get_status_new_option/', data = param ,stream=True, timeout=10)
+
+def re_pci_status(id=None):
+    work_pci = []
+    (status,output_fan)=subprocess.getstatusoutput("sudo lspci -v | grep --color -E '(VGA|3D)'")
+    all_pci = re.split('\n', output_fan)
+    for i in all_pci:
+        work_pci.append({i.split(' ')[0]: True})
+    print('work_pci',work_pci)
+    try:
+        with open('coolers.json', 'r') as f:
+            json_data = json.load(f)
+            if json_data != work_pci
+                touch_pci_status_file(id, work_pci)
+    except Exception as e:
+        touch_pci_status_file(id, work_pci)
+
+
 
 def engine_start():
     global last_rpm
@@ -862,8 +887,7 @@ def engine_start():
     except Exception as e:
         time.sleep(10)
         engine_start()
-
-
+    re_pci_status()
     if ressetRig == True:
         try:
             requests.post("http://ggc.center:8000/ressetRigAndFanData/", data={'ressetRig':'True', 'id_rig_in_server':id_rig_in_server},stream=True, timeout=10)
@@ -1015,12 +1039,12 @@ def apdate_fan_sh():
     subprocess.getstatusoutput("sudo chmod ugo+x /home/onrig/fan.sh")
     subprocess.getstatusoutput("sudo rm /home/onrig/fan.sh")
 
+
 if __name__ == '__main__':
     if os.path.exists("coolers.json") == True:
         pass
     else:
         subprocess.getstatusoutput("touch /run/hive/fan_controller_recallibrate_req")
-
     if os.path.exists("/home/onrig/fan.sh") == True:
         apdate_fan_sh()
         time.sleep(5)

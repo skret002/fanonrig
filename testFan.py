@@ -70,20 +70,18 @@ def testFan(id_rig, step=4):
                                                                  'max_rpm':int(max_rpm),
                                                                  'effective_echo':effective_handler
                                                                  })
+        try:
+            os.system("/hive/bin/miner start")
+        except Exception:
+            pass
+        os.system("rm /run/hive/fan_controller_recallibrate_req")
+        return("Maximum speed of external coolers :"+str(max_rpm))
     else:
         send_mess(' RECALIBRATION is not accurate, try again.', id_rig)
         print("РЕКАЛИБРОВКА с шагом 5 пройти не удалось, пробую ", step+1)
         testFan(id_rig, step)
 
     print("РЕЗУЛЬТАТ РЕКАЛИБРОВКИ  >>  ", test)
-
-
-    try:
-        os.system("/hive/bin/miner start")
-    except Exception:
-        pass
-    os.system("rm /run/hive/fan_controller_recallibrate_req")
-    return("Maximum speed of external coolers :"+str(max_rpm))
 
 if __name__ == '__main__':
     testFan(id_rig, 8)

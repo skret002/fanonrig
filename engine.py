@@ -161,7 +161,7 @@ def active_cool_mod():
                 old_hot_gpu = hot_gpu
                 if int(hot_gpu) > int(optimum_temp):
                     stable_temp_round = 0     
-                if  (int(mem_t) == int(target_mem_temp)) or (int(optimum_temp) == int(hot_gpu)) or (int(last_rpm) <= int(real_min_fan_rpm):
+                if  (int(mem_t) == int(target_mem_temp)) or (int(optimum_temp) == int(hot_gpu)) or (int(last_rpm) <= int(real_min_fan_rpm)):
                     print('optTRIGER', int(mem_t) == int(target_mem_temp) , int(optimum_temp) == int(hot_gpu),(int(last_rpm) <= int(real_min_fan_rpm)))
                     optimum_on = 1
                     print("ОПТИМУМ ГОТОВ", optimun_echo, 'mem_t', mem_t)
@@ -215,12 +215,12 @@ def addFanData(rpmfun, temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gp
                             'hot_gpu':hot_gpu, 'hot_mem':mem_t
                             }
     try:
-        r = requests.post("http://4f7a-188-243-182-20.ngrok.io/add_and_read_fandata/", data=data,stream=True, timeout=10)
+        r = requests.post("http://d132-188-243-182-20.ngrok.io/add_and_read_fandata/", data=data,stream=True, timeout=10)
     except Exception:
         print('ошибка в отправке данных по кулерам')
         time.sleep(30)
         try:
-            r = requests.post("http://4f7a-188-243-182-20.ngrok.io/add_and_read_fandata/", data=data,stream=True, timeout=10)
+            r = requests.post("http://d132-188-243-182-20.ngrok.io/add_and_read_fandata/", data=data,stream=True, timeout=10)
         except Exception:
             time.sleep(10)
             send_mess('Failed to connect to the server, try to restart the rig | ', id_rig_in_server)
@@ -529,7 +529,7 @@ def search_min_fan_rpm_now(static_option = None):
 
 def get_setting_server(id_rig_in_server,key_slave):
     try:
-        response = requests.get('http://4f7a-188-243-182-20.ngrok.io/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)],stream=True, timeout=10 )
+        response = requests.get('http://d132-188-243-182-20.ngrok.io/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)],stream=True, timeout=10 )
     except Exception:
         engine_start()
     response = response.json()
@@ -630,7 +630,7 @@ def get_setting_server(id_rig_in_server,key_slave):
 
 def get_setting_server1(id_rig_in_server, key_slave):
     try:
-        response = requests.get('http://4f7a-188-243-182-20.ngrok.io/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)] ,stream=True, timeout=10)
+        response = requests.get('http://d132-188-243-182-20.ngrok.io/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)] ,stream=True, timeout=10)
     except Exception:
         engine_start()
     response = response.json()
@@ -683,7 +683,7 @@ def get_setting_server1(id_rig_in_server, key_slave):
     return("true")
 def get_setting_server2(id_rig_in_server, key_slave):
     try:
-        response = requests.get('http://4f7a-188-243-182-20.ngrok.io/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)],stream=True, timeout=10 )
+        response = requests.get('http://d132-188-243-182-20.ngrok.io/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)],stream=True, timeout=10 )
     except Exception:
         engine_start()
     response = response.json()
@@ -728,9 +728,9 @@ def get_setting_server2(id_rig_in_server, key_slave):
 def checking_new_settings(id, applyOptionReady = None):
     try:
         param= [('rigId', id), ('applyOptionReady',applyOptionReady)]
-        response = requests.post('http://4f7a-188-243-182-20.ngrok.io/get_status_new_option/', data = param ,stream=True, timeout=10)
+        response = requests.post('http://d132-188-243-182-20.ngrok.io/get_status_new_option/', data = param ,stream=True, timeout=10)
         print("Статус настроек", response)
-        if response == 1:
+        if int(response.json()["data"]) == 1:
             engine_start()
         else:
             pass
@@ -742,67 +742,62 @@ def sendInfoRig(rig_id, rig_name, key_slave, device_name):
     global id_rig_in_server
     param= [('rigId', rig_id), ('rigName', rig_name), ('key_slave',key_slave), ('device_name', device_name)] 
     try:
-        response = requests.post('http://4f7a-188-243-182-20.ngrok.io/add_rig_or_test/', data = param ,stream=True, timeout=10)
+        response = requests.post('http://d132-188-243-182-20.ngrok.io/add_rig_or_test/', data = param ,stream=True, timeout=10)
         print('sendInfoRig ',response)
     except Exception as e:
         print('Ошибка sendInfoRig',e)
         time.sleep(90)
         engine_start()
     id_rig_in_server = response.json()["data"]
-
-    checking_new_settings(id_rig_in_server, applyOptionReady = 1)
+    checking_new_settings(id_rig_in_server, applyOptionReady = 0)
     return(True)
 
 def test_select_mod(): # Проверяем режим работы
-    if selected_mod == old_selected_mod:
-        pass
-    else:
-        engine_start()
-
+    try:
+        if selected_mod == old_selected_mod:
+            pass
+        else:
+            engine_start()
+    except Exception:
+        print("Не удалось проверить режим работы, возможно сервер не ответил")
+        
 def touch_pci_status_file(id, w):
     with open('pci_status_file.json', "w+") as file:
         file.seek(0)
         file.write(json.dumps(w))
         file.truncate()
     if id != None:
-        param= [('rigId', id), ('work_pci', w)]
-        response = requests.post('http://4f7a-188-243-182-20.ngrok.io/get_status_new_option/', data = param ,stream=True, timeout=10)
-    checking_new_settings(id_rig_in_server, applyOptionReady = 1)
+        param= [('rigId', id), ('work_pci', str(w))]
+        response = requests.post('http://d132-188-243-182-20.ngrok.io/get_status_new_option/', data = param ,stream=True, timeout=10)
 
 def re_pci_status(server_pci_status_file = None, id=None):
+    print(server_pci_status_file)
     work_pci = []
-    if server_pci_status_file == None:
-        (status,output_fan)=subprocess.getstatusoutput("sudo lspci -v | grep --color -E '(VGA|3D)'")
-        all_pci = re.split('\n', output_fan)
-        for i in all_pci:
-            work_pci.append({str(i.split(' ')[0])+' ('+str(i.split('[', 1)[1].split(']')[0]).replace('RTX','').replace('NVIDIA','').replace('AMD','').replace('GeForce','').replace('NVIDIA','').replace('/Max-Q','').replace(' ','').replace("''",'')+')': True})
+    (status,output_fan)=subprocess.getstatusoutput("sudo lspci -v | grep --color -E '(VGA|3D)'")
+    all_pci = re.split('\n', output_fan)
+    for i in all_pci:
+        name = str(i.split('[', 1)[1].split(']')[0]).replace('RTX','').replace('NVIDIA','').replace('AMD','').replace('GeForce','').replace('NVIDIA','').replace('/Max-Q','').replace(' ','').replace("''",'')           
+        if name == '/ATI':    
+            name = 'AMD ' + str(i.split('[')[2].split(']')[0].replace('Radeon','').replace('RX','').replace(' ','')[0:3].replace('/',''))       
+        work_pci.append({str(i.split(' ')[0])+' ('+str(name)+')': True}) 
+    if len(work_pci) != len(server_pci_status_file):
+        touch_pci_status_file(id, work_pci)
     else:
+        touch_pci_status_file(id, server_pci_status_file)
         work_pci = server_pci_status_file
-        touch_pci_status_file(id, work_pci)
     print('work_pci',work_pci)
-    try:
-        with open('pci_status_file.json', 'r') as f:
-            json_data = json.load(f)
-            if len(json_data) != len(work_pci):
-                touch_pci_status_file(id, work_pci)
-    except Exception as e:
-        touch_pci_status_file(id, work_pci)
+    #try:
+    #    with open('pci_status_file.json', 'r') as f:
+    #        json_data = json.load(f)
+    #        if len(json_data) != len(work_pci):
+    #            touch_pci_status_file(id, work_pci)
+    #except Exception as e:
+    #    touch_pci_status_file(id, work_pci)
 
 
 
 def engine_start():
-    global last_rpm
-    global boost_in_s
-    global stable_temp_round
-    global optimum_fan
-    global optimum_temp
-    global optimum_on
-    global optimun_echo
-    global start_optimum
-    global temp_gpu_freeze
-    global old_stab_balance
-    global optimum_round
-    global last_rpm_s
+    global last_rpm, boost_in_s, stable_temp_round, optimum_fan, optimum_temp, optimum_on, optimun_echo, start_optimum, temp_gpu_freeze, old_stab_balance, optimum_round, last_rpm_s, old_selected_mod, selected_mod, terget_temp_min, terget_temp_max, min_fan_rpm, hot_gpu, critical_temp, const_rpm, select_fan, rpmfun, option1, option2, id_rig_in_server, ressetRig, soft_rev, device_name
     #скидываем в 0 если там были данные
     last_rpm_s = 0
     last_rpm = 0
@@ -815,22 +810,8 @@ def engine_start():
     temp_gpu_freeze = 0
     old_stab_balance = 0
     optimum_round = 0
-    global old_selected_mod
-    global selected_mod
-    global terget_temp_min
-    global terget_temp_max
-    global min_fan_rpm
-    global hot_gpu
-    global critical_temp
-    global const_rpm
-    global select_fan
-    global rpmfun
-    global option1
-    global option2
-    global id_rig_in_server
-    global ressetRig
-    global soft_rev
-    global device_name
+    old_min_fan = 0
+    old_option2 = 0
     #снижаем шум до загрузки мода
     subprocess.getstatusoutput("echo 1 >>/sys/class/hwmon/hwmon1/pwm2_enable")
     subprocess.getstatusoutput("echo 15 >> /sys/class/hwmon/hwmon1/pwm2") 
@@ -850,12 +831,14 @@ def engine_start():
     try:
         sendInfoRig(rig_id,rig_name, key_slave, device_name)
     except Exception as e:
-        engine_start()
+        print(e)
     re_pci_status()
+    
     if ressetRig == True:
         try:
-            requests.post("http://4f7a-188-243-182-20.ngrok.io/ressetRigAndFanData/", data={'ressetRig':'True', 'id_rig_in_server':id_rig_in_server},stream=True, timeout=10)
+            requests.post("http://d132-188-243-182-20.ngrok.io/ressetRigAndFanData/", data={'ressetRig':'True', 'id_rig_in_server':id_rig_in_server},stream=True, timeout=10)
         except Exception as e:
+            time.sleep(90)
             print('ошибка ressetRig ',e)
             engine_start()
         ressetRig = False
@@ -867,19 +850,19 @@ def engine_start():
         engine_start()
     try:
         get_setting_server(id_rig_in_server, key_slave)
-        #print("ответ с сервера получен")
+        print("ответ с сервера получен")
     except Exception:
         print("нет ответа с сервера, перезапускаю engine")
+        time.sleep(90)
         engine_start()
 
     try:
         task_update(id_rig_in_server, str(soft_rev))
     except Exception:
+        time.sleep(90)
         print("ошибка запроса на обновление")
-
-    old_min_fan = 0
-    old_option2 = 0
-
+        engine_start()
+        
     if selected_mod == 0:
         if int(min_fan_rpm_persent) == None:  # если это первый страрт с реколибровкой, то будет NONE
             os.system("reboot")
@@ -888,8 +871,6 @@ def engine_start():
         send_mess(' Intelligent mode activated', id_rig_in_server)
         subprocess.getstatusoutput("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
         subprocess.getstatusoutput("echo " + str(round(const_rpm / 100 * int(option2))) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))       
-        p1 = 0
-        p2 = 0
         while 1 > 0:
             checking_new_settings(id_rig_in_server)
             if int(min_fan_rpm) != int(old_min_fan):
@@ -899,23 +880,8 @@ def engine_start():
                 except Exception as e:
                     print("проблема в search_min_fan_rpm_now",e) 
             active_cool_mod()
-                                                                                                                     
-            p1 = p1 + 1
-            p2 = p2 + 1
             try:
-                if p1 == 3:
-                    try:
-                        test_select_mod()
-                    except Exception as e:
-                        print("!!!Ошибка запроса режима работы!!!",e)
-                        pass
-                    try:
-                        get_setting_server(id_rig_in_server, key_slave)
-                    except Exception as e:
-                        print("!!!Ошибка получения ID  с сервера!!!",e)
-                        engine_start()
-                    p1 = 0
-
+                test_select_mod()
                 try:
                     if mod_option_hive == 1:
                         communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, rpmfun,rigRpmFanMaximum, option2, terget_temp_min,terget_temp_max, min_fan_rpm_persent, target_mem_temp, selected_mod,device_name)
@@ -927,13 +893,9 @@ def engine_start():
             except Exception as e:
                 print("ERROR selected_mod0 " + str(e))
                 engine_start()
-
-            if int(p2) == 150:
-                p2=0
-                task_update(id_rig_in_server, str(soft_rev))
-
+                
     elif selected_mod == 1:
-        #print("Выбран ручной режим")
+        print("Выбран ручной режим")
         send_mess(' Manual mode activated', id_rig_in_server)
         subprocess.getstatusoutput("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
         subprocess.getstatusoutput("echo " + str(int(const_rpm / 100 * int(option2))) + ">> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
@@ -1017,8 +979,6 @@ if __name__ == '__main__':
     #else:
     #    pass
     try:
-        #subprocess.getstatusoutput("echo 1 >>/sys/class/hwmon/hwmon1/pwm2_enable")
-        #subprocess.getstatusoutput("echo 30 >> /sys/class/hwmon/hwmon1/pwm2")
         engine_start()
     except Exception as e:
         send_mess('ОError in ENGINE CORE - send a text message to the developer | ' + str(e), id_rig_in_server)

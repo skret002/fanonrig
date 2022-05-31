@@ -64,6 +64,7 @@ device_name = ''
 real_min_fan_rpm = 0
 last_rpm_s = 0
 boost_in_s =0
+gpu_status = ''
 
 
 def error511():
@@ -218,12 +219,15 @@ def addFanData(rpmfun, temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gp
         r = requests.post("http://d132-188-243-182-20.ngrok.io/add_and_read_fandata/", data=data,stream=True, timeout=10)
     except Exception:
         print('ошибка в отправке данных по кулерам')
-        time.sleep(30)
+        time.sleep(60)
         try:
             r = requests.post("http://d132-188-243-182-20.ngrok.io/add_and_read_fandata/", data=data,stream=True, timeout=10)
         except Exception:
             time.sleep(10)
-            send_mess('Failed to connect to the server, try to restart the rig | ', id_rig_in_server)
+            try:
+                send_mess('Failed to connect to the server, try to restart the rig | ', id_rig_in_server)
+            except Exception:
+                subprocess.run('reboot',shell=True)    
             subprocess.run('reboot',shell=True)
 
 def get_temp():
@@ -533,8 +537,7 @@ def get_setting_server(id_rig_in_server,key_slave):
     except Exception:
         engine_start()
     response = response.json()
-    print("ДАННЫЕ С СЕРВЕРА ИЗУЧИТЬ", response["data"])
-    global selected_mod
+    global selected_mod, gpu_status
     global terget_temp_min
     global terget_temp_max
     global min_fan_rpm
@@ -553,6 +556,7 @@ def get_setting_server(id_rig_in_server,key_slave):
     global option2
     global target_mem_temp
     global target_mem
+    
 
     if const_rpm == 0:
         mod_option_hive = int(response["data"][0]["attributes"]["mod_option_hive"])
@@ -572,7 +576,10 @@ def get_setting_server(id_rig_in_server,key_slave):
         target_mem_temp = int(response["data"][0]["attributes"]["SetMode0"]["target_mem"])
         min_fan_rpm = int(const_rpm / 100 * int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"]))
         rigOnBoot = 1
+        gpu_status = response["data"][0]["attributes"]["gpu_status"]
     else:
+        if gpu_status != response["data"][0]["attributes"]["gpu_status"]:
+            gpu_status = response["data"][0]["attributes"]["gpu_status"]
         if const_rpm != int(response["data"][0]["attributes"]["effective_echo_fan"]):
             const_rpm = int(response["data"][0]["attributes"]["effective_echo_fan"])
 
@@ -729,7 +736,7 @@ def checking_new_settings(id, applyOptionReady = None):
     try:
         param= [('rigId', id), ('applyOptionReady',applyOptionReady)]
         response = requests.post('http://d132-188-243-182-20.ngrok.io/get_status_new_option/', data = param ,stream=True, timeout=10)
-        print("Статус настроек", response)
+        print("Статус настроек", response.json()["data"])
         if int(response.json()["data"]) == 1:
             engine_start()
         else:
@@ -768,32 +775,27 @@ def touch_pci_status_file(id, w):
         file.truncate()
     if id != None:
         param= [('rigId', id), ('work_pci', str(w))]
-        response = requests.post('http://d132-188-243-182-20.ngrok.io/get_status_new_option/', data = param ,stream=True, timeout=10)
+        response = requests.post('http://d132-188-243-182-20.ngrok.io/rig_pci_status/', data = param ,stream=True, timeout=10)
+    applay_pci_status()
 
-def re_pci_status(server_pci_status_file = None, id=None):
+def re_pci_status(server_pci_status_file = None):
+    id = id_rig_in_server
     print(server_pci_status_file)
     work_pci = []
     (status,output_fan)=subprocess.getstatusoutput("sudo lspci -v | grep --color -E '(VGA|3D)'")
     all_pci = re.split('\n', output_fan)
-    for i in all_pci:
-        name = str(i.split('[', 1)[1].split(']')[0]).replace('RTX','').replace('NVIDIA','').replace('AMD','').replace('GeForce','').replace('NVIDIA','').replace('/Max-Q','').replace(' ','').replace("''",'')           
-        if name == '/ATI':    
-            name = 'AMD ' + str(i.split('[')[2].split(']')[0].replace('Radeon','').replace('RX','').replace(' ','')[0:3].replace('/',''))       
-        work_pci.append({str(i.split(' ')[0])+' ('+str(name)+')': True}) 
+    for i in all_pci:#if 'VGAcontroller' not in str(i):
+        if "VGA controller" not in str(i.split('[', 1)[1].split(']')[0]): 
+            name = str(i.split('[', 1)[1].split(']')[0]).replace('RTX','').replace('NVIDIA','').replace('AMD','').replace('GeForce','').replace('NVIDIA','').replace('/Max-Q','').replace(' ','').replace("''",'')           
+            if name == '/ATI':    
+                name = 'AMD ' + str(i.split('[')[2].split(']')[0].replace('Radeon','').replace('RX','').replace(' ','')[0:3].replace('/',''))       
+            work_pci.append({str(i.split(' ')[0])+' ('+str(name)+')': True}) 
     if len(work_pci) != len(server_pci_status_file):
         touch_pci_status_file(id, work_pci)
     else:
         touch_pci_status_file(id, server_pci_status_file)
         work_pci = server_pci_status_file
     print('work_pci',work_pci)
-    #try:
-    #    with open('pci_status_file.json', 'r') as f:
-    #        json_data = json.load(f)
-    #        if len(json_data) != len(work_pci):
-    #            touch_pci_status_file(id, work_pci)
-    #except Exception as e:
-    #    touch_pci_status_file(id, work_pci)
-
 
 
 def engine_start():
@@ -832,7 +834,6 @@ def engine_start():
         sendInfoRig(rig_id,rig_name, key_slave, device_name)
     except Exception as e:
         print(e)
-    re_pci_status()
     
     if ressetRig == True:
         try:
@@ -862,7 +863,7 @@ def engine_start():
         time.sleep(90)
         print("ошибка запроса на обновление")
         engine_start()
-        
+    re_pci_status(gpu_status)     # Отключаем или включаем PCI
     if selected_mod == 0:
         if int(min_fan_rpm_persent) == None:  # если это первый страрт с реколибровкой, то будет NONE
             os.system("reboot")

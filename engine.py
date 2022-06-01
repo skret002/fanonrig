@@ -737,7 +737,7 @@ def touch_pci_status_file(id, w):
     if id != None:
         param= [('rigId', id), ('work_pci', str(w))]
         response = requests.post('http://d132-188-243-182-20.ngrok.io/rig_pci_status/', data = param ,stream=True, timeout=10)
-    applay_pci_status()         
+    applay_pci_status(w)         
 
 def re_pci_status():
     server_pci_status_file = server_pci_status_list(gpu_status)               
@@ -777,7 +777,6 @@ def re_pci_status():
         print("Карты прежнии")
         work_pci = server_pci_status_file                                                    
         touch_pci_status_file(id, server_pci_status_file) 
-        touch_pci_status_file(id, server_pci_status_file)
 
 def test_select_mod(): # Проверяем режим работы
     try:
@@ -860,7 +859,7 @@ def engine_start():
         time.sleep(90)
         print("ошибка запроса на обновление")
         engine_start()
-    re_pci_status(gpu_status)     # Отключаем или включаем PCI
+    re_pci_status()     # Отключаем или включаем PCI
     if selected_mod == 0:
         if int(min_fan_rpm_persent) == None:  # если это первый страрт с реколибровкой, то будет NONE
             os.system("reboot")

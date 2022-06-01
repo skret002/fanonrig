@@ -1,12 +1,8 @@
-import json 
-import simplejson
-import os
-import requests
-import time
-import sys
+import json , os, requests, time, sys,subprocess
 from testFan import testFan
 from test_box import testing
 from handler_messeges import transmit_mess as send_mess
+
 req_link_hive       = '/run/hive/fan_controller_req'  #файл запроса в хайв json
 answer_link_hive    = '/run/hive/fan_controller_rsp' # файл ответа из hive json
 req_recallibrate    = '/run/hive/fan_controller_recallibrate_req' # запрос реколибровки если файл есть > потом удалить

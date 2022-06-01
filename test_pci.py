@@ -1,10 +1,27 @@
 import subprocess, json, time
 
+def test(ser_side_info):
+    with open('/home/fanonrig/init_gpu.json', 'r') as f:
+        f_init_gpu = json.load(f)  
+    for i in f_init_gpu:
+        non_change = 1
+        for x in range(0,len(ser_side_info)):
+            try:
+                if ser_side_info[x][i]:
+                    non_change = 0
+            except Exception:
+                pass
+        if non_change != 0:
+            print("карты в слотах изменились")
+            return(False) 
 
 def applay_pci_status(server_side_pci = None):
+    if server_side_pci != None:
+        if test(server_side_pci) == False:
+            return(False)
     try:
         subprocess.run('/hive/bin/miner stop',shell=True)
-        time.sleep(30)
+        time.sleep(3)
         with open('/home/fanonrig/pci_status_file.json', 'r') as f:  #подгружаем ранее созданный файл с данными
             pci_status_local = json.load(f)
     
@@ -15,19 +32,35 @@ def applay_pci_status(server_side_pci = None):
                     if v == False or v == 'False':
                         subprocess.getstatusoutput("timeout  90 sudo echo 1 > /sys/bus/pci/devices/0000:"+str(k.split(' ')[0]) +"/remove")
         else:
-            for local in pci_status_local:
-                for k, v in local.items():
-                    v_local = v
-                for s_s_p in server_side_pci:
-                    for k, v in s_s_p.items():
-                        s_s_p_v = v
-                if v_local == True and s_s_p_v == False or v_local == 'True' and s_s_p_v == 'False':
-                    subprocess.getstatusoutput("timeout  90 sudo echo 1 > /sys/bus/pci/devices/0000:"+str(k.split(' ')[0]) +"/remove")
-                elif  v_local == False and s_s_p_v == True or  v_local == 'False' and s_s_p_v == 'True':
-                    subprocess.run('reboot',shell=True)
-        time.sleep(30)
+            reboot = 0
+            for s_s_p in server_side_pci:
+                for k, v in s_s_p.items():
+                    if v == False or v == 'False':
+                        for local in pci_status_local:
+                            for k2, v2 in local.items():
+                                if k == k2:
+                                    print("ОТКЛЮЧАЮ GPU", k)
+                                    subprocess.getstatusoutput("timeout  30 sudo echo 1 > /sys/bus/pci/devices/0000:"+str(k.split(' ')[0]) +"/remove")
+                    if v == True or v == 'True': 
+                        for local in pci_status_local:
+                            adder = 1
+                            for k2, v2 in local.items():
+                                    if k == k2:
+                                        adder = 0
+                        
+                        if adder == 1:
+                            reboot = 1
+                            pci_status_local.append({k:v})
+                            with open('/home/fanonrig/init_gpu.json', "w+") as file:
+                                file.seek(0)
+                                file.write(json.dumps(pci_status_local))
+                                file.truncate() 
+            if reboot == 1:
+                print("Некоторые карты приказано включить, ухожу на перезагрузку")
+                
         subprocess.run('/hive/bin/miner start',shell=True)        
-    except Exception:
-        pass    
+    except Exception as e:
+        print(e)
+         
 if __name__ == '__main__':                                                                                                                           
     applay_pci_status()     

@@ -9,7 +9,7 @@ def f_init_gpu():
             name = str(i.split('[', 1)[1].split(']')[0]).replace('RTX','').replace('NVIDIA','').replace('AMD','').replace('GeForce','').replace('NVIDIA','').replace('/Max-Q','').replace(' ','').replace("''",'')           
             if name == '/ATI':
                 name = 'AMD ' + str(i.split('[')[2].split(']')[0].replace('Radeon','').replace('RX','').replace(' ','')[0:3].replace('/',''))
-            work_pci.append({str(i.split(' ')[0])+' ('+str(name)+')': True})
+            work_pci.append(str(i.split(' ')[0])+' ('+str(name)+')')
     with open('/home/fanonrig/init_gpu.json', "w+") as file:
         file.seek(0)
         file.write(json.dumps(work_pci))

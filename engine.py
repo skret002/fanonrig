@@ -4,7 +4,7 @@ from pprint import pprint  # подключили Pprint для красоты �
 from handler_messeges import transmit_mess as send_mess
 from mem import mem_temp
 from talk_from_hive import communication_hive
-from test_pci import applay_pci_status
+from test_pci import applay_pci_status, test
 from testFan import testFan
 from update_task import task_update
 
@@ -751,32 +751,39 @@ def re_pci_status():
             if name == '/ATI':
                 name = 'AMD ' + str(i.split('[')[2].split(']')[0].replace('Radeon','').replace('RX','').replace(' ','')[0:3].replace('/',''))
             work_pci.append({str(i.split(' ')[0])+' ('+str(name)+')': True})
-    obj1 = {}                                                       
-    obj2 = {}     
-    with open('/home/fanonrig/init_gpu.json', 'r') as f:
-        f_init_gpu = json.load(f)      
-                                                    
-    for i in range(0, len(f_init_gpu)):
-        for key,value in work_pci[i].items():
-            obj1[key] = value                                                  
-    for i in range(0, len(server_pci_status_file)):
-        for key,value in server_pci_status_file[i].items():
-            obj2[key] = value
-    
-    for i in obj2:
-        try:                                          
-            obj1[i]
-        except Exception as e:
-            print("Карты в слотах не совпадают, записываем новый порядок", e) 
-            touch_pci_status_file(id, work_pci)
-            return()
-    if len(work_pci) > len(server_pci_status_file):
-        print("Карт стало больше, записываем новый порядок")
+    if test(server_pci_status_file) != False:
+        print("Карты стоят теже самые")
+        touch_pci_status_file(id, server_pci_status_file)
+    else:
         touch_pci_status_file(id, work_pci)
-    else:                                                              
-        print("Карты прежнии")
-        work_pci = server_pci_status_file                                                    
-        touch_pci_status_file(id, server_pci_status_file) 
+        
+        
+    #obj1 = {}                                                       
+    #obj2 = {}     
+    #with open('/home/fanonrig/init_gpu.json', 'r') as f:
+    #    f_init_gpu = json.load(f)      
+    #                                                
+    #for i in range(0, len(f_init_gpu)):
+    #    for key,value in work_pci[i].items():
+    #        obj1[key] = value                                                  
+    #for i in range(0, len(server_pci_status_file)):
+    #    for key,value in server_pci_status_file[i].items():
+    #        obj2[key] = value
+    #
+    #for i in obj2:
+    #    try:                                          
+    #        obj1[i]
+    #    except Exception as e:
+    #        print("Карты в слотах не совпадают, записываем новый порядок", e) 
+    #        touch_pci_status_file(id, work_pci)
+    #        return()
+    #if len(work_pci) > len(server_pci_status_file):
+    #    print("Карт стало больше, записываем новый порядок")
+    #    touch_pci_status_file(id, work_pci)
+    #else:                                                              
+    #    print("Карты прежнии")
+    #    work_pci = server_pci_status_file                                                    
+    #    touch_pci_status_file(id, server_pci_status_file) 
 
 def test_select_mod(): # Проверяем режим работы
     try:

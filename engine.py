@@ -728,19 +728,20 @@ def server_pci_status_list(str):
     except Exception:
         pass                                                                                                                                                    
     return (lists)                                                      
-def touch_pci_status_file(id, w):
+def touch_pci_status_file(id, w, sps , wr=0):
     #print("Буду записывать в json",w)
     with open('pci_status_file.json', "w+") as file:
         file.seek(0)
         file.write(json.dumps(w))
         file.truncate()
-    if id != None:
+    if id != None and wr == 1:
         param= [('rigId', id), ('work_pci', str(w))]
         response = requests.post('http://d132-188-243-182-20.ngrok.io/rig_pci_status/', data = param ,stream=True, timeout=10)
-    applay_pci_status(w)         
+    applay_pci_status(sps)         
 
 def re_pci_status():
-    server_pci_status_file = server_pci_status_list(gpu_status)               
+    server_pci_status_file = server_pci_status_list(gpu_status)       
+    sps = server_pci_status_file        
     id = id_rig_in_server                                                                                                             
     work_pci = []                                                    
     (status,output_fan)=subprocess.getstatusoutput("sudo lspci -v | grep --color -E '(VGA|3D)'")
@@ -753,9 +754,9 @@ def re_pci_status():
             work_pci.append({str(i.split(' ')[0])+' ('+str(name)+')': True})
     if test(server_pci_status_file) != False:
         print("Карты стоят теже самые")
-        touch_pci_status_file(id, server_pci_status_file)
+        touch_pci_status_file(id, server_pci_status_file, sps)
     else:
-        touch_pci_status_file(id, work_pci)
+        touch_pci_status_file(id, work_pci, sps , 1)
         
         
     #obj1 = {}                                                       

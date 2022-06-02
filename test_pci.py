@@ -3,14 +3,19 @@ import subprocess, json, time
 def test(ser_side_info):
     with open('/home/fanonrig/init_gpu.json', 'r') as f:
         f_init_gpu = json.load(f)  
-    for i in f_init_gpu:
+    obj1 = []                                                       
+    obj2 = []                                               
+    for i in range(0, len(f_init_gpu)):
+        for key,value in f_init_gpu[i].items():
+            obj1.append(key)                                                  
+    for i in range(0, len(ser_side_info)):
+        for key,value in ser_side_info[i].items():
+            obj2.append(key)    
+    print(obj1, '\n', obj2)
+    for i in obj1:
         non_change = 1
-        for x in range(0,len(ser_side_info)):
-            try:
-                if ser_side_info[x][i]:
-                    non_change = 0
-            except Exception:
-                pass
+        if i in obj2:
+            non_change = 0
         if non_change != 0:
             print("карты в слотах изменились")
             return(False) 

@@ -7,7 +7,7 @@ def test(ser_side_info):
         obj2 = []
         for i in range(0, len(ser_side_info)):
             for key,value in ser_side_info[i].items():
-                obj2.append(key)
+                obj2.append(key.replace(' ',''))
         print(f_init_gpu, '\n', obj2)
         for i in f_init_gpu:
             non_change = 1
@@ -34,7 +34,7 @@ def applay_pci_status(server_side_pci = None):
                 for k, v in i.items():
                     print('текущее сотояние PCI',k,v)
                     if v == False or v == 'False':
-                        subprocess.getstatusoutput("timeout  90 sudo echo 1 > /sys/bus/pci/devices/0000:"+str(k.split(' ')[0]) +"/remove")
+                        subprocess.getstatusoutput("timeout  90 sudo echo 1 > /sys/bus/pci/devices/0000:"+str(k.strip().split(' ')[0]) +"/remove")
         else:  
             subprocess.run('/hive/bin/miner stop',shell=True)                                                    
             count_gpu_on = 0 
@@ -64,7 +64,7 @@ def applay_pci_status(server_side_pci = None):
             #if count_gpu_on > count_gpu_on2:
             #    print("Некоторые карты приказано включить, ухожу на перезагрузку")
         #subprocess.run('/hive/bin/miner start',shell=True)
-        subprocess.getstatusoutput("sreboot") # удаляю старый файл состояния
+        subprocess.getstatusoutput("reboot") # удаляю старый файл состояния
     except Exception as e:
         try:    
             newlocal = []

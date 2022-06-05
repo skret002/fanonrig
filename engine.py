@@ -55,7 +55,6 @@ real_min_fan_rpm = 0
 last_rpm_s = 0
 boost_in_s =0
 gpu_status = ''
-fstart = 0
 
 
 def error511():
@@ -736,8 +735,7 @@ def touch_pci_status_file(id, w, sps , wr=0):
     if id != None and wr == 1:
         param= [('rigId', id), ('work_pci', str(w))]
         response = requests.post('http://ggc.center:8005/rig_pci_status/', data = param ,stream=True, timeout=10)
-    if fstart != 0:
-        applay_pci_status(sps)         
+    applay_pci_status(sps)         
 
 def re_pci_status():
     server_pci_status_file = server_pci_status_list(gpu_status)       
@@ -846,7 +844,6 @@ def engine_start():
         print("ошибка запроса на обновление")
         engine_start()
     re_pci_status()     # Отключаем или включаем PCI
-    fstart = 2          # разрешаем отключение PCI
     locate()            # Получаем локацию
     if selected_mod == 0:
         if int(min_fan_rpm_persent) == None:  # если это первый страрт с реколибровкой, то будет NONE

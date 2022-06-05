@@ -55,6 +55,7 @@ real_min_fan_rpm = 0
 last_rpm_s = 0
 boost_in_s =0
 gpu_status = ''
+fstart = 0
 
 
 def error511():
@@ -194,7 +195,7 @@ def active_cool_mod():
         subprocess.getstatusoutput("echo " + str(real_min_fan_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
         time.sleep(29)
     return()
-
+    
 def addFanData(rpmfun, temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gpu5,temp_gpu6,temp_gpu7,rpm_fun_gpu, alertFan,problemNumberGpu, hot_gpu):
     data={"id_in_serv": id_rig_in_server,'rpmfun':rpmfun,
                             'temp_gpu0':temp_gpu0, 'temp_gpu1':temp_gpu1,
@@ -206,12 +207,12 @@ def addFanData(rpmfun, temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gp
                             'hot_gpu':hot_gpu, 'hot_mem':mem_t
                             }
     try:
-        r = requests.post("http://d132-188-243-182-20.ngrok.io/add_and_read_fandata/", data=data,stream=True, timeout=10)
+        r = requests.post("http://72c6-188-243-182-20.ngrok.io/add_and_read_fandata/", data=data,stream=True, timeout=10)
     except Exception:
         print('ошибка в отправке данных по кулерам')
         time.sleep(60)
         try:
-            r = requests.post("http://d132-188-243-182-20.ngrok.io/add_and_read_fandata/", data=data,stream=True, timeout=10)
+            r = requests.post("http://72c6-188-243-182-20.ngrok.io/add_and_read_fandata/", data=data,stream=True, timeout=10)
         except Exception:
             time.sleep(10)
             try:
@@ -456,7 +457,7 @@ def send_mess_of_change_option(id_rig_in_server):
     return(True)
 
 def search_min_fan_rpm_now(static_option = None):
-    global min_fan_rpm                                                                                                                                                                                 
+    global min_fan_rpm                                
     global real_min_fan_rpm  
     global stable_temp_round
     set_ok=0
@@ -523,7 +524,7 @@ def search_min_fan_rpm_now(static_option = None):
 
 def get_setting_server(id_rig_in_server,key_slave):
     try:
-        response = requests.get('http://d132-188-243-182-20.ngrok.io/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)],stream=True, timeout=10 )
+        response = requests.get('http://72c6-188-243-182-20.ngrok.io/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)],stream=True, timeout=10 )
     except Exception:
         time.sleep(90)
         engine_start()
@@ -610,7 +611,7 @@ def get_setting_server(id_rig_in_server,key_slave):
 
 def get_setting_server1(id_rig_in_server, key_slave):
     try:
-        response = requests.get('http://d132-188-243-182-20.ngrok.io/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)] ,stream=True, timeout=10)
+        response = requests.get('http://72c6-188-243-182-20.ngrok.io/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)] ,stream=True, timeout=10)
     except Exception:
         time.sleep(90)
         engine_start()
@@ -655,7 +656,7 @@ def get_setting_server1(id_rig_in_server, key_slave):
     
 def get_setting_server2(id_rig_in_server, key_slave):
     try:
-        response = requests.get('http://d132-188-243-182-20.ngrok.io/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)],stream=True, timeout=10 )
+        response = requests.get('http://72c6-188-243-182-20.ngrok.io/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)],stream=True, timeout=10 )
     except Exception:
         time.sleep(90)
         engine_start()
@@ -695,8 +696,9 @@ def get_setting_server2(id_rig_in_server, key_slave):
 def checking_new_settings(id, applyOptionReady = None):
     try:
         param= [('rigId', id), ('applyOptionReady',applyOptionReady)]
-        response = requests.post('http://d132-188-243-182-20.ngrok.io/get_status_new_option/', data = param ,stream=True, timeout=10)
-        print("Статус настроек", response.json()["data"])
+        response = requests.post('http://72c6-188-243-182-20.ngrok.io/get_status_new_option/', data = param ,stream=True, timeout=10)
+        requests.post("http://72c6-188-243-182-20.ngrok.io/i_am_online/", data={'online':1, 'id_rig_in_server':id_rig_in_server})
+        #print("Статус настроек", response.json()["data"])
         if int(response.json()["data"]) == 1:
             engine_start()
         else:
@@ -709,7 +711,7 @@ def sendInfoRig(rig_id, rig_name, key_slave, device_name):
     global id_rig_in_server
     param= [('rigId', rig_id), ('rigName', rig_name), ('key_slave',key_slave), ('device_name', device_name)] 
     try:
-        response = requests.post('http://d132-188-243-182-20.ngrok.io/add_rig_or_test/', data = param ,stream=True, timeout=10)
+        response = requests.post('http://72c6-188-243-182-20.ngrok.io/add_rig_or_test/', data = param ,stream=True, timeout=10)
         print('sendInfoRig ',response)
     except Exception as e:
         print('Ошибка sendInfoRig',e)
@@ -720,7 +722,7 @@ def sendInfoRig(rig_id, rig_name, key_slave, device_name):
     return(True)
 
 def server_pci_status_list(str):                              
-    print("Пришлов обработку", str)
+    #print("Пришлов обработку", str)
     lists = []                                                     
     try:                                                             
         for i in str.split(','):
@@ -730,14 +732,11 @@ def server_pci_status_list(str):
     return (lists)                                                      
 def touch_pci_status_file(id, w, sps , wr=0):
     #print("Буду записывать в json",w)
-    with open('pci_status_file.json', "w+") as file:
-        file.seek(0)
-        file.write(json.dumps(w))
-        file.truncate()
     if id != None and wr == 1:
         param= [('rigId', id), ('work_pci', str(w))]
-        response = requests.post('http://d132-188-243-182-20.ngrok.io/rig_pci_status/', data = param ,stream=True, timeout=10)
-    applay_pci_status(sps)         
+        response = requests.post('http://72c6-188-243-182-20.ngrok.io/rig_pci_status/', data = param ,stream=True, timeout=10)
+    if fstart != 0:
+        applay_pci_status(sps)         
 
 def re_pci_status():
     server_pci_status_file = server_pci_status_list(gpu_status)       
@@ -754,37 +753,9 @@ def re_pci_status():
             work_pci.append({str(i.split(' ')[0])+' ('+str(name)+')': True})
     if test(server_pci_status_file) != False:
         print("Карты стоят теже самые")
-        touch_pci_status_file(id, server_pci_status_file, sps)
+        touch_pci_status_file(id, server_pci_status_file, sps,0)
     else:
         touch_pci_status_file(id, work_pci, sps , 1)
-        
-        
-    #obj1 = {}                                                       
-    #obj2 = {}     
-    #with open('/home/fanonrig/init_gpu.json', 'r') as f:
-    #    f_init_gpu = json.load(f)      
-    #                                                
-    #for i in range(0, len(f_init_gpu)):
-    #    for key,value in work_pci[i].items():
-    #        obj1[key] = value                                                  
-    #for i in range(0, len(server_pci_status_file)):
-    #    for key,value in server_pci_status_file[i].items():
-    #        obj2[key] = value
-    #
-    #for i in obj2:
-    #    try:                                          
-    #        obj1[i]
-    #    except Exception as e:
-    #        print("Карты в слотах не совпадают, записываем новый порядок", e) 
-    #        touch_pci_status_file(id, work_pci)
-    #        return()
-    #if len(work_pci) > len(server_pci_status_file):
-    #    print("Карт стало больше, записываем новый порядок")
-    #    touch_pci_status_file(id, work_pci)
-    #else:                                                              
-    #    print("Карты прежнии")
-    #    work_pci = server_pci_status_file                                                    
-    #    touch_pci_status_file(id, server_pci_status_file) 
 
 def test_select_mod(): # Проверяем режим работы
     try:
@@ -795,9 +766,15 @@ def test_select_mod(): # Проверяем режим работы
     except Exception:
         print("Не удалось проверить режим работы, возможно сервер не ответил")
         
-
+def locate():
+    try:
+        l = subprocess.getstatusoutput('curl ipinfo.io { "ip": "24.6.61.239", "hostname": "c-24-6-61-239.hsd1.ca.comcast.net"')
+        c = l[1].split('\n')[8].replace('"','').replace("'","").replace(',','').replace(' ','')
+        requests.get('http://72c6-188-243-182-20.ngrok.io/locate/', data = [('id_in_serv', id_rig_in_server),('city',c)],stream=True, timeout=10 )     
+    except Exception:
+        pass
 def engine_start():
-    global last_rpm, boost_in_s, stable_temp_round, optimum_fan, optimum_temp, optimum_on, optimun_echo, start_optimum, temp_gpu_freeze, old_stab_balance, optimum_round, last_rpm_s, old_selected_mod, selected_mod, terget_temp_min, terget_temp_max, min_fan_rpm, hot_gpu, critical_temp, const_rpm, select_fan, rpmfun, option1, option2, id_rig_in_server, ressetRig, soft_rev, device_name
+    global last_rpm, boost_in_s, stable_temp_round, optimum_fan, optimum_temp, optimum_on, optimun_echo, start_optimum, temp_gpu_freeze, old_stab_balance, optimum_round, last_rpm_s, old_selected_mod, selected_mod, terget_temp_min, terget_temp_max, min_fan_rpm, hot_gpu, critical_temp, const_rpm, select_fan, rpmfun, option1, option2, id_rig_in_server, ressetRig, soft_rev, device_name, fstart
     #скидываем в 0 если там были данные
     last_rpm_s = 0
     last_rpm = 0
@@ -835,7 +812,7 @@ def engine_start():
     
     if ressetRig == True:
         try:
-            requests.post("http://d132-188-243-182-20.ngrok.io/ressetRigAndFanData/", data={'ressetRig':'True', 'id_rig_in_server':id_rig_in_server},stream=True, timeout=10)
+            requests.post("http://72c6-188-243-182-20.ngrok.io/ressetRigAndFanData/", data={'ressetRig':'True', 'id_rig_in_server':id_rig_in_server},stream=True, timeout=10)
         except Exception as e:
             time.sleep(90)
             print('ошибка ressetRig ',e)
@@ -868,6 +845,8 @@ def engine_start():
         print("ошибка запроса на обновление")
         engine_start()
     re_pci_status()     # Отключаем или включаем PCI
+    fstart = 2          # разрешаем отключение PCI
+    locate()            # Получаем локацию
     if selected_mod == 0:
         if int(min_fan_rpm_persent) == None:  # если это первый страрт с реколибровкой, то будет NONE
             os.system("reboot")
@@ -890,7 +869,7 @@ def engine_start():
                 try:
                     if mod_option_hive == 1:
                         communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, rpmfun,rigRpmFanMaximum, option2, terget_temp_min,terget_temp_max, min_fan_rpm_persent, target_mem_temp, selected_mod,device_name)
-                        print("*** Активно управление из HIVE ***")
+                        #print("*** Активно управление из HIVE ***")
                     else:
                         pass
                 except Exception as e:
@@ -947,20 +926,26 @@ def apdate_fan_sh():
 
 
 if __name__ == '__main__':
+    print('  ╔═══╗╔╗─╔╗╔════╗╔═══╗╔═══╗╔═══╗╔═╗─╔╗     ╔═══╗╔════╗╔═══╗╔═══╗╔════╗','\n',
+            '║╔═╗║║║─║║║╔╗╔╗║║╔═╗║║╔══╝║╔═╗║║║╚╗║║     ║╔═╗║║╔╗╔╗║║╔═╗║║╔═╗║║╔╗╔╗║','\n',
+            '║║─║║║║─║║╚╝║║╚╝║║─║║║╚══╗║║─║║║╔╗╚╝║     ║╚══╗╚╝║║╚╝║║─║║║╚═╝║╚╝║║╚╝','\n',
+            '║╚═╝║║║─║║──║║──║║─║║║╔══╝║╚═╝║║║╚╗║║     ╚══╗║──║║──║╚═╝║║╔╗╔╝──║║──','\n',
+            '║╔═╗║║╚═╝║──║║──║╚═╝║║║───║╔═╗║║║─║║║     ║╚═╝║──║║──║╔═╗║║║║╚╗──║║──','\n',
+            '╚╝─╚╝╚═══╝──╚╝──╚═══╝╚╝───╚╝─╚╝╚╝─╚═╝     ╚═══╝──╚╝──╚╝─╚╝╚╝╚═╝──╚╝──')
     if os.path.exists("coolers.json") == True:
         pass
     else:
         subprocess.getstatusoutput("touch /run/hive/fan_controller_recallibrate_req")
-    #if os.path.exists("/home/onrig/fan.sh") == True:
-    #    apdate_fan_sh()
-    #    time.sleep(5)
-    #    #os.system("reboot")
-    #    #subprocess.run('reboot',shell=True)
-    #else:
-    #    pass
+    if os.path.exists("/home/onrig/fan.sh") == True:
+        apdate_fan_sh()
+        time.sleep(5)
+        #os.system("reboot")
+        #subprocess.run('reboot',shell=True)
+    else:
+        pass
     try:
         engine_start()
     except Exception as e:
         send_mess('ОError in ENGINE CORE - send a text message to the developer | ' + str(e), id_rig_in_server)
-        #os.system("reboot")
-        #subprocess.run('reboot',shell=True)
+        os.system("reboot")
+        subprocess.run('reboot',shell=True)

@@ -207,12 +207,12 @@ def addFanData(rpmfun, temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gp
                             'hot_gpu':hot_gpu, 'hot_mem':mem_t
                             }
     try:
-        r = requests.post("http://72c6-188-243-182-20.ngrok.io/add_and_read_fandata/", data=data,stream=True, timeout=10)
+        r = requests.post("http://ggc.center:8005/add_and_read_fandata/", data=data,stream=True, timeout=10)
     except Exception:
         print('ошибка в отправке данных по кулерам')
         time.sleep(60)
         try:
-            r = requests.post("http://72c6-188-243-182-20.ngrok.io/add_and_read_fandata/", data=data,stream=True, timeout=10)
+            r = requests.post("http://ggc.center:8005/add_and_read_fandata/", data=data,stream=True, timeout=10)
         except Exception:
             time.sleep(10)
             try:
@@ -524,7 +524,7 @@ def search_min_fan_rpm_now(static_option = None):
 
 def get_setting_server(id_rig_in_server,key_slave):
     try:
-        response = requests.get('http://72c6-188-243-182-20.ngrok.io/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)],stream=True, timeout=10 )
+        response = requests.get('http://ggc.center:8005/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)],stream=True, timeout=10 )
     except Exception:
         time.sleep(90)
         engine_start()
@@ -604,6 +604,7 @@ def get_setting_server(id_rig_in_server,key_slave):
             min_fan_rpm_persent = int(response["data"][0]["attributes"]["SetMode0"]["min_fan_rpm"])
 
     # проверяем включена ли реколебровка и если нужно запускаем
+
     if response["data"][0]["attributes"]["recalibrationFanRig"] == True:
         testFan(id_rig_in_server)
         get_setting_server(id_rig_in_server, key_slave)
@@ -611,7 +612,7 @@ def get_setting_server(id_rig_in_server,key_slave):
 
 def get_setting_server1(id_rig_in_server, key_slave):
     try:
-        response = requests.get('http://72c6-188-243-182-20.ngrok.io/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)] ,stream=True, timeout=10)
+        response = requests.get('http://ggc.center:8005/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)] ,stream=True, timeout=10)
     except Exception:
         time.sleep(90)
         engine_start()
@@ -656,7 +657,7 @@ def get_setting_server1(id_rig_in_server, key_slave):
     
 def get_setting_server2(id_rig_in_server, key_slave):
     try:
-        response = requests.get('http://72c6-188-243-182-20.ngrok.io/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)],stream=True, timeout=10 )
+        response = requests.get('http://ggc.center:8005/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)],stream=True, timeout=10 )
     except Exception:
         time.sleep(90)
         engine_start()
@@ -696,8 +697,8 @@ def get_setting_server2(id_rig_in_server, key_slave):
 def checking_new_settings(id, applyOptionReady = None):
     try:
         param= [('rigId', id), ('applyOptionReady',applyOptionReady)]
-        response = requests.post('http://72c6-188-243-182-20.ngrok.io/get_status_new_option/', data = param ,stream=True, timeout=10)
-        requests.post("http://72c6-188-243-182-20.ngrok.io/i_am_online/", data={'online':1, 'id_rig_in_server':id_rig_in_server})
+        response = requests.post('http://ggc.center:8005/get_status_new_option/', data = param ,stream=True, timeout=10)
+        requests.post("http://ggc.center:8005/i_am_online/", data={'online':1, 'id_rig_in_server':id_rig_in_server})
         #print("Статус настроек", response.json()["data"])
         if int(response.json()["data"]) == 1:
             engine_start()
@@ -711,7 +712,7 @@ def sendInfoRig(rig_id, rig_name, key_slave, device_name):
     global id_rig_in_server
     param= [('rigId', rig_id), ('rigName', rig_name), ('key_slave',key_slave), ('device_name', device_name)] 
     try:
-        response = requests.post('http://72c6-188-243-182-20.ngrok.io/add_rig_or_test/', data = param ,stream=True, timeout=10)
+        response = requests.post('http://ggc.center:8005/add_rig_or_test/', data = param ,stream=True, timeout=10)
         print('sendInfoRig ',response)
     except Exception as e:
         print('Ошибка sendInfoRig',e)
@@ -734,7 +735,7 @@ def touch_pci_status_file(id, w, sps , wr=0):
     #print("Буду записывать в json",w)
     if id != None and wr == 1:
         param= [('rigId', id), ('work_pci', str(w))]
-        response = requests.post('http://72c6-188-243-182-20.ngrok.io/rig_pci_status/', data = param ,stream=True, timeout=10)
+        response = requests.post('http://ggc.center:8005/rig_pci_status/', data = param ,stream=True, timeout=10)
     if fstart != 0:
         applay_pci_status(sps)         
 
@@ -770,7 +771,7 @@ def locate():
     try:
         l = subprocess.getstatusoutput('curl ipinfo.io { "ip": "24.6.61.239", "hostname": "c-24-6-61-239.hsd1.ca.comcast.net"')
         c = l[1].split('\n')[8].replace('"','').replace("'","").replace(',','').replace(' ','')
-        requests.get('http://72c6-188-243-182-20.ngrok.io/locate/', data = [('id_in_serv', id_rig_in_server),('city',c)],stream=True, timeout=10 )     
+        requests.get('http://ggc.center:8005/locate/', data = [('id_in_serv', id_rig_in_server),('city',c)],stream=True, timeout=10 )     
     except Exception:
         pass
 def engine_start():
@@ -812,7 +813,7 @@ def engine_start():
     
     if ressetRig == True:
         try:
-            requests.post("http://72c6-188-243-182-20.ngrok.io/ressetRigAndFanData/", data={'ressetRig':'True', 'id_rig_in_server':id_rig_in_server},stream=True, timeout=10)
+            requests.post("http://ggc.center:8005/ressetRigAndFanData/", data={'ressetRig':'True', 'id_rig_in_server':id_rig_in_server},stream=True, timeout=10)
         except Exception as e:
             time.sleep(90)
             print('ошибка ressetRig ',e)

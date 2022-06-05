@@ -66,7 +66,28 @@ def applay_pci_status(server_side_pci = None):
         #subprocess.run('/hive/bin/miner start',shell=True)
         subprocess.getstatusoutput("sreboot") # удаляю старый файл состояния
     except Exception as e:
-        print(e)         
+        try:    
+            newlocal = []
+            for s_s_p in server_side_pci:
+                for k, v in s_s_p.items():
+                    if v == False or v == 'False':
+                        for local in pci_status_local:
+                            for k2, v2 in local.items():
+                                if k == k2:
+                                    newlocal.append({k:v})
+                                    print("ОТКЛЮЧАЮ GPU", k)
+                                    #subprocess.getstatusoutput("timeout  30 sudo echo 1 > /sys/bus/pci/devices/0000:"+str(k.split(' ')[0]) +"/remove")
+                    if v == True or v == 'True':
+                        #count_gpu_on = count_gpu_on + 1
+                        newlocal.append({k:v})
+            subprocess.getstatusoutput("rm /home/fanonrig/pci_status_file.json") # удаляю старый файл состояния
+            with open('/home/fanonrig/pci_status_file.json', "w+") as file: # Записываю новый файл состояния
+                file.seek(0)                                                    
+                file.write(json.dumps(newlocal)) 
+                file.truncate()
+        except Exception:
+            pass
+                 
                  
 if __name__ == '__main__':                                                                                                                           
     applay_pci_status()     

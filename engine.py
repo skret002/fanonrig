@@ -206,12 +206,12 @@ def addFanData(rpmfun, temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gp
                             'hot_gpu':hot_gpu, 'hot_mem':mem_t
                             }
     try:
-        r = requests.post("http://ggc.center:8005/add_and_read_fandata/", data=data,stream=True, timeout=10)
+        r = requests.post("http://ggc.center:8000/add_and_read_fandata/", data=data,stream=True, timeout=10)
     except Exception:
         print('ошибка в отправке данных по кулерам')
         time.sleep(60)
         try:
-            r = requests.post("http://ggc.center:8005/add_and_read_fandata/", data=data,stream=True, timeout=10)
+            r = requests.post("http://ggc.center:8000/add_and_read_fandata/", data=data,stream=True, timeout=10)
         except Exception:
             time.sleep(10)
             try:
@@ -523,7 +523,7 @@ def search_min_fan_rpm_now(static_option = None):
 
 def get_setting_server(id_rig_in_server,key_slave):
     try:
-        response = requests.get('http://ggc.center:8005/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)],stream=True, timeout=10 )
+        response = requests.get('http://ggc.center:8000/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)],stream=True, timeout=10 )
     except Exception:
         time.sleep(90)
         engine_start()
@@ -611,7 +611,7 @@ def get_setting_server(id_rig_in_server,key_slave):
 
 def get_setting_server1(id_rig_in_server, key_slave):
     try:
-        response = requests.get('http://ggc.center:8005/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)] ,stream=True, timeout=10)
+        response = requests.get('http://ggc.center:8000/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)] ,stream=True, timeout=10)
     except Exception:
         time.sleep(90)
         engine_start()
@@ -656,7 +656,7 @@ def get_setting_server1(id_rig_in_server, key_slave):
     
 def get_setting_server2(id_rig_in_server, key_slave):
     try:
-        response = requests.get('http://ggc.center:8005/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)],stream=True, timeout=10 )
+        response = requests.get('http://ggc.center:8000/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)],stream=True, timeout=10 )
     except Exception:
         time.sleep(90)
         engine_start()
@@ -696,8 +696,8 @@ def get_setting_server2(id_rig_in_server, key_slave):
 def checking_new_settings(id, applyOptionReady = None):
     try:
         param= [('rigId', id), ('applyOptionReady',applyOptionReady)]
-        response = requests.post('http://ggc.center:8005/get_status_new_option/', data = param ,stream=True, timeout=10)
-        requests.post("http://ggc.center:8005/i_am_online/", data={'online':1, 'id_rig_in_server':id_rig_in_server})
+        response = requests.post('http://ggc.center:8000/get_status_new_option/', data = param ,stream=True, timeout=10)
+        requests.post("http://ggc.center:8000/i_am_online/", data={'online':1, 'id_rig_in_server':id_rig_in_server})
         #print("Статус настроек", response.json()["data"])
         if int(response.json()["data"]) == 1:
             engine_start()
@@ -711,7 +711,7 @@ def sendInfoRig(rig_id, rig_name, key_slave, device_name):
     global id_rig_in_server
     param= [('rigId', rig_id), ('rigName', rig_name), ('key_slave',key_slave), ('device_name', device_name)] 
     try:
-        response = requests.post('http://ggc.center:8005/add_rig_or_test/', data = param ,stream=True, timeout=10)
+        response = requests.post('http://ggc.center:8000/add_rig_or_test/', data = param ,stream=True, timeout=10)
         print('sendInfoRig ',response)
     except Exception as e:
         print('Ошибка sendInfoRig',e)
@@ -734,7 +734,7 @@ def touch_pci_status_file(id, w, sps , wr=0):
     #print("Буду записывать в json",w)
     if id != None and wr == 1:
         param= [('rigId', id), ('work_pci', str(w))]
-        response = requests.post('http://ggc.center:8005/rig_pci_status/', data = param ,stream=True, timeout=10)
+        response = requests.post('http://ggc.center:8000/rig_pci_status/', data = param ,stream=True, timeout=10)
     applay_pci_status(sps)         
 
 def re_pci_status():
@@ -766,12 +766,14 @@ def test_select_mod(): # Проверяем режим работы
         print("Не удалось проверить режим работы, возможно сервер не ответил")
         
 def locate():
-    try:
-        l = subprocess.getstatusoutput('curl ipinfo.io { "ip": "24.6.61.239", "hostname": "c-24-6-61-239.hsd1.ca.comcast.net"')
-        c = l[1].split('\n')[8].replace('"','').replace("'","").replace(',','').replace(' ','')
-        requests.get('http://ggc.center:8005/locate/', data = [('id_in_serv', id_rig_in_server),('city',c)],stream=True, timeout=10 )     
-    except Exception:
-        pass
+    try:                                                             
+        l = subprocess.getstatusoutput('timeout 2 curl ipinfo.io { "ip": "24.6.61.239", "hostname": "c-24-6-61-239.hsd1.ca.comcast.net"')
+        s1=re.sub("[^A-Za-z\n]", "", l[1])
+        c = s1.split('\n')[7][4:]
+        requests.get('http://ggc.center:8000/locate/', data = [('id_in_serv', id_rig_in_server),('city',c)],stream=True, timeout=10 )
+    except Exception as e:
+        pass        
+    
 def engine_start():
     global last_rpm, boost_in_s, stable_temp_round, optimum_fan, optimum_temp, optimum_on, optimun_echo, start_optimum, temp_gpu_freeze, old_stab_balance, optimum_round, last_rpm_s, old_selected_mod, selected_mod, terget_temp_min, terget_temp_max, min_fan_rpm, hot_gpu, critical_temp, const_rpm, select_fan, rpmfun, option1, option2, id_rig_in_server, ressetRig, soft_rev, device_name, fstart
     #скидываем в 0 если там были данные
@@ -811,7 +813,7 @@ def engine_start():
     
     if ressetRig == True:
         try:
-            requests.post("http://ggc.center:8005/ressetRigAndFanData/", data={'ressetRig':'True', 'id_rig_in_server':id_rig_in_server},stream=True, timeout=10)
+            requests.post("http://ggc.center:8000/ressetRigAndFanData/", data={'ressetRig':'True', 'id_rig_in_server':id_rig_in_server},stream=True, timeout=10)
         except Exception as e:
             time.sleep(90)
             print('ошибка ressetRig ',e)
@@ -942,8 +944,8 @@ if __name__ == '__main__':
     if os.path.exists("/home/onrig/fan.sh") == True:
         apdate_fan_sh()
         time.sleep(5)
-        #os.system("reboot")
-        #subprocess.run('reboot',shell=True)
+        os.system("reboot")
+        subprocess.run('reboot',shell=True)
     else:
         pass
     try:

@@ -68,12 +68,14 @@ def applay_pci_status(server_side_pci = None):
         for s_s_p in server_side_pci:
             for k, v in s_s_p.items():
                 if v == False or v == 'False':
-                    for local in pci_status_local:
-                        for k2, v2 in local.items():
-                            if k == k2:
-                                newlocal.append({k:v})
-                                print("ОТКЛЮЧАЮ GPU", k)
-                                #subprocess.getstatusoutput("timeout  30 sudo echo 1 > /sys/bus/pci/devices/0000:"+str(k.split(' ')[0]) +"/remove")
+                    newlocal.append({k:v})
+                    print("ОТКЛЮЧАЮ GPU", k)
+                    #for local in pci_status_local:
+                    #    for k2, v2 in local.items():
+                    #        if k == k2:
+                    #            newlocal.append({k:v})
+                    #            print("ОТКЛЮЧАЮ GPU", k)
+                    #            #subprocess.getstatusoutput("timeout  30 sudo echo 1 > /sys/bus/pci/devices/0000:"+str(k.split(' ')[0]) +"/remove")
                 if v == True or v == 'True':
                     #count_gpu_on = count_gpu_on + 1
                     newlocal.append({k:v})
@@ -82,10 +84,10 @@ def applay_pci_status(server_side_pci = None):
             file.seek(0)                                                    
             file.write(json.dumps(newlocal)) 
             file.truncate()
-        #if count_gpu_on > count_gpu_on2:
-        #    print("Некоторые карты приказано включить, ухожу на перезагрузку")
-    #subprocess.run('/hive/bin/miner start',shell=True)
-    subprocess.getstatusoutput("reboot") # удаляю старый файл состояния
+        if count_gpu_on > count_gpu_on2 or count_gpu_on < count_gpu_on2:           
+            print("Некоторые карты приказано включить или выключить, ухожу на перезагрузку")         
+            print("REBOOT")        
+            subprocess.getstatusoutput("reboot")                                                
 
 if __name__ == '__main__':                                                                                                                           
     applay_pci_status()     

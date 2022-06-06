@@ -821,6 +821,11 @@ def engine_start():
     try:
         get_temp()
     except Exception:
+        try:
+            send_mess(' There are no GPUs enabled in your box. The operation is suspended until the GPU is enabled.', id_rig_in_server)  
+        except Exception:
+            pass
+        time.sleep(60)
         print("Проблема с получением данных, возможно в риге нет карт")
         engine_start()
     try:

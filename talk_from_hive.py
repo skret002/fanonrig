@@ -52,7 +52,7 @@ def communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, 
             fan_mode = 1
 
         with open(req_link_hive, 'r') as f:
-            print("захожу в проверку настроек req_link_hive")
+            #print("захожу в проверку настроек req_link_hive")
             json_data = json.load(f)
             j_target_temp      = int(json_data['target_temp'])
             j_target_mtemp     = int(json_data['target_mtemp'])
@@ -63,10 +63,10 @@ def communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, 
             else:
                 j_fan_mode = 2
             j_min_fan          = int(json_data['min_fan'])
-            print(j_target_temp, j_target_mtemp, j_manual_fan_speed, j_fan_mode, j_min_fan)
-            print(int(now_target_core), int(now_target_mem), int(now_manual_fan_speed), int(now_fan_mode), int(now_min_fan_rpm))
+            #print(j_target_temp, j_target_mtemp, j_manual_fan_speed, j_fan_mode, j_min_fan)
+            #print(int(now_target_core), int(now_target_mem), int(now_manual_fan_speed), int(now_fan_mode), int(now_min_fan_rpm))
             if (j_target_temp != int(now_target_core)) or (j_target_mtemp != int(now_target_mem)) or (j_manual_fan_speed != int(now_manual_fan_speed)) or (j_fan_mode != int(now_fan_mode)) or (j_min_fan != int(now_min_fan_rpm)):
-                print(">>> настройки сервера и hive  не одинаковые, жду обновление.")
+                #print(">>> настройки сервера и hive  не одинаковые, жду обновление.")
                 if int(str(j_target_temp)[1:2]) <=4:
                     new_min_temp =  j_target_temp - 8
                     new_max_temp =  j_target_temp + 8
@@ -77,14 +77,14 @@ def communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, 
                 new_manual_fan_speed = j_manual_fan_speed
                 fan_mode = j_fan_mode
                 min_fan = j_min_fan
-                print(">>> Новые настройки от HIVE",new_min_temp, new_max_temp,new_target_mem, new_manual_fan_speed,fan_mode,min_fan)
+                #print(">>> Новые настройки от HIVE",new_min_temp, new_max_temp,new_target_mem, new_manual_fan_speed,fan_mode,min_fan)
                 new_data = [('rig_id', id_rig_in_server),('new_min_temp',new_min_temp),('new_max_temp',new_max_temp),('new_target_mem',new_target_mem),('new_manual_fan_speed',new_manual_fan_speed),('fan_mode',fan_mode),('min_fan',min_fan)]
-                requests.get('http://ggc.center:8000/set_option_for_hive/', data = new_data,stream=True, timeout=10)
+                requests.get('http://ggc.center:8000/set_option_for_hive/', data = new_data,stream=True, timeout=(100, 100))
             else:
                 pass
                 #print('настройки хайва и сервера одинаковые')
         if os.path.exists(req_recallibrate) == True:
-            print(">>>> начать реколебровку") 
+            #print(">>>> начать реколебровку") 
             send_mess(' Starting recalibration of external coolers, wait for the result. It may take about 10 minutes.', id_rig_in_server)                                                                                                            
             res_test_fan = testFan(id_rig_in_server)                                                                                                 
             os.system("rm " + req_recallibrate)
@@ -96,7 +96,7 @@ def communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, 
             os.system("reboot")
             subprocess.run('reboot',shell=True)
         if os.path.exists(fan_diagn_req) == True:
-            print(">>>> Запрос диагностики") 
+            print("!!!! Diagnostic request from Hive !!!!") 
             send_mess(' Query diagnostics from Hive OS', id_rig_in_server)                                                                                                 
             os.system("rm " + fan_diagn_req)
                                                                                                 

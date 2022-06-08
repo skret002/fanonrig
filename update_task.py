@@ -24,7 +24,7 @@ def task_update(rig_id, soft_rev):
             f.write(json.dumps(json_data))                                                                                            
             f.truncate()  
         time.sleep(3)
-        print("***********СИСТЕМА ОБНОВЛЕНА ****************")
+        print("*********** SYSTEM UPDATED ****************")
         os.system("reboot")
         subprocess.run(['reboot'], stdout=subprocess.PIPE)
 

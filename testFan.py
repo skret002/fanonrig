@@ -1,8 +1,7 @@
-import os, json                                                                                                                             
-import time                                                                                                                           
-import requests                                                                                                                                                                                                                                             
-import subprocess
+import os, json, requests, time, subprocess                                                                                                                    
 from handler_messeges import transmit_mess as send_mess
+
+answer_recallibrate ='/run/hive/fan_controller_recallibrate_rsp' # вывести рез. реколиб. текстом
 
 def testFan(id_rig, step=4):   
     ## сначала стопарим майнер и удаляем старый файл рекалиброки
@@ -16,7 +15,7 @@ def testFan(id_rig, step=4):
     effective_handler = 0
     max_rpm = 0                                                                                                                                                                                                                                                               
     one_data_fan = 0                                                                                                                                                                                                                                                          
-    print("НАЧИНАЮ РЕКОЛЕБРОВКУ КУЛЕРОВ")
+    print("**** STARTING COOLER REVOLUTION ****")
     subprocess.getstatusoutput("echo 1 >> /sys/class/hwmon/hwmon1/pwm2_enable")
     subprocess.getstatusoutput("echo 1  >> /sys/class/hwmon/hwmon1/pwm2")
     time.sleep(30)        # убираем остаточное движение если до этого были раскручены                                                                                                                                                                                                                                                     
@@ -41,8 +40,7 @@ def testFan(id_rig, step=4):
         rpm5 = output5.replace('fan2:', '').replace('RPM', '').replace('(min = 0 RPM)', '').replace(' ', '').replace('(min=0)','')
         rpm = max(int(rpm1),int(rpm2),int(rpm3),int(rpm4),int(rpm5))
         average_rpm = int((int(rpm1)+int(rpm2)+int(rpm3)+int(rpm4)+int(rpm5)) / 5)
-        print("average_rpm",average_rpm)
-        print(give_rpm, rpm)
+        print("average_rpm - ",average_rpm)
         if int(rpm) != 0:
             if one_data_fan == 0:
                 if int(old_average_rpm) < int(average_rpm):
@@ -74,14 +72,23 @@ def testFan(id_rig, step=4):
             os.system("/hive/bin/miner start")
         except Exception:
             pass
-        os.system("rm /run/hive/fan_controller_recallibrate_req")
+        try:
+            os.system("rm /run/hive/fan_controller_recallibrate_req")
+        except Exception:
+            pass
+        file_info1 = open(answer_recallibrate, "w+")                                                                                              
+        file_info1.write('device_name: '+ str("Recalibration completed successfully.The effective speed of your box's coolers > " +str(max_rpm) ))
+        file_info1.close()
         return("Maximum speed of external coolers :"+str(max_rpm))
     else:
         send_mess(' RECALIBRATION is not accurate, try again.', id_rig)
-        print("РЕКАЛИБРОВКА с шагом 5 пройти не удалось, пробую ", step+1)
+        file_info1 = open(answer_recallibrate, "w+")                                                                                              
+        file_info1.write('device_name: '+ str('Recalibration with standard parameters failed. I will try other modes, the result will be sent to > ggc.center'))
+        file_info1.close() 
+        print("!!!! RECALIBRATION with step 5 failed, I try !!!!", step+1)
         testFan(id_rig, step)
 
-    print("РЕЗУЛЬТАТ РЕКАЛИБРОВКИ  >>  ", test)
+    print("**** RESULT OF RECALIBRATION  **** >>  ", test)
 
 if __name__ == '__main__':
     testFan(id_rig, 8)

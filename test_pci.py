@@ -29,10 +29,7 @@ def applay_pci_status(server_side_pci = None):
         for s_s_p in server_side_pci:
             for k, v in s_s_p.items():
                 if v == False or v == 'False':
-                    for local in pci_status_local:
-                        for k2, v2 in local.items():
-                            if k == k2:
-                                newlocal.append({k:v})
+                    newlocal.append({k:v})
                 if v == True or v == 'True':
                     newlocal.append({k:v})
         with open('/home/fanonrig/pci_status_file.json', "w+") as file: # Записываю новый файл состояния
@@ -59,6 +56,7 @@ def applay_pci_status(server_side_pci = None):
     else:  
         #subprocess.run('/hive/bin/miner stop',shell=True)                                                    
         count_gpu_on = 0 
+        reboot=0
         count_gpu_on2 = 0
         for i in pci_status_local:
             for k, v in i.items():
@@ -70,21 +68,23 @@ def applay_pci_status(server_side_pci = None):
                 if v == False or v == 'False':
                     newlocal.append({k:v})
                     print("ОТКЛЮЧАЮ GPU", k)
-                    #for local in pci_status_local:
-                    #    for k2, v2 in local.items():
-                    #        if k == k2:
-                    #            newlocal.append({k:v})
-                    #            print("ОТКЛЮЧАЮ GPU", k)
-                    #            #subprocess.getstatusoutput("timeout  30 sudo echo 1 > /sys/bus/pci/devices/0000:"+str(k.split(' ')[0]) +"/remove")
+                    for local in pci_status_local:
+                        for k2, v2 in local.items():
+                            if str(k).strip() == str(k2).strip():
+                                print("local",k2, v2)
+                                print('naw', k, v)
+                                if str(v2).strip() != str(v).strip():
+                                    reboot = 1
+                                #subprocess.getstatusoutput("timeout  30 sudo echo 1 > /sys/bus/pci/devices/0000:"+str(k.split(' ')[0]) +"/remove")
                 if v == True or v == 'True':
-                    #count_gpu_on = count_gpu_on + 1
+                    count_gpu_on = count_gpu_on + 1
                     newlocal.append({k:v})
         subprocess.getstatusoutput("rm /home/fanonrig/pci_status_file.json") # удаляю старый файл состояния
         with open('/home/fanonrig/pci_status_file.json', "w+") as file: # Записываю новый файл состояния
             file.seek(0)                                                    
             file.write(json.dumps(newlocal)) 
             file.truncate()
-        if count_gpu_on > count_gpu_on2 or count_gpu_on < count_gpu_on2:           
+        if count_gpu_on > count_gpu_on2 or reboot == 1:           
             print("Некоторые карты приказано включить или выключить, ухожу на перезагрузку")         
             print("REBOOT")        
             subprocess.getstatusoutput("reboot")                                                

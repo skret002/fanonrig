@@ -523,12 +523,13 @@ def search_min_fan_rpm_now(static_option = None):
 
 def get_setting_server(id_rig_in_server,key_slave):
     try:
-        response = requests.get('http://ggc.center:8000/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)],stream=True, timeout=10 )
-    except Exception:
+        response = requests.get('http://ggc.center:8000/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)],stream=True, timeout=(100, 100) )
+    except Exception as e:
+        print(e)
         time.sleep(90)
         engine_start()
     response = response.json()
-    global selected_mod, gpu_status, terget_temp_min, terget_temp_max, min_fan_rpm, select_fan, boost, critical_temp, option1, statusAlertSystem, gpuFanSetHive,typeGpu,const_rpm, rigOnBoot, rigRpmFanMaximum, min_fan_rpm_persent, mod_option_hive, option2, target_mem_temp
+    global selected_mod, gpu_status, terget_temp_min, terget_temp_max, min_fan_rpm, select_fan, boost, critical_temp, option1, statusAlertSystem, gpuFanSetHive, typeGpu ,const_rpm, rigOnBoot, rigRpmFanMaximum, min_fan_rpm_persent, mod_option_hive, option2, target_mem_temp
 
     
     if const_rpm == 0:
@@ -611,7 +612,7 @@ def get_setting_server(id_rig_in_server,key_slave):
 
 def get_setting_server1(id_rig_in_server, key_slave):
     try:
-        response = requests.get('http://ggc.center:8000/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)] ,stream=True, timeout=10)
+        response = requests.get('http://ggc.center:8000/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)] ,stream=True, timeout=(100, 100))
     except Exception:
         time.sleep(90)
         engine_start()
@@ -656,12 +657,12 @@ def get_setting_server1(id_rig_in_server, key_slave):
     
 def get_setting_server2(id_rig_in_server, key_slave):
     try:
-        response = requests.get('http://ggc.center:8000/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)],stream=True, timeout=10 )
+        response = requests.get('http://ggc.center:8000/get_option_rig/', data = [('id_in_serv', id_rig_in_server),('key_slave',key_slave)],stream=True, timeout=(10, 10) )
     except Exception:
         time.sleep(90)
         engine_start()
     response = response.json()
-    global option2, selected_mod, statusAlertSystem, gpuFanSetHive, typeGpum, rigOnBoot, mod_option_hive
+    global option2, selected_mod, statusAlertSystem, gpuFanSetHive, typeGpu, rigOnBoot, mod_option_hive
 
     if rigOnBoot ==0:
         mod_option_hive = int(response["data"][0]["attributes"]["mod_option_hive"])
@@ -711,7 +712,7 @@ def sendInfoRig(rig_id, rig_name, key_slave, device_name):
     global id_rig_in_server
     param= [('rigId', rig_id), ('rigName', rig_name), ('key_slave',key_slave), ('device_name', device_name)] 
     try:
-        response = requests.post('http://ggc.center:8000/add_rig_or_test/', data = param ,stream=True, timeout=10)
+        response = requests.post('http://ggc.center:8000/add_rig_or_test/', data = param ,stream=True, timeout=(100, 100))
         print('sendInfoRig ',response)
     except Exception as e:
         print('Ошибка sendInfoRig',e)
@@ -831,7 +832,10 @@ def engine_start():
         print("Проблема с получением данных, возможно в риге нет карт")
         engine_start()
     try:
-        get_setting_server(id_rig_in_server, key_slave)
+        try:
+            get_setting_server(id_rig_in_server, key_slave)
+        except Exception as e:
+            print('>>>', e)
         if selected_mod == 1:
             pass
         elif selected_mod == 1:
@@ -839,8 +843,8 @@ def engine_start():
         elif selected_mod == 2:
             get_setting_server2(id_rig_in_server, key_slave)
         print("ответ с сервера получен")
-    except Exception:
-        print("нет ответа с сервера, перезапускаю engine")
+    except Exception as e:
+        print("нет ответа с сервера, перезапускаю engine", e)
         time.sleep(90)
         engine_start()
 
@@ -874,7 +878,7 @@ def engine_start():
                 try:
                     if mod_option_hive == 1:
                         communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, rpmfun,rigRpmFanMaximum, option2, terget_temp_min,terget_temp_max, min_fan_rpm_persent, target_mem_temp, selected_mod,device_name)
-                        #print("*** Активно управление из HIVE ***")
+                        print("*** Активно управление из HIVE ***")
                     else:
                         pass
                 except Exception as e:
@@ -887,16 +891,19 @@ def engine_start():
         print("Выбран ручной режим")
         subprocess.getstatusoutput("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
         send_mess(' Manual mode activated', id_rig_in_server)
+        get_setting_server1(id_rig_in_server, key_slave)
         while 1 > 0:
             checking_new_settings(id_rig_in_server)
             test_select_mod()
             time.sleep(50)
             get_temp()
+            print('>>>>>',option1)
             for i in option1:
+                print('i',i)
                 if hot_gpu >= option1[i][0] and  hot_gpu <= option1[i][1]:
                     last_rpm = int(int(const_rpm / 100) * int(i))
                     subprocess.getstatusoutput("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-                    #print("выдаю  ",i,"%",  "горячая карта ", hot_gpu)
+                    print("выдаю  ",i,"%",  "горячая карта ", hot_gpu)
     elif selected_mod == 2:
         #print("Выбран статичный режим")
         subprocess.getstatusoutput("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")

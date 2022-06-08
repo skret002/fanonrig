@@ -53,8 +53,15 @@ def applay_pci_status(server_side_pci = None):
                     print('Off GPU >> ', str(k.strip().split(' ')[0]))
                     time.sleep(5)
                     subprocess.getstatusoutput("timeout  90 sudo echo 1 > /sys/bus/pci/devices/0000:"+str(k.strip().split(' ')[0]) +"/remove")
+<<<<<<< HEAD
+    else:  
+        #subprocess.run('/hive/bin/miner stop',shell=True)                                                    
+        count_gpu_on = 0 
+        reboot=0
+=======
     else:                                                    
         count_gpu_on  = 0 
+>>>>>>> a698efd35a5673eac6f5fbda0713c1ac1da58a7e
         count_gpu_on2 = 0
         reboot        = 0
         for i in pci_status_local:
@@ -66,6 +73,17 @@ def applay_pci_status(server_side_pci = None):
             for k, v in s_s_p.items():
                 if v == False or v == 'False':
                     newlocal.append({k:v})
+<<<<<<< HEAD
+                    print("ОТКЛЮЧАЮ GPU", k)
+                    for local in pci_status_local:
+                        for k2, v2 in local.items():
+                            if str(k).strip() == str(k2).strip():
+                                print("local",k2, v2)
+                                print('naw', k, v)
+                                if str(v2).strip() != str(v).strip():
+                                    reboot = 1
+                                #subprocess.getstatusoutput("timeout  30 sudo echo 1 > /sys/bus/pci/devices/0000:"+str(k.split(' ')[0]) +"/remove")
+=======
                     for local in pci_status_local:                                                
                         for k2, v2 in local.items():
                             if str(k).strip() == str(k2).strip():
@@ -73,6 +91,7 @@ def applay_pci_status(server_side_pci = None):
                                 #print('naw', k, v)
                                 if str(v2).strip() != str(v).strip():
                                     reboot = 1  
+>>>>>>> a698efd35a5673eac6f5fbda0713c1ac1da58a7e
                 if v == True or v == 'True':
                     count_gpu_on = count_gpu_on + 1
                     newlocal.append({k:v})
@@ -81,9 +100,15 @@ def applay_pci_status(server_side_pci = None):
             file.seek(0)                                                    
             file.write(json.dumps(newlocal)) 
             file.truncate()
+<<<<<<< HEAD
+        if count_gpu_on > count_gpu_on2 or reboot == 1:           
+            print("Некоторые карты приказано включить или выключить, ухожу на перезагрузку")         
+            print("REBOOT")        
+=======
         if count_gpu_on > count_gpu_on2 or reboot == 1:            
             #print("Некоторые карты приказано включить или выключить, ухожу на перезагрузку")         
             print(" **** REBOOT ****")        
+>>>>>>> a698efd35a5673eac6f5fbda0713c1ac1da58a7e
             subprocess.getstatusoutput("reboot")                                                
 
 if __name__ == '__main__':                                                                                                                           

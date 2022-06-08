@@ -708,7 +708,7 @@ def sendInfoRig(rig_id, rig_name, key_slave, device_name):
     param= [('rigId', rig_id), ('rigName', rig_name), ('key_slave',key_slave), ('device_name', device_name)] 
     try:
         response = requests.post('http://ggc.center:8000/add_rig_or_test/', data = param ,stream=True, timeout=10)
-        print('𝙏𝙝𝙚 𝙡𝙞𝙘𝙚𝙣𝙨𝙚 𝙞𝙨 𝙖𝙘𝙩𝙞𝙫𝙚. 𝙏𝙝𝙚 𝙨𝙚𝙧𝙫𝙚𝙧 𝙖𝙡𝙡𝙤𝙬𝙨 𝙬𝙤𝙧𝙠. ')
+        print(' **** The license is activated. Server ready to go **** ')
     except Exception as e:
         print('The license is not active or the server is not responding.')
         time.sleep(90)
@@ -717,35 +717,34 @@ def sendInfoRig(rig_id, rig_name, key_slave, device_name):
     checking_new_settings(id_rig_in_server, applyOptionReady = 0)
     return(True)
 
-def server_pci_status_list(str):                              
-    lists = []                                                     
-    try:                                                             
-        for i in str.split(','):
+def server_pci_status_list(str):
+    lists = []
+    try:
+        for i in str.split(','): 
             lists.append({i.split("'",2)[1].replace('{','').replace('}','').replace("'",'').replace(']','').replace('[',''):i.split(':')[2].replace("}",'').replace('"','').replace("'",'').replace(']','').replace(' ','').replace('[','').replace("'",'')})
     except Exception:
         pass                                                                                                                                                    
-    return (lists)                                                      
+    return (lists)                                                        
 def touch_pci_status_file(id, w, sps , wr=0):
     if id != None and wr == 1:
         param= [('rigId', id), ('work_pci', str(w))]
         response = requests.post('http://ggc.center:8000/rig_pci_status/', data = param ,stream=True, timeout=10)
-    applay_pci_status(sps)         
-
+    applay_pci_status(sps)
 def re_pci_status():
-    server_pci_status_file = server_pci_status_list(gpu_status)       
-    sps = server_pci_status_file        
-    id = id_rig_in_server                                                                                                             
-    work_pci = []                                                    
+    server_pci_status_file = server_pci_status_list(gpu_status)
+    sps = server_pci_status_file
+    id = id_rig_in_server
+    work_pci = []
     (status,output_fan)=subprocess.getstatusoutput("sudo lspci -v | grep --color -E '(VGA|3D)'")
     all_pci = re.split('\n', output_fan)
     for i in all_pci:
-        if "VGA controller" not in str(i.split('[', 1)[1].split(']')[0]):  
-            name = str(i.split('[', 1)[1].split(']')[0]).replace('RTX','').replace('NVIDIA','').replace('AMD','').replace('GeForce','').replace('NVIDIA','').replace('/Max-Q','').replace(' ','').replace("''",'')           
+        if "VGA controller" not in str(i.split('[', 1)[1].split(']')[0]):
+            name = str(i.split('[', 1)[1].split(']')[0]).replace('RTX','').replace('NVIDIA','').replace('AMD','').replace('GeForce','').replace('NVIDIA','').replace('/Max-Q','').replace(' ','').replace("''",'')
             if name == '/ATI':
                 name = 'AMD ' + str(i.split('[')[2].split(']')[0].replace('Radeon','').replace('RX','').replace(' ','')[0:3].replace('/',''))
             work_pci.append({str(i.split(' ')[0])+' ('+str(name)+')': True})
     if test(server_pci_status_file) != False:
-        #print("Карты стоят теже самые")
+        #print("Карты стоят теже самые") 
         touch_pci_status_file(id, server_pci_status_file, sps,0)
     else:
         touch_pci_status_file(id, work_pci, sps , 1)
@@ -829,8 +828,9 @@ def engine_start():
     locate()            # Получаем локацию
     
     if selected_mod == 0:
-        print("𝕀𝕟𝕥𝕖𝕝𝕝𝕚𝕘𝕖𝕟𝕥 𝕞𝕠𝕕𝕖 𝕒𝕔𝕥𝕚𝕧𝕒𝕥𝕖𝕕")
+        print("**** Intelegent mode active ****")
         if int(min_fan_rpm_persent) == None:  # если это первый страрт с реколибровкой, то будет NONE
+            print("Error min_fan_rpm_persent = 0")
             subprocess.run('reboot',shell=True)
         send_mess(' Intelligent mode activated', id_rig_in_server)
         subprocess.getstatusoutput("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
@@ -861,7 +861,7 @@ def engine_start():
             print("No response from server, I'll try again.")
             time.sleep(90)
             engine_start()
-        print("𝕄𝕒𝕟𝕦𝕒𝕝 𝕞𝕠𝕕𝕖 𝕒𝕔𝕥𝕚𝕧𝕒𝕥𝕖𝕕")
+        print("**** Manual mode active ****")
         subprocess.getstatusoutput("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
         send_mess(' Manual mode activated', id_rig_in_server)
         while 1 > 0:
@@ -876,7 +876,7 @@ def engine_start():
             write_resp(rpmfun, rigRpmFanMaximum)
             
     elif selected_mod == 2:
-        print("𝕊𝕥𝕒𝕥𝕚𝕔 𝕞𝕠𝕕𝕖 𝕒𝕔𝕥𝕚𝕧𝕒𝕥𝕖𝕕")
+        print("**** Static 𝕞𝕠𝕕𝕖 mode active ***")
         try:
             get_setting_server2(id_rig_in_server, key_slave)
         except Exception:
@@ -919,7 +919,7 @@ if __name__ == '__main__':
             '║╚═╝║║║─║║──║║──║║─║║║╔══╝║╚═╝║║║╚╗║║     ╚══╗║──║║──║╚═╝║║╔╗╔╝──║║──','\n',
             '║╔═╗║║╚═╝║──║║──║╚═╝║║║───║╔═╗║║║─║║║     ║╚═╝║──║║──║╔═╗║║║║╚╗──║║──','\n',
             '╚╝─╚╝╚═══╝──╚╝──╚═══╝╚╝───╚╝─╚╝╚╝─╚═╝     ╚═══╝──╚╝──╚╝─╚╝╚╝╚═╝──╚╝──')
-    print('@ 𝕕𝕖𝕧 𝕓𝕪 𝕄𝕖𝕧𝕝𝕦𝕥𝕠𝕧 𝔸.𝕍 𝕞𝕒𝕚𝕝: 𝕒.𝕧.𝕞𝕖𝕧𝕝𝕦𝕥𝕠𝕧@𝕘𝕞𝕒𝕚𝕝.𝕔𝕠𝕞')
+    print('@ dev by Mevlutov mail: a.v.mevlutov@gmail.com')
     if os.path.exists("coolers.json") == True:
         pass
     else:
@@ -929,7 +929,9 @@ if __name__ == '__main__':
         time.sleep(5)
         subprocess.run('reboot',shell=True)
     if os.path.exists("/home/fanonrig/keeper_fan.service") == True:
-        subprocess.getstatusoutput("sudo cp keeper_fan.service /lib/systemd/system/ && sudo systemctl daemon-reload")
+        subprocess.getstatusoutput("sudo cp -r keeper_fan.service /lib/systemd/system/ && sudo systemctl daemon-reload")
+        subprocess.getstatusoutput("sudo rm keeper_fan.service")
+        subprocess.getstatusoutput("sudo sudo systemctl enable keeper_fan && sudo systemctl start keeper_fan")
         time.sleep(5)
         subprocess.run('reboot',shell=True)
 

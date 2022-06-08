@@ -8,7 +8,7 @@ def test(ser_side_info):
         for i in range(0, len(ser_side_info)):
             for key,value in ser_side_info[i].items():
                 obj2.append(key.replace(' ',''))
-        print(f_init_gpu, '\n', obj2)
+        #print(f_init_gpu, '\n', obj2)
         for i in f_init_gpu:
             non_change = 1
             if i in obj2:

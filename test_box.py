@@ -1,8 +1,4 @@
-import os
-import subprocess
-import requests
-
-import sensors
+import os, subprocess, requests, sensors, time
 sensors.init()
 
 def get_temp():
@@ -56,7 +52,7 @@ def testing():
         pass
         #print("внешние кулера управляемые и крутятся")
     else:
-        print("Внешних кулеров нет или они не управляемые")
+        print("!!!! There are no external coolers or they are not controlled !!!!")
         time.sleep(10)
         testing()
         return("There are no external coolers or they are not controlled, check the connections of the coolers to the motherboard. Make sure you are using WIND TANK TECHNOLOGIES L.L.C box")
@@ -65,5 +61,5 @@ def testing():
     except Exception:
         return("Data about video cards cannot be read, GPU may not be installed")
 
-    print("тест завершился успешно")
+    print("**** Test completed successfully ****")
     return(True)

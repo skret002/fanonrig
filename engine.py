@@ -956,6 +956,5 @@ if __name__ == '__main__':
     try:
         engine_start()
     except Exception as e:
-        print('>>>', e)
         send_mess('ОError in ENGINE CORE - send a text message to the developer | ' + str(e), id_rig_in_server)
-        #subprocess.run('reboot',shell=True)
+        subprocess.run('reboot',shell=True)

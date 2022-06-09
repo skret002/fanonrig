@@ -14,10 +14,10 @@ def test(ser_side_info):
             if i in obj2:
                 non_change = 0
             if non_change != 0:
-                print("карты в слотах изменились")
+                print("cards in slots have changed")
                 return(False)
         if len(f_init_gpu) > len(obj2):
-            print("карты изменились", len(f_init_gpu), len(obj2))
+            #print("карты изменились", len(f_init_gpu), len(obj2))
             return(False)
     except Exception as e:
         print(e)  

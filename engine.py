@@ -88,7 +88,7 @@ def active_cool_mod():
                 boost_mem = round(int(boost_mem /2))               
             corect_boost = (int(const_rpm) / (int(terget_temp_max - terget_temp_min))) * ((int(hot_gpu) - int(terget_temp_min))) + int(boost)+ int(boost_mem)
             corect_boost = int(int(corect_boost/100)*90)
-            print("///// АКТИВИРОВАН РЕЖИМ С ОПЕРЕЖЕНИЕМ", int(corect_boost))
+            print("****  Rig has become hot or the temperature settings are too low ****", int(corect_boost))
             subprocess.getstatusoutput("echo " + str(int(corect_boost)) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
             old_hot_gpu = hot_gpu
             stable_temp_round = 0
@@ -99,10 +99,10 @@ def active_cool_mod():
         else:    
             if (optimum_on == 0) and (stable_temp_round <= 15) and (int(mem_t) <110):
                 if int(old_hot_gpu) != int(hot_gpu) or int(hot_gpu) > int(optimum_temp) or int(mem_t) > int(target_mem_temp):
-                    print('усредненый пересчитываю') 
+                    #print('усредненый пересчитываю') 
                     last_rpm = int((int(const_rpm) / (int(terget_temp_max - terget_temp_min))) * ((int(hot_gpu) - int(terget_temp_min)))) 
                     if int(hot_gpu) > int(optimum_temp) or int(mem_t) > int(target_mem_temp):
-                        print('Применяю адаптивно-усредненый') 
+                        #print('Применяю адаптивно-усредненый') 
                         last_rpm_s = (last_rpm/100)* (80 + (int(hot_gpu) - int(optimum_temp))*2)
                         if last_rpm_s < 0:
                             last_rpm_s = 0
@@ -118,26 +118,26 @@ def active_cool_mod():
                         time.sleep(29)
                     get_temp()                                                                                       
                 else:          
-                    print('усредненый оставляю как есть')
+                    #print('усредненый оставляю как есть')
                     get_temp()
                     old_hot_gpu = hot_gpu
                     time.sleep(29)
                 if int(hot_gpu) <= int(optimum_temp) and int(mem_t) <= int(target_mem_temp):
                     stable_temp_round = stable_temp_round + 1 
                     time.sleep(29)
-                    print("::::::::Все стабильно, готовлюсь к search optimum:::::::::", stable_temp_round)
+                    print(":::: Everything is stable, getting ready to find the optimal airflow ::::", stable_temp_round)
                 else:
                     boost_in_s = boost_in_s + int(int(int(const_rpm) / 100) * 2 )
                     #stable_temp_round = 0 
                     time.sleep(29)
-                    print("::::::::сбросил stable_temp_round до входа search optimum:::::::::",boost_in_s, last_rpm_s)
+                    print(":::: External conditions have changed, rebuilding ::::")
 
             elif (stable_temp_round > 15) and (optimum_on == 0) and (int(mem_t) <= (int(target_mem_temp) + 2)):  
-                print("/////Температура стабильна, ищу оптимум ///")
+                print(":::: Looking for optimal airflow ::::")
                 get_temp()
                 optimum_fan = optimum_fan + int(int(const_rpm) / 100) * 1                                                                 
                 last_rpm = int(start_optimum) - int(optimum_fan)
-                print("значения после корекции", last_rpm)
+                print(":::: Correction ::::", last_rpm)
                 #send_mess("/////Температура стабильна, ищу оптимум /// значения после корекции " + str(last_rpm) , id_rig_in_server)  
                 if int(last_rpm) < int(real_min_fan_rpm):
                     last_rpm = int(real_min_fan_rpm)
@@ -152,36 +152,36 @@ def active_cool_mod():
                 if int(hot_gpu) > int(optimum_temp):
                     stable_temp_round = 0     
                 if  (int(mem_t) == int(target_mem_temp)) or (int(optimum_temp) == int(hot_gpu)) or (int(last_rpm) <= int(real_min_fan_rpm)):
-                    print('optTRIGER', int(mem_t) == int(target_mem_temp) , int(optimum_temp) == int(hot_gpu),(int(last_rpm) <= int(real_min_fan_rpm)))
+                    #print('optTRIGER', int(mem_t) == int(target_mem_temp) , int(optimum_temp) == int(hot_gpu),(int(last_rpm) <= int(real_min_fan_rpm)))
                     optimum_on = 1
-                    print("ОПТИМУМ ГОТОВ", optimun_echo, 'mem_t', mem_t)
+                    print(":::: Optimal airflow found at speed :::: >", optimun_echo, ' \n The memory temperature will be approx > ', mem_t)
                     old_hot_gpu = hot_gpu
                     optimun_echo = last_rpm + int(int(int(const_rpm) / 100) * 5 )
                     temp_gpu_freeze = int(hot_gpu)
                 return()
             elif optimum_on == 1:     
-                print("///////////////////////////////Применяю оптимум//////////////////////")
+                print(":::: System in optimal airflow ::::")
                 get_temp()
                 stab_balance_mem= 0
                 stab_balance = 0 
                 #send_mess("оптимум - коректирую ", id_rig_in_server)
-                stab_balance =    int((int(hot_gpu) - int(temp_gpu_freeze)) * ((int(const_rpm) / 100)*3)) #int((int(const_rpm) / 100) * ((int(hot_gpu) - int(temp_gpu_freeze))*2.5)) 
+                stab_balance =    int((int(hot_gpu) - int(temp_gpu_freeze)) * ((int(const_rpm) / 100)*4)) #int((int(const_rpm) / 100) * ((int(hot_gpu) - int(temp_gpu_freeze))*2.5)) 
                 stab_balance_mem =  int((int(mem_t) - int(target_mem_temp)) * ((int(const_rpm) / 100)*2)) #int((int(const_rpm) / 100) * ((int(mem_t) - (int(target_mem_temp)-2))*1.5))
                 if stab_balance_mem < 0:
                     stab_balance_mem = 0
                 if stab_balance <0:
                     stab_balance = 0
-                print("оптимум - коректирую")
-                print("stab_balance | stab_balance_mem" + str(stab_balance) + " " + str(stab_balance_mem))
+                print(":::: System in optimal airflow - correction ::::")
+                #print("stab_balance | stab_balance_mem" + str(stab_balance) + " " + str(stab_balance_mem))
                 echo = int(optimun_echo) + int(stab_balance) + int(stab_balance_mem)
                 if int(echo) < int(real_min_fan_rpm):
                     echo = int(real_min_fan_rpm)
                 subprocess.getstatusoutput("echo " + str(echo) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan)) 
-                print("echo", str(echo))
+                #print("echo", str(echo))
                 get_temp()
                 time.sleep(29)
-                if int(hot_gpu) > (int(temp_gpu_freeze) + 3)  or int(hot_gpu) < (temp_gpu_freeze-2) or int(mem_t) >= (int(target_mem_temp) + 4) or (int(mem_t) < int(target_mem_temp)-4 and int(mem_t) != 0):            
-                    print('::::::::::::::::::сбросил optimum_on::::::::::::::::::')
+                if int(hot_gpu) >= (int(temp_gpu_freeze) + 3)  or int(hot_gpu) <= (temp_gpu_freeze-2) or int(mem_t) >= (int(target_mem_temp) + 4) or (int(mem_t) < int(target_mem_temp)-4 and int(mem_t) != 0):            
+                    print(':::: External conditions have changed, rebuilding. Optimal airflow resset ::::')
                     optimum_on = 0        
                     stable_temp_round = 0      
                     optimum_fan = 0     
@@ -207,7 +207,7 @@ def addFanData(rpmfun, temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gp
     try:
         r = requests.post("http://ggc.center:8000/add_and_read_fandata/", data=data,stream=True, timeout=10)
     except Exception:
-        print('ошибка в отправке данных по кулерам')
+        print('!!!! Error in sending data on coolers !!!!')
         time.sleep(60)
         try:
             r = requests.post("http://ggc.center:8000/add_and_read_fandata/", data=data,stream=True, timeout=10)
@@ -360,8 +360,7 @@ def testing():
                         rpmfun = feature.get_value()
                         return(int(rpmfun))
     if rpmfun != 0:
-        pass
-        #print("внешние кулера управляемые и крутятся")
+        print("**** External coolers are controlled and spin ****")
     else:
         subprocess.getstatusoutput("echo 1 >>/sys/class/hwmon/hwmon1/pwm2_enable")
         subprocess.getstatusoutput("echo 80 >> /sys/class/hwmon/hwmon1/pwm2")
@@ -369,18 +368,17 @@ def testing():
         time.sleep(5)
         get_fan_rpm()
         if rpmfun != 0:
-            print("Внешних кулеров нет или они не управляемые")
+            print("!!!! There are no external coolers or they are not controlled !!!!")
         return("There are no external coolers or they are not controlled, check the connections of the coolers to the motherboard. Make sure you are using WIND TANK TECHNOLOGIES L.L.C box")
     try:
         get_temp()
     except Exception:
         return("Data about video cards cannot be read, GPU may not be installed")
-
-    print("тест завершился успешно")
+    print("**** test completed successfully ****")
     return(True)
 
 def test_key(rig_id='', rig_name=''):                                                                                                 
-    print("Зашли в test_key", len(str(rig_id)))                                                                                       
+    #print("Зашли в test_key", len(str(rig_id)))                                                                                       
     global key_slave
                                                                                                           
     r_id = ""                                                                                                                         
@@ -390,7 +388,7 @@ def test_key(rig_id='', rig_name=''):
             file_key = open(filename, "r")
             key_slave = file_key.read()                                                                                                   
     except Exception:
-        print("Ошибка ключа")
+        print("!!!! License file error, try again !!!!")
         test_key()                                                                                                     
     
     try:
@@ -405,7 +403,7 @@ def test_key(rig_id='', rig_name=''):
                 r_id = line.replace("RIG_ID=", "").replace('\n', '')                                                                      
                 #print(r_id)
                 if  len(r_id) <2:
-                    print("не нашел ID, Пробую еще")
+                    print("!!!! Didn't find ID in your rig.conf, try again !!!!")
                     engine_start()
                 else:
                     if str(r_id) != str(rig_id) or rig_name != r_name:
@@ -421,15 +419,15 @@ def test_key(rig_id='', rig_name=''):
 
 
     except Exception:
-        print("Ошибка открытия hive-config")
+        print("!!!! Access error hive-config !!!!")
         test_key()
     
     if len(r_id)<2 or len(r_name)< 2:
-        print('ОШИБКА имя или id слишком короткие, пробую еще раз')
+        print('!!!! ERROR name or id is too short, try again !!!!')
         engine_start()
     else:
         if len(str(rig_id)) == 0:                                                                                                         
-            print("Это первый запуск, прописываю ID в память")                                                                            
+            print("**** Congratulations, this is the first launch of the system ****")
             with open('settings.json', 'r+') as f:
                 json_data = json.load(f)                                                                                                  
                 json_data['rig_id'] = str(r_id)                                                                                           
@@ -459,19 +457,19 @@ def search_min_fan_rpm_now(static_option = None):
     global real_min_fan_rpm  
     global stable_temp_round
     set_ok=0
-    print("::::::::  ищу min fan или статик мод min fan   :::::::::::")                                      
+    print(":::: Search for a given minimum speed >>>> ::::")                                      
     if static_option == None:
         mr = (int(rigRpmFanMaximum) / 100) * int(min_fan_rpm_persent)
-        mr_min = mr - 100
-        mr_max = mr + 100
-        mr_min1 = mr - 200
-        mr_max1 = mr + 200
+        mr_min = mr - 50
+        mr_max = mr + 50
+        mr_min1 = mr - 100
+        mr_max1 = mr + 100
     else:
         mr = (int(rigRpmFanMaximum) / 100) * int(static_option)
-        mr_min = mr - 100
-        mr_max = mr + 100
-        mr_min1 = mr - 200
-        mr_max1 = mr + 200
+        mr_min = mr - 50
+        mr_max = mr + 50
+        mr_min1 = mr - 100
+        mr_max1 = mr + 100
     step = 0
     with open('coolers.json', "r+") as file:
         data = json.load(file)
@@ -704,7 +702,7 @@ def checking_new_settings(id, applyOptionReady = None):
         else:
             pass
     except Exception as e:
-        print("Ошибка получения статуса настроек",e)
+        print("**** Error getting settings status ****" + '\n', e)
 
 
 def sendInfoRig(rig_id, rig_name, key_slave, device_name):
@@ -712,9 +710,9 @@ def sendInfoRig(rig_id, rig_name, key_slave, device_name):
     param= [('rigId', rig_id), ('rigName', rig_name), ('key_slave',key_slave), ('device_name', device_name)] 
     try:
         response = requests.post('http://ggc.center:8000/add_rig_or_test/', data = param ,stream=True, timeout=(100, 100))
-        print('sendInfoRig ',response)
+        print(' **** The license is activated. Server ready to go **** ')
     except Exception as e:
-        print('Ошибка sendInfoRig',e)
+        print('The license is not active or the server is not responding.')
         time.sleep(90)
         engine_start()
     id_rig_in_server = response.json()["data"]
@@ -751,7 +749,7 @@ def re_pci_status():
                 name = 'AMD ' + str(i.split('[')[2].split(']')[0].replace('Radeon','').replace('RX','').replace(' ','')[0:3].replace('/',''))
             work_pci.append({str(i.split(' ')[0])+' ('+str(name)+')': True})
     if test(server_pci_status_file) != False:
-        print("Карты стоят теже самые")
+        #print("Карты стоят теже самые")
         touch_pci_status_file(id, server_pci_status_file, sps,0)
     else:
         touch_pci_status_file(id, work_pci, sps , 1)
@@ -761,9 +759,11 @@ def test_select_mod(): # Проверяем режим работы
         if selected_mod == old_selected_mod:
             pass
         else:
+            time.sleep(60)
             engine_start()
     except Exception:
-        print("Не удалось проверить режим работы, возможно сервер не ответил")
+        pass
+        #print("Не удалось проверить режим работы, возможно сервер не ответил")
         
 def locate():
     try:                                                             
@@ -809,41 +809,38 @@ def engine_start():
     try:
         sendInfoRig(rig_id,rig_name, key_slave, device_name)
     except Exception as e:
-        print(e)
+        print('!!!! The license is not active or the server is not responding !!!!', e)
     
     if ressetRig == True:
         try:
             requests.post("http://ggc.center:8000/ressetRigAndFanData/", data={'ressetRig':'True', 'id_rig_in_server':id_rig_in_server},stream=True, timeout=10)
         except Exception as e:
             time.sleep(90)
-            print('ошибка ressetRig ',e)
+            print('!!!! Data reset error !!!!',e)
             engine_start()
         ressetRig = False
 
     try:
         get_temp()
     except Exception:
-        try:
-            send_mess(' There are no GPUs enabled in your box. The operation is suspended until the GPU is enabled.', id_rig_in_server)  
-        except Exception:
-            pass
+        send_mess(' There are no GPUs enabled in your box. The operation is suspended until the GPU is enabled.', id_rig_in_server)  
         time.sleep(60)
-        print("Проблема с получением данных, возможно в риге нет карт")
         engine_start()
     try:
         try:
             get_setting_server(id_rig_in_server, key_slave)
+            print("**** The server is up and running ****")
         except Exception as e:
-            print('>>>', e)
+            print("!!!! No response from server, I'll try again !!!!")
         if selected_mod == 1:
             pass
         elif selected_mod == 1:
             get_setting_server1(id_rig_in_server, key_slave)
         elif selected_mod == 2:
             get_setting_server2(id_rig_in_server, key_slave)
-        print("ответ с сервера получен")
+        #print("ответ с сервера получен")
     except Exception as e:
-        print("нет ответа с сервера, перезапускаю engine", e)
+        print("!!!! No response from server, I'll try again !!!!")
         time.sleep(90)
         engine_start()
 
@@ -851,11 +848,13 @@ def engine_start():
         task_update(id_rig_in_server, str(soft_rev))
     except Exception:
         time.sleep(90)
-        print("ошибка запроса на обновление")
+        print("!!!! Update request failed !!!!")
         engine_start()
     re_pci_status()     # Отключаем или включаем PCI
     locate()            # Получаем локацию
+    
     if selected_mod == 0:
+        print("**** Intelegent mode active ****")
         if int(min_fan_rpm_persent) == None:  # если это первый страрт с реколибровкой, то будет NONE
             os.system("reboot")
             subprocess.run('reboot',shell=True)
@@ -870,24 +869,24 @@ def engine_start():
                 try:
                     search_min_fan_rpm_now()
                 except Exception as e:
-                    print("проблема в search_min_fan_rpm_now",e) 
+                    print("Error",e) 
             active_cool_mod()
             try:
                 test_select_mod()
                 try:
                     if mod_option_hive == 1:
                         communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, rpmfun,rigRpmFanMaximum, option2, terget_temp_min,terget_temp_max, min_fan_rpm_persent, target_mem_temp, selected_mod,device_name)
-                        print("*** Активно управление из HIVE ***")
+                        print("*** Hive mode True ***")
                     else:
                         pass
                 except Exception as e:
-                    print('erroe in hive mode',e)
+                    print('Erroe in hive mode',e)
             except Exception as e:
-                print("ERROR selected_mod0 " + str(e))
+                print("ERROR " + str(e))
                 engine_start()
                 
     elif selected_mod == 1:
-        print("Выбран ручной режим")
+        print("**** Manual mode activated***")
         subprocess.getstatusoutput("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
         send_mess(' Manual mode activated', id_rig_in_server)
         get_setting_server1(id_rig_in_server, key_slave)
@@ -904,7 +903,7 @@ def engine_start():
                     subprocess.getstatusoutput("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
                     print("выдаю  ",i,"%",  "горячая карта ", hot_gpu)
     elif selected_mod == 2:
-        #print("Выбран статичный режим")
+        print("**** Static  mode active ***")
         subprocess.getstatusoutput("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
         send_mess(' Static mode activated', id_rig_in_server)
         while 1 > 0:
@@ -925,7 +924,7 @@ def engine_start():
                 try:
                     search_min_fan_rpm_now(int(option2))
                 except Exception as e:
-                    print("проблема в search_min_fan_rpm_now",e) 
+                    print("Error",e) 
             option = int(const_rpm / 100 * int(option2))
             subprocess.getstatusoutput("echo " + str(option) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
             print("echo " + str(option) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
@@ -943,6 +942,7 @@ if __name__ == '__main__':
             '║╚═╝║║║─║║──║║──║║─║║║╔══╝║╚═╝║║║╚╗║║     ╚══╗║──║║──║╚═╝║║╔╗╔╝──║║──','\n',
             '║╔═╗║║╚═╝║──║║──║╚═╝║║║───║╔═╗║║║─║║║     ║╚═╝║──║║──║╔═╗║║║║╚╗──║║──','\n',
             '╚╝─╚╝╚═══╝──╚╝──╚═══╝╚╝───╚╝─╚╝╚╝─╚═╝     ╚═══╝──╚╝──╚╝─╚╝╚╝╚═╝──╚╝──')
+    print('@ dev by Mevlutov mail: a.v.mevlutov@gmail.com')
     if os.path.exists("coolers.json") == True:
         pass
     else:
@@ -950,13 +950,14 @@ if __name__ == '__main__':
     if os.path.exists("/home/onrig/fan.sh") == True:
         apdate_fan_sh()
         time.sleep(5)
-        os.system("reboot")
         subprocess.run('reboot',shell=True)
-    else:
-        pass
+    if os.path.exists("/home/fanonrig/keeper_fan.service") == True:
+        os.system("sudo cp -r keeper_fan.service /lib/systemd/system/ && sudo systemctl daemon-reload")
+        os.system("sudo rm keeper_fan.service")
+        os.system("sudo sudo systemctl enable keeper_fan && sudo systemctl start keeper_fan")
+
     try:
         engine_start()
     except Exception as e:
         send_mess('ОError in ENGINE CORE - send a text message to the developer | ' + str(e), id_rig_in_server)
-        os.system("reboot")
         subprocess.run('reboot',shell=True)

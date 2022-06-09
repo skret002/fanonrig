@@ -3,9 +3,11 @@ from pprint import pprint  # подключили Pprint для красоты �
 from handler_messeges import transmit_mess as send_mess
 from mem import mem_temp
 from talk_from_hive import communication_hive
+from talk_from_hive import write_resp
 from test_pci import applay_pci_status, test
 from testFan import testFan
 from update_task import task_update
+
 
 sensors.init()
 # общие переменные
@@ -205,12 +207,12 @@ def addFanData(rpmfun, temp_gpu0,temp_gpu1,temp_gpu2,temp_gpu3,temp_gpu4,temp_gp
                             'hot_gpu':hot_gpu, 'hot_mem':mem_t
                             }
     try:
-        r = requests.post("http://ggc.center:8000/add_and_read_fandata/", data=data,stream=True, timeout=10)
+        r = requests.post("http://ggc.center:8000/add_and_read_fandata/", data=data,stream=True, timeout=(100,100))
     except Exception:
         print('!!!! Error in sending data on coolers !!!!')
         time.sleep(60)
         try:
-            r = requests.post("http://ggc.center:8000/add_and_read_fandata/", data=data,stream=True, timeout=10)
+            r = requests.post("http://ggc.center:8000/add_and_read_fandata/", data=data,stream=True, timeout=(100,100))
         except Exception:
             time.sleep(10)
             try:
@@ -694,7 +696,7 @@ def get_setting_server2(id_rig_in_server, key_slave):
 def checking_new_settings(id, applyOptionReady = None):
     try:
         param= [('rigId', id), ('applyOptionReady',applyOptionReady)]
-        response = requests.post('http://ggc.center:8000/get_status_new_option/', data = param ,stream=True, timeout=10)
+        response = requests.post('http://ggc.center:8000/get_status_new_option/', data = param ,stream=True, timeout=(100,100))
         requests.post("http://ggc.center:8000/i_am_online/", data={'online':1, 'id_rig_in_server':id_rig_in_server})
         #print("Статус настроек", response.json()["data"])
         if int(response.json()["data"]) == 1:
@@ -732,7 +734,7 @@ def touch_pci_status_file(id, w, sps , wr=0):
     #print("Буду записывать в json",w)
     if id != None and wr == 1:
         param= [('rigId', id), ('work_pci', str(w))]
-        response = requests.post('http://ggc.center:8000/rig_pci_status/', data = param ,stream=True, timeout=10)
+        response = requests.post('http://ggc.center:8000/rig_pci_status/', data = param ,stream=True, timeout=(100,100))
     applay_pci_status(sps)         
 
 def re_pci_status():
@@ -770,7 +772,7 @@ def locate():
         l = subprocess.getstatusoutput('timeout 2 curl ipinfo.io { "ip": "24.6.61.239", "hostname": "c-24-6-61-239.hsd1.ca.comcast.net"')
         s1=re.sub("[^A-Za-z\n]", "", l[1])
         c = s1.split('\n')[7][4:]
-        requests.get('http://ggc.center:8000/locate/', data = [('id_in_serv', id_rig_in_server),('city',c)],stream=True, timeout=10 )
+        requests.get('http://ggc.center:8000/locate/', data = [('id_in_serv', id_rig_in_server),('city',c)],stream=True, timeout=(100,100) )
     except Exception as e:
         pass        
     
@@ -813,7 +815,7 @@ def engine_start():
     
     if ressetRig == True:
         try:
-            requests.post("http://ggc.center:8000/ressetRigAndFanData/", data={'ressetRig':'True', 'id_rig_in_server':id_rig_in_server},stream=True, timeout=10)
+            requests.post("http://ggc.center:8000/ressetRigAndFanData/", data={'ressetRig':'True', 'id_rig_in_server':id_rig_in_server},stream=True, timeout=(100,100))
         except Exception as e:
             time.sleep(90)
             print('!!!! Data reset error !!!!',e)
@@ -871,19 +873,16 @@ def engine_start():
                 except Exception as e:
                     print("Error",e) 
             active_cool_mod()
+            write_resp(rpmfun, rigRpmFanMaximum)
             try:
-                test_select_mod()
-                try:
-                    if mod_option_hive == 1:
-                        communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, rpmfun,rigRpmFanMaximum, option2, terget_temp_min,terget_temp_max, min_fan_rpm_persent, target_mem_temp, selected_mod,device_name)
-                        print("*** Hive mode True ***")
-                    else:
-                        pass
-                except Exception as e:
-                    print('Erroe in hive mode',e)
+                if mod_option_hive == 1:
+                    communication_hive(id_rig_in_server, key_slave, mod_option_hive, const_rpm, rpmfun,rigRpmFanMaximum, option2, terget_temp_min,terget_temp_max, min_fan_rpm_persent, target_mem_temp, selected_mod,device_name)
+                    print("*** Hive mode True ***")
+                else:
+                    pass
             except Exception as e:
-                print("ERROR " + str(e))
-                engine_start()
+                print('Erroe in hive mode',e)
+
                 
     elif selected_mod == 1:
         print("**** Manual mode activated***")
@@ -892,16 +891,14 @@ def engine_start():
         get_setting_server1(id_rig_in_server, key_slave)
         while 1 > 0:
             checking_new_settings(id_rig_in_server)
-            test_select_mod()
             time.sleep(50)
             get_temp()
-            print('>>>>>',option1)
             for i in option1:
-                print('i',i)
                 if hot_gpu >= option1[i][0] and  hot_gpu <= option1[i][1]:
                     last_rpm = int(int(const_rpm / 100) * int(i))
                     subprocess.getstatusoutput("echo " + str(last_rpm) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-                    print("выдаю  ",i,"%",  "горячая карта ", hot_gpu)
+                    #print("выдаю  ",i,"%",  "горячая карта ", hot_gpu)
+            write_resp(rpmfun, rigRpmFanMaximum)
     elif selected_mod == 2:
         print("**** Static  mode active ***")
         subprocess.getstatusoutput("echo 1 >>/sys/class/hwmon/hwmon1/pwm"+str(select_fan)+"_enable")
@@ -918,7 +915,6 @@ def engine_start():
             except Exception as e:
                 print('erroe in hive mode',e)
             get_temp()
-            test_select_mod()
             if int(option2) != int(old_option2):
                 old_option2 = int(option2)
                 try:
@@ -927,7 +923,8 @@ def engine_start():
                     print("Error",e) 
             option = int(const_rpm / 100 * int(option2))
             subprocess.getstatusoutput("echo " + str(option) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
-            print("echo " + str(option) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
+            write_resp(rpmfun, rigRpmFanMaximum)
+            #print("echo " + str(option) + " >> /sys/class/hwmon/hwmon1/pwm"+str(select_fan))
 
 def apdate_fan_sh():
     subprocess.getstatusoutput("cp -u /home/onrig/fan.sh /home/")
@@ -951,7 +948,7 @@ if __name__ == '__main__':
         apdate_fan_sh()
         time.sleep(5)
         subprocess.run('reboot',shell=True)
-    if os.path.exists("/home/fanonrig/keeper_fan.service") == True:
+    if os.path.exists("/home/onrig/keeper_fan.service") == True:
         os.system("sudo cp -r keeper_fan.service /lib/systemd/system/ && sudo systemctl daemon-reload")
         os.system("sudo rm keeper_fan.service")
         os.system("sudo sudo systemctl enable keeper_fan && sudo systemctl start keeper_fan")
@@ -959,5 +956,6 @@ if __name__ == '__main__':
     try:
         engine_start()
     except Exception as e:
+        print('>>>', e)
         send_mess('ОError in ENGINE CORE - send a text message to the developer | ' + str(e), id_rig_in_server)
-        subprocess.run('reboot',shell=True)
+        #subprocess.run('reboot',shell=True)

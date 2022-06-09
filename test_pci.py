@@ -2,7 +2,7 @@ import subprocess, json, time, os
 
 def test(ser_side_info):                                      
     try:
-        with open('/home/fanonrig/init_gpu.json', 'r') as f:
+        with open('/home/onrig/init_gpu.json', 'r') as f:
             f_init_gpu = json.load(f)
         obj2 = []
         for i in range(0, len(ser_side_info)):
@@ -23,7 +23,7 @@ def test(ser_side_info):
         print(e)  
         
 def applay_pci_status(server_side_pci = None):
-    if os.path.exists("/home/fanonrig/pci_status_file.json") == False and server_side_pci != None:
+    if os.path.exists("/home/onrig/pci_status_file.json") == False and server_side_pci != None:
         print("!!!! First run, create GPU's status file !!!!")
         newlocal = []
         for s_s_p in server_side_pci:
@@ -32,7 +32,7 @@ def applay_pci_status(server_side_pci = None):
                     newlocal.append({k:v})
                 if v == True or v == 'True':
                     newlocal.append({k:v})
-        with open('/home/fanonrig/pci_status_file.json', "w+") as file: # Записываю новый файл состояния
+        with open('/home/onrig/pci_status_file.json', "w+") as file: # Записываю новый файл состояния
             file.seek(0)                                                    
             file.write(json.dumps(newlocal)) 
             file.truncate()
@@ -40,10 +40,10 @@ def applay_pci_status(server_side_pci = None):
     if server_side_pci != None:
         if test(server_side_pci) == False:
             return(False)       
-    if os.path.exists("/home/fanonrig/pci_status_file.json") == False and server_side_pci == None:
+    if os.path.exists("/home/onrig/pci_status_file.json") == False and server_side_pci == None:
         print('!!!! This is the first run, PCI control is not possible now !!!!')
         return()                                                        
-    with open('/home/fanonrig/pci_status_file.json', 'r') as f:  #подгружаем ранее созданный файл с данными 
+    with open('/home/onrig/pci_status_file.json', 'r') as f:  #подгружаем ранее созданный файл с данными 
         pci_status_local = json.load(f)
     if server_side_pci == None:    # если запущен как инит при загрузке просто проверяем и отключаем если есть отключенные
         for i in pci_status_local:
@@ -76,8 +76,8 @@ def applay_pci_status(server_side_pci = None):
                 if v == True or v == 'True':
                     count_gpu_on = count_gpu_on + 1
                     newlocal.append({k:v})
-        subprocess.getstatusoutput("rm /home/fanonrig/pci_status_file.json") # удаляю старый файл состояния
-        with open('/home/fanonrig/pci_status_file.json', "w+") as file: # Записываю новый файл состояния
+        subprocess.getstatusoutput("rm /home/onrig/pci_status_file.json") # удаляю старый файл состояния
+        with open('/home/onrig/pci_status_file.json', "w+") as file: # Записываю новый файл состояния
             file.seek(0)                                                    
             file.write(json.dumps(newlocal)) 
             file.truncate()

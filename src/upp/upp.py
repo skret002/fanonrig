@@ -105,7 +105,7 @@ def _write_pp_to_reg_file(filename, data, debug=False):
 @click.group(context_settings=CONTEXT_SETTINGS)
 @click.option('-p', '--pp-file', help='Input/output PP table binary file.',
               metavar='<filename>',
-              default='/sys/class/drm/card1/device/pp_table')
+              default='/sys/class/drm/card3/device/pp_table')
 @click.option('-f', '--from-registry',
               help='Import PP_PhmSoftPowerPlayTable from Windows registry ' +
                    '(overrides -p / --pp-file option).',
